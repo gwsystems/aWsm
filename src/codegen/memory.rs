@@ -1,0 +1,108 @@
+use llvm;
+use llvm::Builder;
+use llvm::Compile;
+use llvm::FunctionType;
+use llvm::PointerType;
+use llvm::Sub;
+use llvm::Value;
+
+use wasmparser;
+use wasmparser::ResizableLimits;
+
+use super::super::wasm::DataInitializer;
+use super::super::wasm::ImplementedFunction;
+use super::super::wasm::Instruction;
+
+use super::function::compile_function;
+use super::type_conversions::wasm_func_type_to_llvm_type;
+use super::ModuleCtx;
+
+pub fn add_memory_size_globals(ctx: &ModuleCtx, limits: &ResizableLimits) {
+    ctx.llvm_module
+        .add_global_variable("starting_pages", limits.initial.compile(ctx.llvm_ctx));
+    let maximum: u32 = limits.maximum.unwrap_or(0);
+    ctx.llvm_module
+        .add_global_variable("max_pages", maximum.compile(ctx.llvm_ctx));
+}
+
+pub fn generate_memory_initialization_stub(ctx: &ModuleCtx, initializers: Vec<DataInitializer>) {
+    let mut initialization_data: Vec<(&llvm::Function, Vec<u8>)> = Vec::new();
+
+    for (n, i) in initializers.into_iter().enumerate() {
+        // We need to translate the offset expression into a usable value
+        // So we compile a function that evaluates the expression, and use that
+        let offset_func = generate_offset_function(ctx, "memory", n, i.offset_expression);
+
+        let mut full_data = Vec::new();
+        for mut d in i.body {
+            full_data.append(&mut d);
+        }
+        initialization_data.push((&*offset_func, full_data));
+    }
+
+    // The runtime assumes the existance of a setup_memory function that sets up the memory
+    // We provide this, by compiling it here
+    let setup_function = ctx.llvm_module.add_function(
+        "populate_memory",
+        FunctionType::new(<()>::get_type(ctx.llvm_ctx), &[]).to_super(),
+    );
+    let bb = setup_function.append("entry");
+    let b = Builder::new(ctx.llvm_ctx);
+    b.position_at_end(bb);
+    for (offset_func, data) in initialization_data {
+        let offset = b.build_call(offset_func, &[]);
+        let data_vec: Vec<&Value> = data.iter().map(|byte| byte.compile(ctx.llvm_ctx)).collect();
+
+        let data_value = Value::new_vector(&data_vec);
+        let data_ptr = b.build_alloca(data_value.get_type());
+        b.build_store(data_value, data_ptr);
+
+        let data_raw_ptr =
+            b.build_bit_cast(data_ptr, PointerType::new(<i8>::get_type(ctx.llvm_ctx)));
+
+        b.build_call(
+            ctx.llvm_module.get_function("initialize_region").unwrap(),
+            &[
+                offset,
+                (data.len() as i32).compile(ctx.llvm_ctx),
+                data_raw_ptr,
+            ],
+        );
+    }
+    b.build_ret_void();
+}
+
+pub fn generate_offset_function<'a>(
+    ctx: &'a ModuleCtx,
+    prefix: &str,
+    n: usize,
+    mut offset_expression: Vec<Instruction>,
+) -> &'a llvm::Function {
+    let offset_func_name = format!("init_{}_offset_{}", prefix, n);
+    let offset_func_type = wasmparser::FuncType {
+        form: wasmparser::Type::Func,
+        params: Vec::new(),
+        returns: vec![wasmparser::Type::I32],
+    };
+
+    offset_expression.push(Instruction::End);
+
+    // Compile function assumes the function is already prototyped
+    let offset_func = ctx.llvm_module.add_function(
+        &offset_func_name,
+        wasm_func_type_to_llvm_type(ctx.llvm_ctx, &offset_func_type),
+    );
+
+    compile_function(
+        ctx,
+        &ImplementedFunction {
+            generated_name: offset_func_name.clone(),
+            ty: Some(offset_func_type),
+            ty_index: None,
+            locals: Vec::new(),
+            code: offset_expression,
+        },
+    );
+
+    offset_func
+}

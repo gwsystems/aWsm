@@ -1,0 +1,69 @@
+[[package]]
+name = "bitflags"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "cbox"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "libc 0.2.41 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "gcc"
+version = "0.3.54"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "libc"
+version = "0.2.41"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "llvm-alt"
+version = "0.5.0"
+dependencies = [
+ "cbox 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.41 (registry+https://github.com/rust-lang/crates.io-index)",
+ "llvm-sys 0.3.0 (git+https://github.com/TomBebbington/llvm-sys.rs)",
+]
+
+[[package]]
+name = "llvm-sys"
+version = "0.3.0"
+source = "git+https://github.com/TomBebbington/llvm-sys.rs#88a4f2da362f5162d28d8fd60503733476040db6"
+dependencies = [
+ "bitflags 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gcc 0.3.54 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.41 (registry+https://github.com/rust-lang/crates.io-index)",
+ "semver 0.1.20 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "semver"
+version = "0.1.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "silverfish"
+version = "0.1.0"
+dependencies = [
+ "llvm-alt 0.5.0",
+ "wasmparser 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "wasmparser"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[metadata]
+"checksum bitflags 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4f67931368edf3a9a51d29886d245f1c3db2f1ef0dcc9e35ff70341b78c10d23"
+"checksum cbox 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e4198143b96d30e1758ebe0abab558e0845f09b36d83872d88db34911349321f"
+"checksum gcc 0.3.54 (registry+https://github.com/rust-lang/crates.io-index)" = "5e33ec290da0d127825013597dbdfc28bee4964690c7ce1166cbc2a7bd08b1bb"
+"checksum libc 0.2.41 (registry+https://github.com/rust-lang/crates.io-index)" = "ac8ebf8343a981e2fa97042b14768f02ed3e1d602eac06cae6166df3c8ced206"
+"checksum llvm-sys 0.3.0 (git+https://github.com/TomBebbington/llvm-sys.rs)" = "<none>"
+"checksum semver 0.1.20 (registry+https://github.com/rust-lang/crates.io-index)" = "d4f410fedcf71af0345d7607d246e7ad15faaadd49d240ee3b24e5dc21a820ac"
+"checksum wasmparser 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)" = "4e58becacade32185edd389bc18fed36000d6c208d92cb46d5f93fa4c08a2e67"
