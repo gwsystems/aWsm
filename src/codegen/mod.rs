@@ -1,3 +1,5 @@
+use std::io;
+
 use llvm::Context as LLVMCtx;
 use llvm::Function as LLVMFunction;
 use llvm::Module as LLVMModule;
@@ -40,7 +42,7 @@ pub struct ModuleCtx<'a> {
     functions: &'a [(&'a LLVMFunction, Function)],
 }
 
-pub fn process_to_llvm(mut wasm_module: WasmModule, output_path: &str) {
+pub fn process_to_llvm(mut wasm_module: WasmModule, output_path: &str) -> io::Result<()> {
     let llvm_ctx = &*LLVMCtx::new();
     let llvm_module = &*LLVMModule::new(&wasm_module.source_name, llvm_ctx);
 
@@ -120,5 +122,5 @@ pub fn process_to_llvm(mut wasm_module: WasmModule, output_path: &str) {
     // TODO: Remove this debugging print
     llvm_module.dump();
 
-    llvm_module.write_bitcode(output_path).unwrap();
+    llvm_module.write_bitcode(output_path)
 }

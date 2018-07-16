@@ -2,5 +2,10 @@
 **/*.rs.bk
 **/.DS_Store
 
+a.out*
+**/*.o
+input.wasm
+output.bc
+
 silverfish.iml
 .idea

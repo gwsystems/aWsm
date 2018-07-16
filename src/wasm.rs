@@ -16,7 +16,7 @@ use wasmparser::WasmDecoder;
 #[derive(Debug)]
 pub struct WasmModule {
     pub source_name: String,
-    name_counter: u32,
+    name_counter: u64,
 
     pub types: Vec<FuncType>,
     pub globals: Vec<Global>,
@@ -833,17 +833,12 @@ impl WasmModule {
     fn process_custom_section(
         &mut self,
         p: &mut Parser,
-        name: Vec<u8>,
-        kind: CustomSectionKind,
+        _: Vec<u8>,
+        _: CustomSectionKind,
     ) -> ProcessState {
-        println!(
-            "Encountered {:?} section {:?}, which we can't interpret",
-            kind,
-            String::from_utf8(name)
-        );
         loop {
             match p.read() {
-                &ParserState::SectionRawData(d) => println!("\t{:?}", str::from_utf8(d)),
+                &ParserState::SectionRawData(_) => {},
                 &ParserState::EndSection => return ProcessState::Outer,
                 e => panic!("Have not implemented custom section state {:?}", e),
             }

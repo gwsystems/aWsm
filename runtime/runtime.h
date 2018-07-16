@@ -12,12 +12,13 @@
 #define EXPORT __attribute__ ((visibility ("default")))
 #define IMPORT __attribute__ ((visibility ("default")))
 
+#define INLINE __attribute__((always_inline))
+
 // Type alias's so I don't have to write uint32_t a million times
 typedef int32_t i32;
 typedef uint32_t u32;
 typedef int64_t i64;
 typedef uint64_t u64;
-typedef __int128 i128;
 
 #define WASM_PAGE_SIZE (1024 * 64)
 
@@ -36,9 +37,10 @@ extern u32 memory_size;
 
 void alloc_linear_memory();
 void expand_memory();
-char* get_memory_ptr(u32 offset, u32 bounds_check);
+// Assumption: bounds_check < WASM_PAGE_SIZE
+INLINE char* get_memory_ptr(u32 offset, u32 bounds_check);
 
-static void* get_memory_ptr_void(u32 offset, u32 bounds_check) {
+static inline void* get_memory_ptr_void(u32 offset, u32 bounds_check) {
     return (void*) get_memory_ptr(offset, bounds_check);
 }
 

@@ -34,7 +34,7 @@ void expand_memory() {
     memory_size += WASM_PAGE_SIZE;
 }
 
-char* get_memory_ptr(u32 offset, u32 bounds_check) {
+INLINE char* get_memory_ptr(u32 offset, u32 bounds_check) {
     // Due to how we setup memory for x86, the virtual memory mechanism will catch the error
     char* mem_as_chars = (char *) memory;
     char* address = &mem_as_chars[offset];

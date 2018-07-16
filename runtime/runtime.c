@@ -35,7 +35,7 @@ char* get_function_from_table(u32 idx, u32 type_id) {
 }
 
 // ROTL and ROTR helper functions
-u32 rotl_u32(u32 n, u32 c_u32) {
+INLINE u32 rotl_u32(u32 n, u32 c_u32) {
     // WASM requires a modulus here (usually a single bitwise op, but it means we need no assert)
     unsigned int c = c_u32 % (CHAR_BIT * sizeof(n));
     const unsigned int mask = (CHAR_BIT*sizeof(n) - 1);  // assumes width is a power of 2.
@@ -44,7 +44,7 @@ u32 rotl_u32(u32 n, u32 c_u32) {
     return (n<<c) | (n>>( (-c)&mask ));
 }
 
-u32 rotr_u32(u32 n, u32 c_u32) {
+INLINE u32 rotr_u32(u32 n, u32 c_u32) {
     // WASM requires a modulus here (usually a single bitwise op, but it means we need no assert)
     unsigned int c = c_u32 % (CHAR_BIT * sizeof(n));
     const unsigned int mask = (CHAR_BIT*sizeof(n) - 1);
@@ -53,7 +53,7 @@ u32 rotr_u32(u32 n, u32 c_u32) {
     return (n>>c) | (n<<( (-c)&mask ));
 }
 
-u64 rotl_u64(u64 n, u64 c_u64) {
+INLINE u64 rotl_u64(u64 n, u64 c_u64) {
     // WASM requires a modulus here (usually a single bitwise op, but it means we need no assert)
     unsigned int c = c_u64 % (CHAR_BIT * sizeof(n));
     const unsigned int mask = (CHAR_BIT*sizeof(n) - 1);  // assumes width is a power of 2.
@@ -62,7 +62,7 @@ u64 rotl_u64(u64 n, u64 c_u64) {
     return (n<<c) | (n>>( (-c)&mask ));
 }
 
-u64 rotr_u64(u64 n, u64 c_u64) {
+INLINE u64 rotr_u64(u64 n, u64 c_u64) {
     // WASM requires a modulus here (usually a single bitwise op, but it means we need no assert)
     unsigned int c = c_u64 % (CHAR_BIT * sizeof(n));
     const unsigned int mask = (CHAR_BIT*sizeof(n) - 1);
@@ -116,11 +116,11 @@ i64 i64_trunc_f64(double f) {
 }
 
 // Float => Float truncation functions
-float f32_trunc_f32(float f) {
+INLINE float f32_trunc_f32(float f) {
     return trunc(f);
 }
 
-double f64_trunc_f64(double f) {
+INLINE double f64_trunc_f64(double f) {
     return trunc(f);
 }
 

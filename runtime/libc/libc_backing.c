@@ -63,6 +63,7 @@ void stub_init(i32 offset) {
 }
 
 // Syscall stuff
+// TODO: the kernel returns error codes, but libc puts those in errno. If we use libc wrappers, we need to translate back to error codes
 
 // We define our own syscall numbers, because WASM uses x86_64 values even on systems that are not x86_64
 #define SYS_WRITE 1
@@ -255,8 +256,8 @@ void env_a_dec(i32 x_off) {
 void env_a_store(i32 p_off, i32 x) {
     assert(sizeof(i32) == sizeof(volatile int));
     volatile int* p = get_memory_ptr_void(p_off, sizeof(i32));
-	__asm__( "mov %1, %0 ; lock ; orl $0,(%%rsp)" : "=m"(*p) : "r"(x) : "memory" );
-
+	__asm__ __volatile__(
+		"mov %1, %0 ; lock ; orl $0,(%%esp)" : "=m"(*p) : "r"(x) : "memory" );
 }
 
 void env_do_spin(i32 i) {
@@ -266,4 +267,14 @@ void env_do_spin(i32 i) {
 void env_do_crash(i32 i) {
     printf("crashing: %d\n", i);
     assert(0);
+}
+
+// Floating point routines
+// TODO: Do a fair comparison between musl and wasm-musl
+INLINE double env_sin(double d) {
+    return sin(d);
+}
+
+INLINE double env_cos(double d) {
+    return cos(d);
 }

@@ -21,7 +21,7 @@ void expand_memory() {
     memory_size += WASM_PAGE_SIZE;
 }
 
-char* get_memory_ptr(u32 offset, u32 bounds_check) {
+INLINE char* get_memory_ptr(u32 offset, u32 bounds_check) {
     // There could be a potential bug here if bounds_check > memory_size
     // But statically we promise that memory_size >= WASM_PAGE_SIZE && bounds_check < WASM_PAGE_SIZE
     assert(offset <= memory_size - bounds_check);
