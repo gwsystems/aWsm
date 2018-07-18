@@ -19,7 +19,7 @@ mod function;
 use self::function::compile_function;
 
 mod globals;
-use self::globals::insert_globals;
+use self::globals::insert_global;
 
 mod memory;
 use self::memory::add_memory_size_globals;
@@ -72,7 +72,7 @@ pub fn process_to_llvm(mut wasm_module: WasmModule, output_path: &str) -> io::Re
     // Wasm globals have a natural mapping to llvm globals
     let mut globals = Vec::new();
     for g in wasm_module.globals {
-        let v = insert_globals(&*llvm_ctx, &*llvm_module, g);
+        let v = insert_global(&*llvm_ctx, &*llvm_module, g);
         globals.push(v);
     }
 

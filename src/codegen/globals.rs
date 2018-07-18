@@ -10,7 +10,7 @@ use super::super::wasm::Instruction;
 use super::type_conversions::llvm_type_to_wasm_type;
 use super::type_conversions::wasm_type_to_llvm_type;
 
-pub fn insert_globals<'a>(
+pub fn insert_global<'a>(
     llvm_ctx: &'a LLVMCtx,
     llvm_module: &'a LLVMModule,
     g: Global,
