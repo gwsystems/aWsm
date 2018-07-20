@@ -838,7 +838,7 @@ impl WasmModule {
     ) -> ProcessState {
         loop {
             match p.read() {
-                &ParserState::SectionRawData(_) => {},
+                &ParserState::SectionRawData(_) => {}
                 &ParserState::EndSection => return ProcessState::Outer,
                 e => panic!("Have not implemented custom section state {:?}", e),
             }

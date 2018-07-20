@@ -28,8 +28,7 @@ char* get_function_from_table(u32 idx, u32 type_id) {
 
     struct indirect_table_entry f = indirect_table[idx];
 
-    assert(f.type_id == type_id);
-    assert(f.func_pointer);
+    assert(f.type_id == type_id && f.func_pointer);
 
     return f.func_pointer;
 }

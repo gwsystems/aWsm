@@ -6,6 +6,7 @@ a.out*
 **/*.o
 input.wasm
 output.bc
+code_benches/*/bin/
 
 silverfish.iml
 .idea

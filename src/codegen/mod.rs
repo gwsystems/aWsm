@@ -120,7 +120,7 @@ pub fn process_to_llvm(mut wasm_module: WasmModule, output_path: &str) -> io::Re
     }
 
     // TODO: Remove this debugging print
-    llvm_module.dump();
+//    llvm_module.dump();
 
     llvm_module.write_bitcode(output_path)
 }
