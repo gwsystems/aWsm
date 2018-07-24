@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <math.h>
 #include <printf.h>
@@ -8,6 +9,8 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <sys/uio.h>
 
 #define EXPORT __attribute__ ((visibility ("default")))
 #define IMPORT __attribute__ ((visibility ("default")))
@@ -43,6 +46,19 @@ INLINE char* get_memory_ptr(u32 offset, u32 bounds_check);
 static inline void* get_memory_ptr_void(u32 offset, u32 bounds_check) {
     return (void*) get_memory_ptr(offset, bounds_check);
 }
+
+// memory/* also provides the table access functions
+// TODO: Change this to use a compiled in size
+#define INDIRECT_TABLE_SIZE 1024
+
+struct indirect_table_entry {
+    u32 type_id;
+    void* func_pointer;
+};
+
+extern struct indirect_table_entry indirect_table[INDIRECT_TABLE_SIZE];
+
+INLINE char* get_function_from_table(u32 idx, u32 type_id);
 
 // libc/* might need to do some setup for the libc setup
 void stub_init(i32 offset);

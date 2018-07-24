@@ -4,9 +4,8 @@ void* memory;
 u32 memory_size;
 
 void alloc_linear_memory() {
-    for (u32 i = 0; i < starting_pages; i++) {
-        expand_memory();
-    }
+    memory = calloc(starting_pages, WASM_PAGE_SIZE);
+    memory_size = starting_pages * WASM_PAGE_SIZE;
 }
 
 void expand_memory() {
@@ -30,4 +29,14 @@ INLINE char* get_memory_ptr(u32 offset, u32 bounds_check) {
     char* address = &mem_as_chars[offset];
 
     return address;
+}
+
+INLINE char* get_function_from_table(u32 idx, u32 type_id) {
+    assert(idx < INDIRECT_TABLE_SIZE);
+
+    struct indirect_table_entry f = indirect_table[idx];
+
+    assert(f.type_id == type_id && f.func_pointer);
+
+    return f.func_pointer;
 }

@@ -66,11 +66,29 @@ void stub_init(i32 offset) {
 // TODO: the kernel returns error codes, but libc puts those in errno. If we use libc wrappers, we need to translate back to error codes
 
 // We define our own syscall numbers, because WASM uses x86_64 values even on systems that are not x86_64
+#define SYS_READ 0
+u32 wasm_read(i32 fildes, i32 buf_offset, i32 nbyte) {
+    char* buf = get_memory_ptr_void(buf_offset, nbyte);
+    return (i32) read(fildes, buf, nbyte);
+}
+
 #define SYS_WRITE 1
 i32 wasm_write(i32 fd, i32 buf_offset, i32 buf_size) {
     // TODO: Handle errno
     char* buf = get_memory_ptr_void(buf_offset, buf_size);
     return (i32) write(fd, buf, buf_size);
+}
+
+#define SYS_OPEN 2
+i32 wasm_open(i32 path_off, i32 flags, i32 mode) {
+    // TODO: Handle string being bad
+    char* path = get_memory_ptr_void(path_off, 0);
+    return (i32) open(path, flags, mode);
+}
+
+#define SYS_CLOSE 3
+i32 wasm_close(i32 fd) {
+    return (i32) close(fd);
 }
 
 #define SYS_MMAP 9
@@ -112,19 +130,33 @@ i32 wasm_ioctl(i32 fd, i32 request, i32 data_offet) {
 	return 0;
 }
 
-#define SYS_WRITEV 20
+#define SYS_READV 19
 struct wasm_iovec {
     i32 base_offset;
     i32 len;
 };
 
-i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
-    i32 written = 0;
+i32 wasm_readv(i32 fd, i32 iov_offset, i32 iovcnt) {
+    i32 read = 0;
     struct wasm_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
     for (int i = 0; i < iovcnt; i++) {
-        written += wasm_write(fd, iov[i].base_offset, iov[i].len);
+        read += wasm_read(fd, iov[i].base_offset, iov[i].len);
     }
-    return written;
+    return read;
+}
+
+#define SYS_WRITEV 20
+i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
+        struct wasm_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
+
+        struct iovec vecs[iovcnt];
+        for (int i = 0; i < iovcnt; i++) {
+            i32 len = iov[i].len;
+            void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
+            vecs[i] = (struct iovec) {ptr, len};
+        }
+
+        return writev(fd, vecs, iovcnt);
 }
 
 #define SYS_MADVISE 28
@@ -132,6 +164,38 @@ i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
 #define SYS_SET_THREAD_AREA 205
 
 #define SYS_SET_TID_ADDRESS 218
+
+#define SYS_GET_TIME 228
+struct wasm_time_spec {
+    u32 sec;
+    u32 nanosec;
+};
+
+i32 wasm_get_time(i32 clock_id, i32 timespec_off) {
+    clockid_t real_clock;
+    switch (clock_id) {
+        case 0:
+            real_clock = CLOCK_REALTIME;
+            break;
+        case 1:
+            real_clock = CLOCK_MONOTONIC;
+            break;
+        case 2:
+            real_clock = CLOCK_PROCESS_CPUTIME_ID;
+            break;
+        default:
+            assert(0);
+    }
+
+    struct wasm_time_spec* timespec = get_memory_ptr_void(timespec_off, sizeof(struct wasm_time_spec));
+
+    struct timespec native_timespec = { 0, 0 };
+    int res = clock_gettime(real_clock, &native_timespec);
+
+    timespec->sec = native_timespec.tv_sec;
+    timespec->nanosec = native_timespec.tv_nsec;
+    return res;
+}
 
 #define SYS_EXIT_GROUP 231
 i32 wasm_exit_group(i32 status) {
@@ -141,15 +205,20 @@ i32 wasm_exit_group(i32 status) {
 
 i32 env_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
     switch(n) {
+        case SYS_READ: return wasm_read(a, b, c);
         case SYS_WRITE: return wasm_write(a, b, c);
+        case SYS_OPEN: return wasm_open(a, b, c);
+        case SYS_CLOSE: return wasm_close(a);
         case SYS_MMAP: return wasm_mmap(a, b, c, d, e, f);
         case SYS_MUNMAP: return 0;
         case SYS_BRK: return wasm_brk(a);
         case SYS_IOCTL: return wasm_ioctl(a, b, c);
+        case SYS_READV: return wasm_readv(a, b, c);
         case SYS_WRITEV: return wasm_writev(a, b, c);
         case SYS_MADVISE: return 0;
         case SYS_SET_THREAD_AREA: return 0;
         case SYS_SET_TID_ADDRESS: return 0;
+        case SYS_GET_TIME: return wasm_get_time(a, b);
         case SYS_EXIT_GROUP: return wasm_exit_group(a);
     }
     printf("syscall %d (%d, %d, %d, %d, %d, %d)\n", n, a, b, c, d, e, f);
@@ -268,6 +337,12 @@ void env_do_crash(i32 i) {
     printf("crashing: %d\n", i);
     assert(0);
 }
+
+int env_a_ctz_32(i32 x) {
+	__asm__( "bsf %1,%0" : "=r"(x) : "r"(x) );
+	return x;
+}
+
 
 // Floating point routines
 // TODO: Do a fair comparison between musl and wasm-musl

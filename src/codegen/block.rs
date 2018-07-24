@@ -659,6 +659,13 @@ pub fn compile_block<'a, 'b>(
                 stack.push(result);
             }
 
+            Instruction::F32ReinterpretI32 => {
+                let v = stack.pop().unwrap();
+                assert_type(m_ctx, v, Type::I32);
+                let result = b.build_bit_cast(v, <f32>::get_type(m_ctx.llvm_ctx));
+                stack.push(result);
+            }
+
             Instruction::F32ConvertSI32 => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I32);

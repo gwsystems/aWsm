@@ -329,6 +329,8 @@ pub enum Instruction {
 
     F32DemoteF64,
 
+    F32ReinterpretI32,
+
     F32ConvertSI32,
     F32ConvertUI32,
     F32ConvertSI64,
@@ -553,6 +555,8 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
             }
 
             Operator::F32DemoteF64 => Instruction::F32DemoteF64,
+
+            Operator::F32ReinterpretI32 => Instruction::F32ReinterpretI32,
 
             Operator::F32ConvertSI32 => Instruction::F32ConvertSI32,
             Operator::F32ConvertUI32 => Instruction::F32ConvertUI32,

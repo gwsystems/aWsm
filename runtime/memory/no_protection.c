@@ -25,3 +25,8 @@ INLINE char* get_memory_ptr(u32 offset, u32 bounds_check) {
     char* mem_as_chars = (char *) memory;
     return &mem_as_chars[offset];
 }
+
+INLINE char* get_function_from_table(u32 idx, u32 type_id) {
+    struct indirect_table_entry f = indirect_table[idx];
+    return f.func_pointer;
+}

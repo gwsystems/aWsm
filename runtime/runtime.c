@@ -8,29 +8,11 @@ EXPORT void initialize_region(u32 offset, u32 data_count, char* data) {
     memcpy(get_memory_ptr(offset, data_count), data, data_count);
 }
 
-// TODO: Change this to use a compiled in size
-#define INDIRECT_TABLE_SIZE 1024
-
-struct indirect_table_entry {
-    u32 type_id;
-    void* func_pointer;
-};
-
 struct indirect_table_entry indirect_table[INDIRECT_TABLE_SIZE];
 
 void add_function_to_table(u32 idx, u32 type_id, char* pointer) {
     assert(idx < INDIRECT_TABLE_SIZE);
     indirect_table[idx] = (struct indirect_table_entry) { .type_id = type_id, .func_pointer = pointer };
-}
-
-char* get_function_from_table(u32 idx, u32 type_id) {
-    assert(idx < INDIRECT_TABLE_SIZE);
-
-    struct indirect_table_entry f = indirect_table[idx];
-
-    assert(f.type_id == type_id && f.func_pointer);
-
-    return f.func_pointer;
 }
 
 // ROTL and ROTR helper functions

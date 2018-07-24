@@ -14,9 +14,12 @@ void alloc_linear_memory() {
         exit(1);
     }
 
-    for (u32 i = 0; i < starting_pages; i++) {
-        expand_memory();
+    void* map_result = mmap(memory, WASM_PAGE_SIZE * starting_pages, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+    if (map_result == MAP_FAILED) {
+        perror("Mapping of initial memory failed");
+        exit(1);
     }
+    memory_size = WASM_PAGE_SIZE * starting_pages;
 }
 
 void expand_memory() {
@@ -39,4 +42,14 @@ INLINE char* get_memory_ptr(u32 offset, u32 bounds_check) {
     char* mem_as_chars = (char *) memory;
     char* address = &mem_as_chars[offset];
     return address;
+}
+
+INLINE char* get_function_from_table(u32 idx, u32 type_id) {
+    assert(idx < INDIRECT_TABLE_SIZE);
+
+    struct indirect_table_entry f = indirect_table[idx];
+
+    assert(f.type_id == type_id && f.func_pointer);
+
+    return f.func_pointer;
 }
