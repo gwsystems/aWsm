@@ -3,13 +3,14 @@ use std::io;
 use llvm::Context as LLVMCtx;
 use llvm::Function as LLVMFunction;
 use llvm::Module as LLVMModule;
-use llvm::Value;
 
 use wasmparser::FuncType;
 
 use wasm::Export;
 use wasm::Function;
 use wasm::WasmModule;
+
+use super::Opt;
 
 mod block;
 
@@ -19,7 +20,8 @@ mod function;
 use self::function::compile_function;
 
 mod globals;
-use self::globals::insert_global;
+use self::globals::insert_globals;
+use self::globals::GlobalValue;
 
 mod memory;
 use self::memory::add_memory_size_globals;
@@ -38,11 +40,15 @@ pub struct ModuleCtx<'a> {
     llvm_ctx: &'a LLVMCtx,
     llvm_module: &'a LLVMModule,
     types: &'a [FuncType],
-    globals: &'a [&'a Value],
+    globals: &'a [GlobalValue<'a>],
     functions: &'a [(&'a LLVMFunction, Function)],
 }
 
-pub fn process_to_llvm(mut wasm_module: WasmModule, output_path: &str) -> io::Result<()> {
+pub fn process_to_llvm(
+    opt: &Opt,
+    mut wasm_module: WasmModule,
+    output_path: &str,
+) -> io::Result<()> {
     let llvm_ctx = &*LLVMCtx::new();
     let llvm_module = &*LLVMModule::new(&wasm_module.source_name, llvm_ctx);
 
@@ -70,11 +76,7 @@ pub fn process_to_llvm(mut wasm_module: WasmModule, output_path: &str) -> io::Re
     insert_runtime_stubs(&*llvm_ctx, &*llvm_module);
 
     // Wasm globals have a natural mapping to llvm globals
-    let mut globals = Vec::new();
-    for g in wasm_module.globals {
-        let v = insert_global(&*llvm_ctx, &*llvm_module, g);
-        globals.push(v);
-    }
+    let globals = insert_globals(&opt, llvm_ctx, llvm_module, wasm_module.globals);
 
     // We need to prototype functions before implementing any, in case a function calls a function implemented after it
     let mut functions = Vec::new();
@@ -120,7 +122,7 @@ pub fn process_to_llvm(mut wasm_module: WasmModule, output_path: &str) -> io::Re
     }
 
     // TODO: Remove this debugging print
-//    llvm_module.dump();
+    //    llvm_module.dump();
 
     llvm_module.write_bitcode(output_path)
 }

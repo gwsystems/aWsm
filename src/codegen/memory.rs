@@ -17,12 +17,19 @@ use super::function::compile_function;
 use super::type_conversions::wasm_func_type_to_llvm_type;
 use super::ModuleCtx;
 
+// We add in globals to tell the runtime how much memory to allocate and startup
+// (And what the max amount of allocated memory should be)
 pub fn add_memory_size_globals(ctx: &ModuleCtx, limits: &ResizableLimits) {
-    ctx.llvm_module
+    let starting_pages_global = ctx
+        .llvm_module
         .add_global_variable("starting_pages", limits.initial.compile(ctx.llvm_ctx));
+    starting_pages_global.set_constant(true);
+
     let maximum: u32 = limits.maximum.unwrap_or(0);
-    ctx.llvm_module
+    let max_pages_global = ctx
+        .llvm_module
         .add_global_variable("max_pages", maximum.compile(ctx.llvm_ctx));
+    max_pages_global.set_constant(true);
 }
 
 pub fn generate_memory_initialization_stub(ctx: &ModuleCtx, initializers: Vec<DataInitializer>) {

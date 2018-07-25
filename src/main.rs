@@ -23,7 +23,7 @@ use wasm::WasmModule;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "silverfish")]
-struct Opt {
+pub struct Opt {
     /// Input wasm file
     #[structopt(name = "input", parse(from_os_str))]
     input: PathBuf,
@@ -31,6 +31,14 @@ struct Opt {
     /// Output bc file
     #[structopt(short = "o", long = "output")]
     output: Option<String>,
+
+    /// Force inlining of constant globals
+    #[structopt(short = "i", long = "inline_constant_globals")]
+    inline_constant_globals: bool,
+
+    /// Don't generate native globals, let the runtime handle it
+    #[structopt(long = "runtime_globals")]
+    use_runtime_global_handling: bool,
 }
 
 fn main() -> io::Result<()> {
@@ -47,8 +55,8 @@ fn main() -> io::Result<()> {
     let mut parser = Parser::new(&wasm_bytes);
     let module = WasmModule::from_wasm_parser(input_filename, &mut parser);
 
-    let output_path = opt.output.unwrap_or("output.bc".to_string());
-    process_to_llvm(module, &output_path)?;
+    let output_path = opt.output.clone().unwrap_or("output.bc".to_string());
+    process_to_llvm(&opt, module, &output_path)?;
 
     Ok(())
 }

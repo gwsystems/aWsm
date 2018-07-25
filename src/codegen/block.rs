@@ -318,14 +318,12 @@ pub fn compile_block<'a, 'b>(
             }
 
             Instruction::GetGlobal { index } => {
-                let g_ptr = m_ctx.globals[index as usize];
-                let v = b.build_load(g_ptr);
+                let v = m_ctx.globals[index as usize].load(b);
                 stack.push(v);
             }
             Instruction::SetGlobal { index } => {
-                let g_ptr = m_ctx.globals[index as usize];
                 let v = stack.pop().unwrap();
-                b.build_store(v, g_ptr);
+                m_ctx.globals[index as usize].store(b, v);
             }
 
             Instruction::I32Const(i) => {
