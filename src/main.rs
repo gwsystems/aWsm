@@ -55,7 +55,7 @@ fn main() -> io::Result<()> {
     let mut parser = Parser::new(&wasm_bytes);
     let module = WasmModule::from_wasm_parser(input_filename, &mut parser);
 
-    let output_path = opt.output.clone().unwrap_or("output.bc".to_string());
+    let output_path = opt.output.clone().unwrap_or_else(|| "output.bc".to_string());
     process_to_llvm(&opt, module, &output_path)?;
 
     Ok(())

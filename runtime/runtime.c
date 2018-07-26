@@ -105,18 +105,18 @@ INLINE double f64_trunc_f64(double f) {
     return trunc(f);
 }
 
+// If we are using runtime globals, we need to populate them
+WEAK void populate_globals() {}
+
 // Code that actually runs the wasm code
 IMPORT i32 wasmf_main(i32 a, i32 b);
-
-EXPORT void setup() {
-}
-
 
 int main(int argc, char* argv[]) {
     // Setup the linear memory and function table
     alloc_linear_memory();
     populate_memory();
     populate_table();
+    populate_globals();
 
     // What follows is a huge cludge
     // We want to pass the program arguments to the program, so we need to copy them into an array in linear memory

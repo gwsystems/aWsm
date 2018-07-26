@@ -148,15 +148,25 @@ i32 wasm_readv(i32 fd, i32 iov_offset, i32 iovcnt) {
 #define SYS_WRITEV 20
 i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
         struct wasm_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
+        if (fd == 1) {
+            int sum = 0;
+            for (int i = 0; i < iovcnt; i++) {
+                i32 len = iov[i].len;
+                void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
+                printf("%.*s", len, ptr);
+                sum += len;
+            }
+            return sum;
+        } else {
+            struct iovec vecs[iovcnt];
+            for (int i = 0; i < iovcnt; i++) {
+                i32 len = iov[i].len;
+                void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
+                vecs[i] = (struct iovec) {ptr, len};
+            }
 
-        struct iovec vecs[iovcnt];
-        for (int i = 0; i < iovcnt; i++) {
-            i32 len = iov[i].len;
-            void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
-            vecs[i] = (struct iovec) {ptr, len};
+            return writev(fd, vecs, iovcnt);
         }
-
-        return writev(fd, vecs, iovcnt);
 }
 
 #define SYS_MADVISE 28

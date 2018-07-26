@@ -16,6 +16,8 @@
 #define IMPORT __attribute__ ((visibility ("default")))
 
 #define INLINE __attribute__((always_inline))
+#define WEAK __attribute__((weak))
+
 
 // Type alias's so I don't have to write uint32_t a million times
 typedef int32_t i32;

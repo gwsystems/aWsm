@@ -7,6 +7,7 @@ use llvm::PointerType;
 use llvm::Sub;
 
 use super::ModuleCtx;
+use super::Opt;
 
 // Backing functions for wasm operations
 pub const INITIALIZE_REGION_STUB: &str = "initialize_region";
@@ -15,6 +16,12 @@ pub const GET_MEMORY_PTR: &str = "get_memory_ptr";
 
 pub const TABLE_ADD: &str = "add_function_to_table";
 pub const TABLE_FETCH: &str = "get_function_from_table";
+
+pub const GET_GLOBAL_I32: &str = "get_global_i32";
+pub const SET_GLOBAL_I32: &str = "set_global_i32";
+
+pub const GET_GLOBAL_I64: &str = "get_global_i64";
+pub const SET_GLOBAL_I64: &str = "set_global_i64";
 
 pub const I32_ROTL: &str = "rotl_u32";
 pub const I32_ROTR: &str = "rotr_u32";
@@ -54,7 +61,7 @@ pub const F64_SQRT: &str = "llvm.sqrt.f64";
 pub const TRAP: &str = "llvm.trap";
 
 // TODO: Rewrite this using macros, because this is just gross
-pub fn insert_runtime_stubs(ctx: &LLVMCtx, m: &LLVMModule) {
+pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
     // Initialize region stub, which is a helper function to setup memory
     let initialize_region_type = FunctionType::new(
         <()>::get_type(ctx),
@@ -82,6 +89,32 @@ pub fn insert_runtime_stubs(ctx: &LLVMCtx, m: &LLVMModule) {
         &[<u32>::get_type(ctx), <u32>::get_type(ctx)],
     );
     m.add_function(TABLE_FETCH, table_get_type.to_super());
+
+    // Runtime global handling
+    if opt.use_runtime_global_handling {
+        m.add_function(
+            GET_GLOBAL_I32,
+            FunctionType::new(<u32>::get_type(ctx), &[<u32>::get_type(ctx)]).to_super(),
+        );
+        m.add_function(
+            SET_GLOBAL_I32,
+            FunctionType::new(
+                <()>::get_type(ctx),
+                &[<u32>::get_type(ctx), <u32>::get_type(ctx)],
+            ).to_super(),
+        );
+        m.add_function(
+            GET_GLOBAL_I64,
+            FunctionType::new(<u64>::get_type(ctx), &[<u32>::get_type(ctx)]).to_super(),
+        );
+        m.add_function(
+            SET_GLOBAL_I64,
+            FunctionType::new(
+                <()>::get_type(ctx),
+                &[<u32>::get_type(ctx), <u64>::get_type(ctx)],
+            ).to_super(),
+        );
+    }
 
     // Rotate left/right types
     let u32_rot_type = FunctionType::new(
