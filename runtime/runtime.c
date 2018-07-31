@@ -5,7 +5,8 @@ EXPORT void initialize_region(u32 offset, u32 data_count, char* data) {
     assert(memory_size >= data_count);
     assert(offset < memory_size - data_count);
 
-    memcpy(get_memory_ptr(offset, data_count), data, data_count);
+    // FIXME: Hack around segmented and unsegmented access
+    memcpy(get_memory_ptr_for_runtime(offset, data_count), data, data_count);
 }
 
 struct indirect_table_entry indirect_table[INDIRECT_TABLE_SIZE];
@@ -114,28 +115,42 @@ IMPORT i32 wasmf_main(i32 a, i32 b);
 int main(int argc, char* argv[]) {
     // Setup the linear memory and function table
     alloc_linear_memory();
-    populate_memory();
     populate_table();
+
+    switch_out_of_runtime();
     populate_globals();
+    switch_into_runtime();
+    populate_memory();
 
     // What follows is a huge cludge
     // We want to pass the program arguments to the program, so we need to copy them into an array in linear memory
     // This is about as nice as you would expect...
 
     u32 page_offset = memory_size;
+
+    switch_out_of_runtime();
     expand_memory();
+    switch_into_runtime();
+
     // FIXME: Should do a real bounds check here
     i32* array_ptr = get_memory_ptr_void(page_offset, argc * sizeof(i32));
     int string_offset = page_offset + argc * sizeof(i32);
     for (int i = 0; i < argc; i++) {
         size_t str_size = strlen(argv[i]) + 1;
 
+        switch_out_of_runtime();
         array_ptr[i] = string_offset;
-        strcpy(get_memory_ptr(string_offset, str_size), argv[i]);
+        switch_into_runtime();
+
+        strcpy(get_memory_ptr_for_runtime(string_offset, strlen(argv[i]) + 1), argv[i]);
+
         string_offset += str_size;
     }
 
     stub_init(string_offset);
 
-    return wasmf_main(argc, page_offset);
+    switch_out_of_runtime();
+    int ret =  wasmf_main(argc, page_offset);
+    switch_into_runtime();
+    return ret;
 }

@@ -4,8 +4,11 @@ void* memory;
 u32 memory_size;
 
 void alloc_linear_memory() {
-    memory = calloc(starting_pages, WASM_PAGE_SIZE);
-    memory_size = starting_pages * WASM_PAGE_SIZE;
+    for (u32 i = 0; i < starting_pages; i++) {
+        expand_memory();
+    }
+
+    asm volatile("bndmk (%0,%1,1), %%bnd0" : : "r"(memory), "r"(memory_size));
 }
 
 void expand_memory() {
@@ -21,110 +24,124 @@ void expand_memory() {
 }
 
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
-    assert(memory_size > bounds_check && offset <= memory_size - bounds_check);
-
     char* mem_as_chars = (char *) memory;
-    char* address = &mem_as_chars[offset];
-
-    return address;
+    return &mem_as_chars[offset];
 }
+
+#define MPX_BC(adr, sz) { asm volatile("bndcl %0, %%bnd0" : : "r"(adr)); asm volatile("bndcu " #sz "(%0), %%bnd0" : : "r"(adr)); }
 
 // All of these are pretty generic
 INLINE float get_f32(i32 offset) {
-    assert(offset <= memory_size - sizeof(float));
-
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
-    return *(float *) address;
+    // Bounds check
+    MPX_BC(address, 0x3);
+
+    float v = *(float *) address;
+    return v;
 }
 
 INLINE double get_f64(i32 offset) {
-    assert(offset <= memory_size - sizeof(double));
-
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
-    return *(double *) address;
+
+    MPX_BC(address, 0x7);
+
+    double v = *(double *) address;
+    return v;
 }
 
 INLINE i8 get_i8(i32 offset) {
-    assert(offset <= memory_size - sizeof(i8));
-
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
+
+    MPX_BC(address, 0x0);
+
     return *(i8 *) address;
 }
 
 INLINE i16 get_i16(i32 offset) {
-    assert(offset <= memory_size - sizeof(i16));
-
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
+
+    MPX_BC(address, 0x1);
+
     return *(i16 *) address;
 }
 
 INLINE i32 get_i32(i32 offset) {
-    assert(offset <= memory_size - sizeof(i32));
-
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
-    return *(i32 *) address;
+
+    MPX_BC(address, 0x3);
+
+    i32 v = *(i32 *) address;
+    return v;
 }
 
 INLINE i64 get_i64(i32 offset) {
-    assert(offset <= memory_size - sizeof(i64));
-
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
-    return *(i64 *) address;
+
+    MPX_BC(address, 0x7);
+
+    i64 v = *(i64 *) address;
+    return v;
 }
 
 // Now setting routines
 INLINE void set_f32(i32 offset, float v) {
-    assert(offset <= memory_size - sizeof(float));
-
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
+
+    MPX_BC(address, 0x3);
+
     *(float *) address = v;
 }
 
 INLINE void set_f64(i32 offset, double v) {
-    assert(offset <= memory_size - sizeof(double));
-
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
+
+    MPX_BC(address, 0x7);
+
     *(double *) address = v;
 }
 
 INLINE void set_i8(i32 offset, i8 v) {
-    assert(offset <= memory_size - sizeof(i8));
-
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
+
+    MPX_BC(address, 0x0);
+
     *(i8 *) address = v;
 }
 
 INLINE void set_i16(i32 offset, i16 v) {
-    assert(offset <= memory_size - sizeof(i16));
-
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
+
+    MPX_BC(address, 0x1);
+
     *(i16 *) address = v;
 }
 
 INLINE void set_i32(i32 offset, i32 v) {
-    assert(offset <= memory_size - sizeof(i32));
-
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
+
+    MPX_BC(address, 0x3);
+
     *(i32 *) address = v;
 }
 
 INLINE void set_i64(i32 offset, i64 v) {
-    assert(offset <= memory_size - sizeof(i64));
-
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
+
+    MPX_BC(address, 0x7);
+
     *(i64 *) address = v;
 }
 
@@ -136,7 +153,7 @@ INLINE char* get_function_from_table(u32 idx, u32 type_id) {
     assert(f.type_id == type_id && f.func_pointer);
 
     return f.func_pointer;
-}
+ }
 
 // Functions that aren't useful for this runtime
 INLINE void switch_into_runtime() {}

@@ -30,7 +30,7 @@ void wasmf___init_libc(i32 envp, i32 pn);
 void stub_init(i32 offset) {
     char program_name[] = "wasm_program";
     i32 program_name_offset = offset;
-    strcpy(get_memory_ptr_void(offset, sizeof(program_name)), program_name);
+    strcpy(get_memory_ptr_for_runtime(offset, sizeof(program_name)), program_name);
     offset += sizeof(program_name);
 
     // The construction of this is:
@@ -56,10 +56,11 @@ void stub_init(i32 offset) {
         0,
     };
     i32 env_vec_offset = offset;
-    memcpy(get_memory_ptr_void(env_vec_offset, sizeof(env_vec)), env_vec, sizeof(env_vec));
+    memcpy(get_memory_ptr_for_runtime(env_vec_offset, sizeof(env_vec)), env_vec, sizeof(env_vec));
 
-
+    switch_out_of_runtime();
     wasmf___init_libc(env_vec_offset, program_name_offset);
+    switch_into_runtime();
 }
 
 // Syscall stuff
@@ -107,7 +108,9 @@ u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
 
     i32 result = memory_size;
     for (int i = 0; i < len / WASM_PAGE_SIZE; i++) {
+        switch_out_of_runtime();
         expand_memory();
+        switch_into_runtime();
     }
 
     return result;
@@ -213,7 +216,8 @@ i32 wasm_exit_group(i32 status) {
     return 0;
 }
 
-i32 env_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
+i32 inner_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
+    i32 res;
     switch(n) {
         case SYS_READ: return wasm_read(a, b, c);
         case SYS_WRITE: return wasm_write(a, b, c);
@@ -234,6 +238,13 @@ i32 env_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
     printf("syscall %d (%d, %d, %d, %d, %d, %d)\n", n, a, b, c, d, e, f);
     assert(0);
     return 0;
+}
+
+i32 env_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
+    switch_into_runtime();
+    i32 i  = inner_syscall_handler(n, a, b, c, d, e, f);
+    switch_out_of_runtime();
+    return i;
 }
 
 // Atomic functions, with definitions stolen from musl

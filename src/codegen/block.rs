@@ -1,5 +1,3 @@
-use std::mem;
-
 use llvm::BasicBlock;
 use llvm::Builder;
 use llvm::Compile;
@@ -1041,18 +1039,23 @@ fn load_val<'a, L: Compile<'a>>(
     let stack_offset = stack.pop().unwrap();
     let total_offset = b.build_add(stack_offset, offset.compile(m_ctx.llvm_ctx));
 
-    let size = (mem::size_of::<L>() as u32).compile(m_ctx.llvm_ctx);
-
-    let memory_pointer = b.build_call(
-        get_stub_function(m_ctx, GET_MEMORY_PTR),
-        &[total_offset, size],
-    );
-    let value_pointer = b.build_bit_cast(
-        memory_pointer,
-        PointerType::new(L::get_type(m_ctx.llvm_ctx)),
-    );
-
-    b.build_load(value_pointer)
+    let ty = L::get_type(m_ctx.llvm_ctx);
+    let f = if ty == <i8>::get_type(m_ctx.llvm_ctx) {
+        get_stub_function(m_ctx, GET_I8)
+    } else if ty == <i16>::get_type(m_ctx.llvm_ctx) {
+        get_stub_function(m_ctx, GET_I16)
+    } else if ty == <i32>::get_type(m_ctx.llvm_ctx) {
+        get_stub_function(m_ctx, GET_I32)
+    } else if ty == <i64>::get_type(m_ctx.llvm_ctx) {
+        get_stub_function(m_ctx, GET_I64)
+    } else if ty == <f32>::get_type(m_ctx.llvm_ctx) {
+        get_stub_function(m_ctx, GET_F32)
+    } else if ty == <f64>::get_type(m_ctx.llvm_ctx) {
+        get_stub_function(m_ctx, GET_F64)
+    } else {
+        panic!("cannot load value of type {:?}", ty)
+    };
+    b.build_call(f, &[total_offset])
 }
 
 fn load_as_i32_sext<'a, L: Compile<'a>>(
@@ -1111,16 +1114,22 @@ fn store_val<'a, L: Compile<'a>>(
     let stack_offset = stack.pop().unwrap();
     let total_offset = b.build_add(stack_offset, offset.compile(m_ctx.llvm_ctx));
 
-    let size = (mem::size_of::<L>() as u32).compile(m_ctx.llvm_ctx);
+    let ty = L::get_type(m_ctx.llvm_ctx);
+    let f = if ty == <i8>::get_type(m_ctx.llvm_ctx) {
+        get_stub_function(m_ctx, SET_I8)
+    } else if ty == <i16>::get_type(m_ctx.llvm_ctx) {
+        get_stub_function(m_ctx, SET_I16)
+    } else if ty == <i32>::get_type(m_ctx.llvm_ctx) {
+        get_stub_function(m_ctx, SET_I32)
+    } else if ty == <i64>::get_type(m_ctx.llvm_ctx) {
+        get_stub_function(m_ctx, SET_I64)
+    } else if ty == <f32>::get_type(m_ctx.llvm_ctx) {
+        get_stub_function(m_ctx, SET_F32)
+    } else if ty == <f64>::get_type(m_ctx.llvm_ctx) {
+        get_stub_function(m_ctx, SET_F64)
+    } else {
+        panic!("cannot store value of type {:?}", ty)
+    };
 
-    let memory_pointer = b.build_call(
-        get_stub_function(m_ctx, GET_MEMORY_PTR),
-        &[total_offset, size],
-    );
-    let value_pointer = b.build_bit_cast(
-        memory_pointer,
-        PointerType::new(L::get_type(m_ctx.llvm_ctx)),
-    );
-
-    b.build_store(val, value_pointer);
+    b.build_call(f, &[total_offset, val]);
 }

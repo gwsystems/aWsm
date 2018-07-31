@@ -20,6 +20,10 @@
 
 
 // Type alias's so I don't have to write uint32_t a million times
+typedef signed char i8;
+typedef unsigned char u8;
+typedef int16_t i16;
+typedef uint16_t u16;
 typedef int32_t i32;
 typedef uint32_t u32;
 typedef int64_t i64;
@@ -32,6 +36,10 @@ typedef uint64_t u64;
 extern u32 starting_pages;
 extern u32 max_pages;
 
+// Some backends might need to do manual switching when we go into the runtime
+INLINE void switch_into_runtime();
+INLINE void switch_out_of_runtime();
+
 // The code generator also compiles in stubs that populate the linear memory and function table
 void populate_memory();
 void populate_table();
@@ -43,10 +51,10 @@ extern u32 memory_size;
 void alloc_linear_memory();
 void expand_memory();
 // Assumption: bounds_check < WASM_PAGE_SIZE
-INLINE char* get_memory_ptr(u32 offset, u32 bounds_check);
+INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check);
 
 static inline void* get_memory_ptr_void(u32 offset, u32 bounds_check) {
-    return (void*) get_memory_ptr(offset, bounds_check);
+    return (void*) get_memory_ptr_for_runtime(offset, bounds_check);
 }
 
 // memory/* also provides the table access functions

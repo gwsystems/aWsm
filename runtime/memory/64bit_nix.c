@@ -37,13 +37,90 @@ void expand_memory() {
     memory_size += WASM_PAGE_SIZE;
 }
 
-INLINE char* get_memory_ptr(u32 offset, u32 bounds_check) {
-    // Due to how we setup memory for x86, the virtual memory mechanism will catch the error
+INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
+    // Due to how we setup memory for x86, the virtual memory mechanism will catch the error, if bounds < WASM_PAGE_SIZE
+    assert(bounds_check < WASM_PAGE_SIZE);
+
     char* mem_as_chars = (char *) memory;
     char* address = &mem_as_chars[offset];
     return address;
 }
 
+// All of these are pretty generic
+INLINE float get_f32(i32 offset) {
+    char* mem_as_chars = (char *) memory;
+    void* address = &mem_as_chars[offset];
+    return *(float *) address;
+}
+
+INLINE double get_f64(i32 offset) {
+    char* mem_as_chars = (char *) memory;
+    void* address = &mem_as_chars[offset];
+    return *(double *) address;
+}
+
+INLINE i8 get_i8(i32 offset) {
+    char* mem_as_chars = (char *) memory;
+    void* address = &mem_as_chars[offset];
+    return *(i8 *) address;
+}
+
+INLINE i16 get_i16(i32 offset) {
+    char* mem_as_chars = (char *) memory;
+    void* address = &mem_as_chars[offset];
+    return *(i16 *) address;
+}
+
+INLINE i32 get_i32(i32 offset) {
+    char* mem_as_chars = (char *) memory;
+    void* address = &mem_as_chars[offset];
+    return *(i32 *) address;
+}
+
+INLINE i64 get_i64(i32 offset) {
+    char* mem_as_chars = (char *) memory;
+    void* address = &mem_as_chars[offset];
+    return *(i64 *) address;
+}
+
+// Now setting routines
+INLINE void set_f32(i32 offset, float v) {
+    char* mem_as_chars = (char *) memory;
+    void* address = &mem_as_chars[offset];
+    *(float *) address = v;
+}
+
+INLINE void set_f64(i32 offset, double v) {
+    char* mem_as_chars = (char *) memory;
+    void* address = &mem_as_chars[offset];
+    *(double *) address = v;
+}
+
+INLINE void set_i8(i32 offset, i8 v) {
+    char* mem_as_chars = (char *) memory;
+    void* address = &mem_as_chars[offset];
+    *(i8 *) address = v;
+}
+
+INLINE void set_i16(i32 offset, i16 v) {
+    char* mem_as_chars = (char *) memory;
+    void* address = &mem_as_chars[offset];
+    *(i16 *) address = v;
+}
+
+INLINE void set_i32(i32 offset, i32 v) {
+    char* mem_as_chars = (char *) memory;
+    void* address = &mem_as_chars[offset];
+    *(i32 *) address = v;
+}
+
+INLINE void set_i64(i32 offset, i64 v) {
+    char* mem_as_chars = (char *) memory;
+    void* address = &mem_as_chars[offset];
+    *(i64 *) address = v;
+}
+
+// Table handling functionality
 INLINE char* get_function_from_table(u32 idx, u32 type_id) {
     assert(idx < INDIRECT_TABLE_SIZE);
 
@@ -53,3 +130,7 @@ INLINE char* get_function_from_table(u32 idx, u32 type_id) {
 
     return f.func_pointer;
 }
+
+// Functions that aren't useful for this runtime
+INLINE void switch_into_runtime() {}
+INLINE void switch_out_of_runtime() {}

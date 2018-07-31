@@ -1,6 +1,7 @@
 from collections import namedtuple
 import os
 import subprocess as sp
+import sys
 import timeit
 
 BENCH_ROOT = os.getcwd()
@@ -14,7 +15,12 @@ WASM_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--no-threa
 WASM_SYSROOT_FLAGS = "--sysroot={}/sysroot".format(WASMCEPTION_PATH)
 WASM_FLAGS = WASM_LINKER_FLAGS + " --target=wasm32-unknown-unknown-wasm -nostartfiles -O3 -flto " + WASM_SYSROOT_FLAGS
 
+IS_64_BIT = sys.maxsize > 2**32
+IS_X86 = '86' in os.uname()[-1]
+IS_32_BIT_X86 = (not IS_64_BIT) and IS_X86
+
 RUN_COUNT = 10
+
 
 Program = namedtuple("Program", ["name", "parameters", "stack_size"])
 
@@ -36,7 +42,7 @@ programs = [
 
 # Now some helper methods for compiling code
 def compile_to_executable(program):
-    sp.check_call("clang -g -O3 -flto *.c -o bin/{}".format(program.name), shell=True, cwd=program.name)
+    sp.check_call("clang -g -O3 -flto -lm *.c -o bin/{}".format(program.name), shell=True, cwd=program.name)
 
 
 def compile_to_wasm(program):
@@ -48,11 +54,18 @@ def compile_to_wasm(program):
 def compile_wasm_to_bc(program):
     command = "{silverfish} bin/{pname}.wasm -o bin/{pname}.bc".format(silverfish=SILVERFISH_PATH, pname=program.name)
     sp.check_call(command, shell=True, cwd=program.name)
+    # Compile a second version with runtime globlas
+    command = "{silverfish} -i --runtime_globals bin/{pname}.wasm -o bin/{pname}_rg.bc".format(silverfish=SILVERFISH_PATH, pname=program.name)
+    sp.check_call(command, shell=True, cwd=program.name)
 
 
-def compile_wasm_to_executable(program, exe_postfix, memory_impl):
-    command = "clang -g -O3 -flto bin/{pname}.bc {runtime}/runtime.c {runtime}/libc/libc_backing.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
-        .format(pname=program.name, runtime=RUNTIME_PATH, mem_impl=memory_impl, postfix=exe_postfix)
+
+def compile_wasm_to_executable(program, exe_postfix, memory_impl, runtime_globals=False):
+    bc_file = "bin/{pname}.bc".format(pname=program.name)
+    if runtime_globals:
+        bc_file = "bin/{pname}_rg.bc".format(pname=program.name)
+    command = "clang -g -lm -O3 -flto {bc_file} {runtime}/runtime.c {runtime}/libc/libc_backing.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
+        .format(bc_file=bc_file, pname=program.name, runtime=RUNTIME_PATH, mem_impl=memory_impl, postfix=exe_postfix)
     sp.check_call(command, shell=True, cwd=program.name)
 
 
@@ -75,12 +88,23 @@ for p in programs:
     compile_wasm_to_bc(p)
     compile_wasm_to_executable(p, "bc", "generic.c")
     compile_wasm_to_executable(p, "np", "no_protection.c")
-    compile_wasm_to_executable(p, "vm", "64bit_nix.c")
+    if IS_64_BIT:
+        compile_wasm_to_executable(p, "vm", "64bit_nix.c")
+    if IS_X86:
+        compile_wasm_to_executable(p, "mpx", "mpx.c")
+    if IS_32_BIT_X86:
+        compile_wasm_to_executable(p, "sm", "segmented.c")
+
 
 for p in programs:
     bench(p, "", "native")
     bench(p, "_np", "wasm no protection")
     bench(p, "_bc", "wasm bounds checked")
-    bench(p, "_vm", "wasm virtual memory")
+    if IS_64_BIT:
+        bench(p, "_vm", "wasm virtual memory")
+    if IS_X86:
+        bench(p, "_mpx", "wasm using mpx")
+    if IS_32_BIT_X86:
+        bench(p, "_sm", "wasm using segmentation")
     print("")
 
