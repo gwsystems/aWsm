@@ -8,7 +8,7 @@ void alloc_linear_memory() {
         expand_memory();
     }
 
-    asm volatile("bndmk (%0,%1,1), %%bnd0" : : "r"(memory), "r"(memory_size));
+    asm volatile("bndmk (%0,%1,1), %%bnd0" : : "r"(memory), "r"((intptr_t) memory_size));
 }
 
 void expand_memory() {
@@ -24,14 +24,16 @@ void expand_memory() {
 }
 
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
+    assert(memory_size > bounds_check && offset <= memory_size - bounds_check);
+
     char* mem_as_chars = (char *) memory;
     return &mem_as_chars[offset];
 }
 
-#define MPX_BC(adr, sz) { asm volatile("bndcl %0, %%bnd0" : : "r"(adr)); asm volatile("bndcu " #sz "(%0), %%bnd0" : : "r"(adr)); }
+#define MPX_BC(adr, sz) { asm volatile("bndcu " #sz "(%0), %%bnd0" : : "r"(adr)); }
 
 // All of these are pretty generic
-INLINE float get_f32(i32 offset) {
+INLINE float get_f32(u32 offset) {
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
@@ -42,7 +44,7 @@ INLINE float get_f32(i32 offset) {
     return v;
 }
 
-INLINE double get_f64(i32 offset) {
+INLINE double get_f64(u32 offset) {
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
@@ -52,7 +54,7 @@ INLINE double get_f64(i32 offset) {
     return v;
 }
 
-INLINE i8 get_i8(i32 offset) {
+INLINE i8 get_i8(u32 offset) {
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
@@ -61,7 +63,7 @@ INLINE i8 get_i8(i32 offset) {
     return *(i8 *) address;
 }
 
-INLINE i16 get_i16(i32 offset) {
+INLINE i16 get_i16(u32 offset) {
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
@@ -70,7 +72,7 @@ INLINE i16 get_i16(i32 offset) {
     return *(i16 *) address;
 }
 
-INLINE i32 get_i32(i32 offset) {
+INLINE i32 get_i32(u32 offset) {
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
@@ -80,7 +82,7 @@ INLINE i32 get_i32(i32 offset) {
     return v;
 }
 
-INLINE i64 get_i64(i32 offset) {
+INLINE i64 get_i64(u32 offset) {
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
@@ -91,7 +93,7 @@ INLINE i64 get_i64(i32 offset) {
 }
 
 // Now setting routines
-INLINE void set_f32(i32 offset, float v) {
+INLINE void set_f32(u32 offset, float v) {
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
@@ -100,7 +102,7 @@ INLINE void set_f32(i32 offset, float v) {
     *(float *) address = v;
 }
 
-INLINE void set_f64(i32 offset, double v) {
+INLINE void set_f64(u32 offset, double v) {
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
@@ -109,7 +111,7 @@ INLINE void set_f64(i32 offset, double v) {
     *(double *) address = v;
 }
 
-INLINE void set_i8(i32 offset, i8 v) {
+INLINE void set_i8(u32 offset, i8 v) {
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
@@ -118,7 +120,7 @@ INLINE void set_i8(i32 offset, i8 v) {
     *(i8 *) address = v;
 }
 
-INLINE void set_i16(i32 offset, i16 v) {
+INLINE void set_i16(u32 offset, i16 v) {
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
@@ -127,7 +129,7 @@ INLINE void set_i16(i32 offset, i16 v) {
     *(i16 *) address = v;
 }
 
-INLINE void set_i32(i32 offset, i32 v) {
+INLINE void set_i32(u32 offset, i32 v) {
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
@@ -136,7 +138,7 @@ INLINE void set_i32(i32 offset, i32 v) {
     *(i32 *) address = v;
 }
 
-INLINE void set_i64(i32 offset, i64 v) {
+INLINE void set_i64(u32 offset, i64 v) {
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
 
