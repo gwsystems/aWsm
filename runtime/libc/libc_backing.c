@@ -92,6 +92,76 @@ i32 wasm_close(i32 fd) {
     return (i32) close(fd);
 }
 
+struct wasm_stat {
+	i64 st_dev;
+	u64 st_ino;
+	u32 st_nlink;
+
+	u32 st_mode;
+	u32 st_uid;
+	u32 st_gid;
+	u32 __pad0;
+	u64 st_rdev;
+	u64 st_size;
+	i32 st_blksize;
+	i64 st_blocks;
+
+	struct { i32 tv_sec; i32 tv_nsec; } st_atim;
+	struct { i32 tv_sec; i32 tv_nsec; } st_mtim;
+	struct { i32 tv_sec; i32 tv_nsec; } st_ctim;
+	i32 __pad1[3];
+};
+
+//     struct stat { /* when _DARWIN_FEATURE_64_BIT_INODE is NOT defined */
+//         dev_t    st_dev;    /* device inode resides on */
+//         ino_t    st_ino;    /* inode's number */
+//         mode_t   st_mode;   /* inode protection mode */
+//         nlink_t  st_nlink;  /* number of hard links to the file */
+//         uid_t    st_uid;    /* user-id of owner */
+//         gid_t    st_gid;    /* group-id of owner */
+//         dev_t    st_rdev;   /* device type, for special file inode */
+//         struct timespec st_atimespec;  /* time of last access */
+//         struct timespec st_mtimespec;  /* time of last data modification */
+//         struct timespec st_ctimespec;  /* time of last file status change */
+//         off_t    st_size;   /* file size, in bytes */
+//         quad_t   st_blocks; /* blocks allocated for file */
+//         u_long   st_blksize;/* optimal file sys I/O ops blocksize */
+//         u_long   st_flags;  /* user defined flags for file */
+//         u_long   st_gen;    /* file generation number */
+//     };
+
+
+#define SYS_FSTAT 5
+i32 wasm_fstat(i32 filedes, i32 stat_offset) {
+    struct wasm_stat* stat_ptr = get_memory_ptr_void(stat_offset, sizeof(struct wasm_stat));
+
+    struct stat stat;
+    i32 res = fstat(filedes, &stat);
+
+    if (res == 0) {
+        *stat_ptr = (struct wasm_stat) {
+            .st_dev = stat.st_dev,
+            .st_ino = stat.st_ino,
+            .st_nlink = stat.st_nlink,
+            .st_mode = stat.st_mode,
+            .st_uid = stat.st_uid,
+            .st_gid = stat.st_gid,
+            .st_rdev = stat.st_rdev,
+            .st_size = stat.st_size,
+            .st_blksize = stat.st_blksize,
+            .st_blocks = stat.st_blocks,
+            // TODO: Also copy access times
+        };
+    }
+
+    return res;
+}
+
+#define SYS_LSEEK 8
+i32 wasm_lseek(i32 filedes, i32 file_offset, i32 whence) {
+    return lseek(filedes, file_offset, whence);
+}
+
 #define SYS_MMAP 9
 u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
 	if (addr != 0) {
@@ -123,13 +193,17 @@ i32 wasm_brk(i32 addr) {
     return 0;
 }
 
+#define SYS_RT_SIGACTION 13
+
+
+#define SYS_RT_SIGPROGMASK 14
+//i32 wasm_sigprocmask(i32 how, i32 set_ptr, i32 oset_ptr) {
+//    return 0;
+//}
+
 #define SYS_IOCTL 16
 i32 wasm_ioctl(i32 fd, i32 request, i32 data_offet) {
 	/* musl libc does some ioctls to stdout, so just allow these to silently go through */
-	if (fd == 1 || fd == 2) return 0;
-
-	printf("ioctl on fd(%d) not implemented\n", fd);
-	assert(0);
 	return 0;
 }
 
@@ -223,9 +297,13 @@ i32 inner_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
         case SYS_WRITE: return wasm_write(a, b, c);
         case SYS_OPEN: return wasm_open(a, b, c);
         case SYS_CLOSE: return wasm_close(a);
+        case SYS_FSTAT: return wasm_fstat(a, b);
+        case SYS_LSEEK: return wasm_lseek(a, b, c);
         case SYS_MMAP: return wasm_mmap(a, b, c, d, e, f);
         case SYS_MUNMAP: return 0;
         case SYS_BRK: return wasm_brk(a);
+        case SYS_RT_SIGACTION: return 0;
+        case SYS_RT_SIGPROGMASK: return 0;
         case SYS_IOCTL: return wasm_ioctl(a, b, c);
         case SYS_READV: return wasm_readv(a, b, c);
         case SYS_WRITEV: return wasm_writev(a, b, c);
@@ -245,6 +323,10 @@ i32 env_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
     i32 i  = inner_syscall_handler(n, a, b, c, d, e, f);
     switch_out_of_runtime();
     return i;
+}
+
+i32 env___syscall(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
+    return env_syscall_handler(n, a, b, c, d, e, f);
 }
 
 // Atomic functions, with definitions stolen from musl

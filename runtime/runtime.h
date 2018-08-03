@@ -10,6 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <sys/stat.h>
 #include <sys/uio.h>
 
 #define EXPORT __attribute__ ((visibility ("default")))

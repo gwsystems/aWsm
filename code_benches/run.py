@@ -21,33 +21,52 @@ IS_32_BIT_X86 = (not IS_64_BIT) and IS_X86
 
 RUN_COUNT = 10
 
+# FIXME: Mibench runs many of these programs multiple times, which is probably worth replicating
 
 Program = namedtuple("Program", ["name", "parameters", "stack_size"])
 
 # These are the programs we're going to test with
+# TODO: Fix ispell, which doesn't compile on OS X
+# TODO: Do ghostscript, which has a ton of files
+# TODO: Add custom program arguments
 programs = [
     Program("basic_math", [], 2 ** 14),
     Program("binarytrees", [18], 2 ** 14),
     Program("bitcount", [2 ** 24], 2 ** 14),
+    Program("crc", ["large.pcm"], 2 ** 14),
     Program("fft", [5000, 2 ** 15], 2 ** 14),
     Program("function_pointers", [], 2 ** 14),
+    Program("gsm", ["-fps", "-c", "large.au"], 2 ** 15),
     Program("mandelbrot", [7500], 2 ** 14),
     Program("matrix_multiply", [], 2 ** 14),
     Program("patricia", ["large.udp"], 2 ** 14),
     Program("qsort", ["input_small.dat"], 2 ** 18),
     Program("sha", ["input_large.asc"], 2 ** 14),
+    Program("susan", ["input_large.pgm", "/dev/null", "-s"], 2 ** 19),
     Program("stringsearch", [], 2 ** 13),
+
+    # TODO: Some bug in my code breaks this program's IO routines
+    # Program("adpcm", ["< large.pcm"], 2 ** 14),
+
+    # TODO: These programs are currently broken. Clang segfaults on the bc file I produce
+    # Program("dijkstra", ["input.dat"], 2 ** 12),
+    # Program("rsynth", ["-a", "-q", "-o", "/dev/null", "< largeinput.txt"], 2**12),
+
+    # TODO: This program segfaults on my computer...
+    # Program("blowfish", ["e", "input_large.asc", "/dev/null", "1234567890abcdeffedcba0987654321"], 2**14),
 ]
 
 
 # Now some helper methods for compiling code
 def compile_to_executable(program):
-    sp.check_call("clang -g -O3 -flto -lm *.c -o bin/{}".format(program.name), shell=True, cwd=program.name)
+    # FIXME: Disable warnings conditionally
+    sp.check_call("clang -DSASR -Wno-everything -lm -g -O3 -flto *.c -o bin/{}".format(program.name), shell=True, cwd=program.name)
 
 
 def compile_to_wasm(program):
+    # FIXME: Disable warnings conditionally
     flags = WASM_FLAGS.format(stack_size=program.stack_size)
-    command = "{clang} {flags} ../dummy.c *.c -o bin/{pname}.wasm".format(clang=WASM_CLANG, flags=flags, pname=program.name)
+    command = "{clang} {flags} -DSASR -Wno-everything -O3 -flto ../dummy.c *.c -o bin/{pname}.wasm".format(clang=WASM_CLANG, flags=flags, pname=program.name)
     sp.check_call(command, shell=True, cwd=program.name)
 
 
@@ -64,7 +83,7 @@ def compile_wasm_to_executable(program, exe_postfix, memory_impl, runtime_global
     bc_file = "bin/{pname}.bc".format(pname=program.name)
     if runtime_globals:
         bc_file = "bin/{pname}_rg.bc".format(pname=program.name)
-    command = "clang -g -lm -O3 -flto {bc_file} {runtime}/runtime.c {runtime}/libc/libc_backing.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
+    command = "clang -lm -g -O3 -flto {bc_file} {runtime}/runtime.c {runtime}/libc/libc_backing.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
         .format(bc_file=bc_file, pname=program.name, runtime=RUNTIME_PATH, mem_impl=memory_impl, postfix=exe_postfix)
     sp.check_call(command, shell=True, cwd=program.name)
 

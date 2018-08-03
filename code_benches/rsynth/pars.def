@@ -1,0 +1,43 @@
+/* $Id: pars.def,v 1.13 1994/11/08 13:30:50 a904209 Exp a904209 $
+*/
+ 1330,  /* F0       long F0hz10;   */
+   60,  /* AV       long AVdb;     */
+  500,  /* F1       long F1hz;     */
+   60,  /* BW1      long B1hz;     */
+ 1500,  /* F2       long F2hz;     */
+   90,  /* BW2      long B2hz;     */
+ 2800,  /* F3       long F3hz;     */
+  150,  /* BW3      long B3hz;     */
+ 3250,  /* F4       long F4hz;     */
+  200,  /* BW4      long B4hz;     */
+ 3700,  /* F5       long F5hz;     */
+  200,  /* BW5      long B5hz;     */
+ 4990,  /* F6       long F6hz;     */
+  500,  /* BW6      long B6hz;     */
+  270,  /* Fnz      long FNZhz;    */
+  100,  /* BWnz     long BNZhz;    */
+  270,  /* Fnp      long FNPhz;    */
+  100,  /* BWnp     long BNPhz;    */
+    0,  /* Aasp     long ASP;      */
+   30,  /* Nopn     long Kopen;    */
+    0,  /* Atur     long Aturb;    */
+   10,  /* tilt     long TLTdb;    */
+    0,  /* Afrc     long AF;       */
+    0,  /* skew     long Kskew;    */
+    0,  /* A1       long A1;       */
+   80,  /* BWp1     long B1phz;    */
+    0,  /* A2       long A2;       */
+  200,  /* BWp2     long B2phz;    */
+    0,  /* A3       long A3;       */
+  350,  /* BWp3     long B3phz;    */
+    0,  /* A4       long A4;       */
+  500,  /* BWp4     long B4phz;    */
+    0,  /* A5       long A5;       */
+  600,  /* BWp5     long B5phz;    */
+    0,  /* A6       long A6;       */
+  800,  /* BWp6     long B6phz;    */
+    0,  /* AN       long ANP;      */
+    0,  /* AB       long AB;       */
+    0,  /* AVpa     long AVpdb;    */
+   62   /* G0       long Gain0;    */
+
