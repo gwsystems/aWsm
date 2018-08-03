@@ -96,151 +96,60 @@ INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
     return address;
 }
 
+#define GS_REL __attribute__((address_space(257)))
+
 // All of these are pretty generic
 INLINE float get_f32(i32 offset) {
-    float f;
-    asm("movl %%gs:(%1), %0" : "=r"(f) : "r" (offset) : "memory");
-    return f;
+    return *((GS_REL float*) offset);
 }
 
 INLINE double get_f64(i32 offset) {
-//    i32 a;
-//    asm volatile("movl %%gs:(%1), %0" : "=r"(a) : "r" (offset));
-//
-//    i32 b;
-//    asm volatile("movl %%gs:(%1), %0" : "=r"(a) : "r" (offset + sizeof(i32)));
-//
-//    union {
-//        struct {
-//            i32 a;
-//            i32 b;
-//        } s;
-//        double f;
-//    } u;
-//
-//    u.s.a = a;
-//    u.s.b = b;
-//    return u.f;
-//    assert(offset <= memory_size - sizeof(i16));
-//
-//    char* mem_as_chars = (char *) memory;
-//    void* address = &mem_as_chars[offset];
-//    return *(double *) address;
-    double d;
-    asm("movq %%gs:(%1), %0" : "=x"(d) : "r" (offset) : "memory");
-    return d;
+    return *((GS_REL double*) offset);
 }
 
 INLINE i8 get_i8(i32 offset) {
-    assert(offset <= memory_size - sizeof(i8));
-
-    char* mem_as_chars = (char *) memory;
-    void* address = &mem_as_chars[offset];
-    return *(i8 *) address;
+    return *((GS_REL i8*) offset);
 }
 
 INLINE i16 get_i16(i32 offset) {
-    assert(offset <= memory_size - sizeof(i16));
-
-    char* mem_as_chars = (char *) memory;
-    void* address = &mem_as_chars[offset];
-    return *(i16 *) address;
+    return *((GS_REL i16*) offset);
 }
 
 INLINE i32 get_i32(i32 offset) {
-    i32 i;
-    asm("movl %%gs:(%1), %0" : "=r"(i) : "r" (offset) : "memory");
-    return i;
+    return *((GS_REL i32*) offset);
 }
 
 INLINE i64 get_i64(i32 offset) {
-//    i32 a;
-//    asm volatile("movl %%gs:(%1), %0" : "=r"(a) : "r" (offset));
-//
-//    i32 b;
-//    asm volatile("movl %%gs:(%1), %0" : "=r"(a) : "r" (offset + sizeof(i32)));
-//
-//    union {
-//        struct {
-//            i32 a;
-//            i32 b;
-//        } s;
-//        i64 i;
-//    } u;
-//    u.s.a = a;
-//    u.s.b = b;
-//    return u.i;
-//    assert(offset <= memory_size - sizeof(i16));
-//
-//    char* mem_as_chars = (char *) memory;
-//    void* address = &mem_as_chars[offset];
-//    return *(i64 *) address;
-    i64 i;
-    asm("movq %%gs:(%1), %0" : "=x"(i) : "r" (offset) : "memory");
-    return i;
+    return *((GS_REL i64*) offset);
 }
 
 // Now setting routines
 INLINE void set_f32(i32 offset, float v) {
-    asm("movl %0, %%gs:(%1)" : : "r" (v), "r" (offset) : "memory");
+    GS_REL float* ptr = (GS_REL float*) offset;
+    *ptr = v;
 }
 
 INLINE void set_f64(i32 offset, double v) {
-//    union {
-//        struct {
-//            i32 a;
-//            i32 b;
-//        } s;
-//        double f;
-//    } u;
-//    u.f = v;
-//
-//    i32 a = u.s.a;
-//    asm volatile("movl %0, %%gs:(%1)" : : "r" (a), "r" (offset) : "memory");
-//
-//    i32 b = u.s.b;
-//    asm volatile("movl %0, %%gs:(%1)" : : "r" (b), "r" (offset + sizeof(i32)) : "memory");
-//    assert(offset <= memory_size - sizeof(double));
-//
-//    char* mem_as_chars = (char *) memory;
-//    void* address = &mem_as_chars[offset];
-//    *(double *) address = v;
-    asm("movq %0, %%gs:(%1)" : : "x" (v), "r" (offset) : "memory");
+    GS_REL double* ptr = (GS_REL double*) offset;
+    *ptr = v;
 }
 
 INLINE void set_i8(i32 offset, i8 v) {
-    asm("movb %0, %%gs:(%1)" : : "r" (v), "r" (offset) : "memory");
+    GS_REL i8* ptr = (GS_REL i8*) offset;
+    *ptr = v;
 }
 
 INLINE void set_i16(i32 offset, i16 v) {
-    asm("movw %0, %%gs:(%1)" : : "r" (v), "r" (offset) : "memory");
+    GS_REL i16* ptr = (GS_REL i16*) offset;
+    *ptr = v;
 }
 
 INLINE void set_i32(i32 offset, i32 v) {
-    asm("movl %0, %%gs:(%1)" : : "r" (v), "r" (offset) : "memory");
+    GS_REL i32* ptr = (GS_REL i32*) offset;
 }
 
 INLINE void set_i64(i32 offset, i64 v) {
-//    union {
-//        struct {
-//            i32 a;
-//            i32 b;
-//        } s;
-//        i64 i;
-//    } u;
-//    u.i = v;
-//
-//    i32 a = u.s.a;
-//    asm volatile("movl %0, %%gs:(%1)" : : "r" (a), "r" (offset) : "memory");
-//
-//    i32 b = u.s.b;
-//    asm volatile("movl %0, %%gs:(%1)" : : "r" (b), "r" (offset + sizeof(i32)) : "memory");
-//    assert(offset <= memory_size - sizeof(i16));
-//
-//    char* mem_as_chars = (char *) memory;
-//    void* address = &mem_as_chars[offset];
-//    *(i64 *) address = v;
-    asm("movq %0, %%gs:(%1)" : : "x" (v), "r" (offset) : "memory");
+    GS_REL i64* ptr = (GS_REL i64*) offset;
 }
 
 INLINE char* get_function_from_table(u32 idx, u32 type_id) {
