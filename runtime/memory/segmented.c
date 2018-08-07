@@ -96,7 +96,7 @@ INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
     return address;
 }
 
-#define GS_REL __attribute__((address_space(257)))
+#define GS_REL __attribute__((address_space(256)))
 
 // All of these are pretty generic
 INLINE float get_f32(i32 offset) {
@@ -146,10 +146,12 @@ INLINE void set_i16(i32 offset, i16 v) {
 
 INLINE void set_i32(i32 offset, i32 v) {
     GS_REL i32* ptr = (GS_REL i32*) offset;
+    *ptr = v;
 }
 
 INLINE void set_i64(i32 offset, i64 v) {
     GS_REL i64* ptr = (GS_REL i64*) offset;
+    *ptr = v;
 }
 
 INLINE char* get_function_from_table(u32 idx, u32 type_id) {
