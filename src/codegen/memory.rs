@@ -35,6 +35,7 @@ pub fn add_memory_size_globals(ctx: &ModuleCtx, limits: &ResizableLimits) {
 pub fn generate_memory_initialization_stub(ctx: &ModuleCtx, initializers: Vec<DataInitializer>) {
     let mut initialization_data: Vec<(&llvm::Function, Vec<u8>)> = Vec::new();
 
+
     for (n, i) in initializers.into_iter().enumerate() {
         // We need to translate the offset expression into a usable value
         // So we compile a function that evaluates the expression, and use that
@@ -56,13 +57,15 @@ pub fn generate_memory_initialization_stub(ctx: &ModuleCtx, initializers: Vec<Da
     let bb = setup_function.append("entry");
     let b = Builder::new(ctx.llvm_ctx);
     b.position_at_end(bb);
-    for (offset_func, data) in initialization_data {
+    for (i, (offset_func, data)) in initialization_data.into_iter().enumerate() {
         let offset = b.build_call(offset_func, &[]);
         let data_vec: Vec<&Value> = data.iter().map(|byte| byte.compile(ctx.llvm_ctx)).collect();
 
         let data_value = Value::new_vector(&data_vec);
-        let data_ptr = b.build_alloca(data_value.get_type());
-        b.build_store(data_value, data_ptr);
+        let data_global = ctx.llvm_module.add_global_variable(&format!("init_vector_{}", i), data_value);
+        data_global.set_constant(true);
+
+        let data_ptr = data_global.to_super();
 
         let data_raw_ptr =
             b.build_bit_cast(data_ptr, PointerType::new(<i8>::get_type(ctx.llvm_ctx)));

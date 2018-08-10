@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MATRIX_SIZE 1700
+#define MATRIX_SIZE 1000
 
 struct matrix {
     int data[MATRIX_SIZE][MATRIX_SIZE];

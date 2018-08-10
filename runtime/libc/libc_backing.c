@@ -1,5 +1,7 @@
 #include "../runtime.h"
 
+#include <gdbm.h>
+
 #define UID 0xFF
 #define GID 0xFE
 
@@ -23,7 +25,6 @@
 #define	AT_SECURE	23
 #define AT_BASE_PLATFORM 24
 #define AT_RANDOM	25
-
 
 void wasmf___init_libc(i32 envp, i32 pn);
 
@@ -64,32 +65,52 @@ void stub_init(i32 offset) {
 }
 
 // Syscall stuff
-// TODO: the kernel returns error codes, but libc puts those in errno. If we use libc wrappers, we need to translate back to error codes
 
 // We define our own syscall numbers, because WASM uses x86_64 values even on systems that are not x86_64
 #define SYS_READ 0
-u32 wasm_read(i32 fildes, i32 buf_offset, i32 nbyte) {
+u32 wasm_read(i32 filedes, i32 buf_offset, i32 nbyte) {
     char* buf = get_memory_ptr_void(buf_offset, nbyte);
-    return (i32) read(fildes, buf, nbyte);
+    i32 res = (i32) read(filedes, buf, nbyte);
+
+    if (res == -1) {
+        return -errno;
+    } else {
+        return res;
+    }
 }
 
 #define SYS_WRITE 1
 i32 wasm_write(i32 fd, i32 buf_offset, i32 buf_size) {
-    // TODO: Handle errno
     char* buf = get_memory_ptr_void(buf_offset, buf_size);
-    return (i32) write(fd, buf, buf_size);
+    i32 res = (i32) write(fd, buf, buf_size);
+
+    if (res == -1) {
+        return -errno;
+    }
+    return res;
 }
 
 #define SYS_OPEN 2
 i32 wasm_open(i32 path_off, i32 flags, i32 mode) {
     // TODO: Handle string being bad
     char* path = get_memory_ptr_void(path_off, 0);
-    return (i32) open(path, flags, mode);
+    i32 res = (i32) open(path, flags, mode);
+
+    if (res == -1) {
+        return -errno;
+    }
+    return res;
+
 }
 
 #define SYS_CLOSE 3
 i32 wasm_close(i32 fd) {
-    return (i32) close(fd);
+    i32 res = (i32) close(fd);
+
+    if (res == -1) {
+        return -errno;
+    }
+    return res;
 }
 
 struct wasm_stat {
@@ -152,14 +173,20 @@ i32 wasm_fstat(i32 filedes, i32 stat_offset) {
             .st_blocks = stat.st_blocks,
             // TODO: Also copy access times
         };
+    } else if (res == -1) {
+        return -errno;
     }
-
     return res;
 }
 
 #define SYS_LSEEK 8
 i32 wasm_lseek(i32 filedes, i32 file_offset, i32 whence) {
-    return lseek(filedes, file_offset, whence);
+    i32 res = (i32) lseek(filedes, file_offset, whence);
+
+    if (res == -1) {
+        return -errno;
+    }
+    return res;
 }
 
 #define SYS_MMAP 9
@@ -189,9 +216,6 @@ u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
 #define SYS_MUNMAP 11
 
 #define SYS_BRK 12
-i32 wasm_brk(i32 addr) {
-    return 0;
-}
 
 #define SYS_RT_SIGACTION 13
 
@@ -224,26 +248,30 @@ i32 wasm_readv(i32 fd, i32 iov_offset, i32 iovcnt) {
 
 #define SYS_WRITEV 20
 i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
-        struct wasm_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
-        if (fd == 1) {
-            int sum = 0;
-            for (int i = 0; i < iovcnt; i++) {
-                i32 len = iov[i].len;
-                void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
-                printf("%.*s", len, ptr);
-                sum += len;
-            }
-            return sum;
-        } else {
-            struct iovec vecs[iovcnt];
-            for (int i = 0; i < iovcnt; i++) {
-                i32 len = iov[i].len;
-                void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
-                vecs[i] = (struct iovec) {ptr, len};
-            }
-
-            return writev(fd, vecs, iovcnt);
+    struct wasm_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
+    if (fd == 1) {
+        int sum = 0;
+        for (int i = 0; i < iovcnt; i++) {
+            i32 len = iov[i].len;
+            void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
+            printf("%.*s", len, ptr);
+            sum += len;
         }
+        return sum;
+    } else {
+        struct iovec vecs[iovcnt];
+        for (int i = 0; i < iovcnt; i++) {
+            i32 len = iov[i].len;
+            void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
+            vecs[i] = (struct iovec) {ptr, len};
+        }
+
+        i32 res = (i32) writev(fd, vecs, iovcnt);
+        if (res == -1) {
+            return -errno;
+        }
+        return res;
+    }
 }
 
 #define SYS_MADVISE 28
@@ -278,6 +306,9 @@ i32 wasm_get_time(i32 clock_id, i32 timespec_off) {
 
     struct timespec native_timespec = { 0, 0 };
     int res = clock_gettime(real_clock, &native_timespec);
+    if (res == -1) {
+        return -errno;
+    }
 
     timespec->sec = native_timespec.tv_sec;
     timespec->nanosec = native_timespec.tv_nsec;
@@ -301,7 +332,7 @@ i32 inner_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
         case SYS_LSEEK: return wasm_lseek(a, b, c);
         case SYS_MMAP: return wasm_mmap(a, b, c, d, e, f);
         case SYS_MUNMAP: return 0;
-        case SYS_BRK: return wasm_brk(a);
+        case SYS_BRK: return 0;
         case SYS_RT_SIGACTION: return 0;
         case SYS_RT_SIGPROGMASK: return 0;
         case SYS_IOCTL: return wasm_ioctl(a, b, c);
@@ -456,3 +487,25 @@ INLINE double env_sin(double d) {
 INLINE double env_cos(double d) {
     return cos(d);
 }
+
+
+// gdbm code
+//int gdbm_file = 0;
+//GDBM_FILE gdbm_files[100];
+//
+//i32 env_gdbm_open(i32 name_off, i32 block_size, i32 read_write, i32 mode, i32 fatal_func) {
+//    char* name = get_memory_ptr_void(name, 0);
+//    GDBM_FILE f = gdbm_open(name, block_size, read_write, mode, NULL);
+//    gdbm_files[gdbm_file] = f;
+//    gdbm_file++;
+//    return (i32) gdbm_file;
+//}
+//
+//i32 env_gdbm_close(i32 gf) {
+//
+//}
+//
+//
+//void env_gdbm_fetch(i32 a, i32 b, i32 c) {
+//}
+//

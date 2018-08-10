@@ -16,7 +16,7 @@ typedef enum {Error_ = -1, Success_, False_ = 0, True_} Boolean_T;
       && !defined(_WINDOWS)
       #if !defined(OS2)*/
   typedef unsigned char  BYTE;
-  typedef unsigned long  DWORD;
+  typedef unsigned int  DWORD;
 /* #endif*/
  typedef unsigned short WORD;
 /*#else

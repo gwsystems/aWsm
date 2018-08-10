@@ -1,0 +1,2 @@
+We use a short input to limit compression and encryption overheads, thereby
+exposing to the fullest extent the public key algorithms.  -Todd Austin

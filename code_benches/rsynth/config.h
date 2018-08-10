@@ -85,7 +85,7 @@
 /* #undef HAVE_LIBAUDIO */
 
 /* Define if you have the gdbm library (-lgdbm).  */
-#define HAVE_LIBGDBM 1
+// #define HAVE_LIBGDBM 1
 
 /* Define if you have the m library (-lm).  */
 /* #undef HAVE_LIBM */
