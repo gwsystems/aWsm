@@ -1,7 +1,5 @@
 #include "../runtime.h"
 
-#include <gdbm.h>
-
 #define UID 0xFF
 #define GID 0xFE
 
@@ -249,29 +247,34 @@ i32 wasm_readv(i32 fd, i32 iov_offset, i32 iovcnt) {
 #define SYS_WRITEV 20
 i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
     struct wasm_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
+
+    // If we aren't on MUSL, pass writev to printf if possible
+    #if defined(__APPLE__) || defined(__GLIBC__)
     if (fd == 1) {
         int sum = 0;
         for (int i = 0; i < iovcnt; i++) {
             i32 len = iov[i].len;
             void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
+
             printf("%.*s", len, ptr);
             sum += len;
         }
         return sum;
-    } else {
-        struct iovec vecs[iovcnt];
-        for (int i = 0; i < iovcnt; i++) {
-            i32 len = iov[i].len;
-            void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
-            vecs[i] = (struct iovec) {ptr, len};
-        }
-
-        i32 res = (i32) writev(fd, vecs, iovcnt);
-        if (res == -1) {
-            return -errno;
-        }
-        return res;
     }
+    #endif
+
+    struct iovec vecs[iovcnt];
+    for (int i = 0; i < iovcnt; i++) {
+        i32 len = iov[i].len;
+        void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
+        vecs[i] = (struct iovec) {ptr, len};
+    }
+
+    i32 res = (i32) writev(fd, vecs, iovcnt);
+    if (res == -1) {
+        return -errno;
+    }
+    return res;
 }
 
 #define SYS_MADVISE 28
@@ -373,19 +376,21 @@ i32 env_a_ctz_64(u64 x) {
 //	return x;
 //}
 
-void env_a_and_64(i32 p_off, u64 v) {
-    volatile uint64_t* p = get_memory_ptr_void(p_off, sizeof(volatile uint64_t));
+INLINE void env_a_and_64(i32 p_off, u64 v) {
+    uint64_t* p = get_memory_ptr_void(p_off, sizeof(uint64_t));
+    *p &= v;
 
-	__asm__( "lock ; and %1, %0"
-			 : "=m"(*p) : "r"(v) : "memory" );
+//	__asm__( "lock ; and %1, %0"
+//			 : "=m"(*p) : "r"(v) : "memory" );
 }
 
-void env_a_or_64(i32 p_off, i64 v) {
-    assert(sizeof(i64) == sizeof(volatile uint64_t));
-    volatile uint64_t* p = get_memory_ptr_void(p_off, sizeof(i64));
+INLINE void env_a_or_64(i32 p_off, i64 v) {
+    assert(sizeof(i64) == sizeof(uint64_t));
+    uint64_t* p = get_memory_ptr_void(p_off, sizeof(i64));
+    *p |= v;
 
-	__asm__( "lock ; or %1, %0"
-			 : "=m"(*p) : "r"(v) : "memory" );
+//	__asm__( "lock ; or %1, %0"
+//			 : "=m"(*p) : "r"(v) : "memory" );
 }
 
 //static inline void a_or_l(volatile void *p, long v)
@@ -413,7 +418,6 @@ i32 env_a_cas(i32 p_off, i32 t, i32 s) {
 void env_a_or(i32 p_off, i32 v) {
     assert(sizeof(i32) == sizeof(volatile int));
     volatile int* p = get_memory_ptr_void(p_off, sizeof(i32));
-
 	__asm__( "lock ; or %1, %0"
 		: "=m"(*p) : "r"(v) : "memory" );
 }

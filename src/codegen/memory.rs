@@ -35,7 +35,6 @@ pub fn add_memory_size_globals(ctx: &ModuleCtx, limits: &ResizableLimits) {
 pub fn generate_memory_initialization_stub(ctx: &ModuleCtx, initializers: Vec<DataInitializer>) {
     let mut initialization_data: Vec<(&llvm::Function, Vec<u8>)> = Vec::new();
 
-
     for (n, i) in initializers.into_iter().enumerate() {
         // We need to translate the offset expression into a usable value
         // So we compile a function that evaluates the expression, and use that
@@ -62,7 +61,9 @@ pub fn generate_memory_initialization_stub(ctx: &ModuleCtx, initializers: Vec<Da
         let data_vec: Vec<&Value> = data.iter().map(|byte| byte.compile(ctx.llvm_ctx)).collect();
 
         let data_value = Value::new_vector(&data_vec);
-        let data_global = ctx.llvm_module.add_global_variable(&format!("init_vector_{}", i), data_value);
+        let data_global = ctx
+            .llvm_module
+            .add_global_variable(&format!("init_vector_{}", i), data_value);
         data_global.set_constant(true);
 
         let data_ptr = data_global.to_super();

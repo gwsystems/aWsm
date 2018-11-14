@@ -152,5 +152,6 @@ int main(int argc, char* argv[]) {
     switch_out_of_runtime();
     int ret =  wasmf_main(argc, page_offset);
     switch_into_runtime();
+
     return ret;
 }

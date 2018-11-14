@@ -20,6 +20,7 @@ IS_X86 = '86' in os.uname()[-1]
 IS_32_BIT_X86 = (not IS_64_BIT) and IS_X86
 
 RUN_COUNT = 10
+ENABLE_DEBUG_SYMBOLS = False
 
 
 # FIXME: Mibench runs many of these programs multiple times, which is probably worth replicating
@@ -74,7 +75,12 @@ programs = [
 
 # Now some helper methods for compiling code
 def compile_to_executable(program):
-    sp.check_call("clang {} -lm -O3 -flto *.c -o bin/{}".format(program.custom_arguments, program.name), shell=True, cwd=program.name)
+    opt = "-O3"
+    if program.do_lto:
+        opt += " -flto"
+    if ENABLE_DEBUG_SYMBOLS:
+        opt += " -g"
+    sp.check_call("clang {} -lm {} *.c -o bin/{}".format(program.custom_arguments, opt, program.name), shell=True, cwd=program.name)
 
 
 def compile_to_wasm(program):
@@ -99,6 +105,8 @@ def compile_wasm_to_executable(program, exe_postfix, memory_impl, runtime_global
     opt = "-O3"
     if program.do_lto:
         opt += " -flto"
+    if ENABLE_DEBUG_SYMBOLS:
+        opt += " -g"
     command = "clang -lm {opt} {bc_file} {runtime}/runtime.c {runtime}/libc/libc_backing.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
         .format(opt=opt, bc_file=bc_file, pname=program.name, runtime=RUNTIME_PATH, mem_impl=memory_impl, postfix=exe_postfix)
     sp.check_call(command, shell=True, cwd=program.name)

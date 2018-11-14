@@ -173,32 +173,50 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
     // Memory functions
     let get_f32_ty = FunctionType::new(<f32>::get_type(ctx), &[<i32>::get_type(ctx)]);
     m.add_function(GET_F32, get_f32_ty.to_super());
-    let set_f32_ty = FunctionType::new(<()>::get_type(ctx), &[<i32>::get_type(ctx), <f32>::get_type(ctx)]);
+    let set_f32_ty = FunctionType::new(
+        <()>::get_type(ctx),
+        &[<i32>::get_type(ctx), <f32>::get_type(ctx)],
+    );
     m.add_function(SET_F32, set_f32_ty.to_super());
 
     let get_f64_ty = FunctionType::new(<f64>::get_type(ctx), &[<i32>::get_type(ctx)]);
     m.add_function(GET_F64, get_f64_ty.to_super());
-    let set_f64_ty = FunctionType::new(<()>::get_type(ctx), &[<i32>::get_type(ctx), <f64>::get_type(ctx)]);
+    let set_f64_ty = FunctionType::new(
+        <()>::get_type(ctx),
+        &[<i32>::get_type(ctx), <f64>::get_type(ctx)],
+    );
     m.add_function(SET_F64, set_f64_ty.to_super());
 
     let get_i8_ty = FunctionType::new(<i8>::get_type(ctx), &[<i32>::get_type(ctx)]);
     m.add_function(GET_I8, get_i8_ty.to_super());
-    let set_i8_ty = FunctionType::new(<()>::get_type(ctx), &[<i32>::get_type(ctx), <i8>::get_type(ctx)]);
+    let set_i8_ty = FunctionType::new(
+        <()>::get_type(ctx),
+        &[<i32>::get_type(ctx), <i8>::get_type(ctx)],
+    );
     m.add_function(SET_I8, set_i8_ty.to_super());
 
     let get_i16_ty = FunctionType::new(<i16>::get_type(ctx), &[<i32>::get_type(ctx)]);
     m.add_function(GET_I16, get_i16_ty.to_super());
-    let set_i16_ty = FunctionType::new(<()>::get_type(ctx), &[<i32>::get_type(ctx), <i16>::get_type(ctx)]);
+    let set_i16_ty = FunctionType::new(
+        <()>::get_type(ctx),
+        &[<i32>::get_type(ctx), <i16>::get_type(ctx)],
+    );
     m.add_function(SET_I16, set_i16_ty.to_super());
 
     let get_i32_ty = FunctionType::new(<i32>::get_type(ctx), &[<i32>::get_type(ctx)]);
     m.add_function(GET_I32, get_i32_ty.to_super());
-    let set_i32_ty = FunctionType::new(<()>::get_type(ctx), &[<i32>::get_type(ctx), <i32>::get_type(ctx)]);
+    let set_i32_ty = FunctionType::new(
+        <()>::get_type(ctx),
+        &[<i32>::get_type(ctx), <i32>::get_type(ctx)],
+    );
     m.add_function(SET_I32, set_i32_ty.to_super());
 
     let get_i64_ty = FunctionType::new(<i64>::get_type(ctx), &[<i32>::get_type(ctx)]);
     m.add_function(GET_I64, get_i64_ty.to_super());
-    let set_i64_ty = FunctionType::new(<()>::get_type(ctx), &[<i32>::get_type(ctx), <i64>::get_type(ctx)]);
+    let set_i64_ty = FunctionType::new(
+        <()>::get_type(ctx),
+        &[<i32>::get_type(ctx), <i64>::get_type(ctx)],
+    );
     m.add_function(SET_I64, set_i64_ty.to_super());
 
     // LLVM intrinsics
