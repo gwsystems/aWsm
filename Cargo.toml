@@ -6,7 +6,7 @@ authors = ["Gregor Peach <gregorpeach@gmail.com>"]
 [dependencies]
 llvm-alt = { git = "https://github.com/Others/llvm-rs.git"}
 structopt = "0.2"
-wasmparser = "0.16.1"
+wasmparser = "0.22"
 
 [profile.release]
 debug = true

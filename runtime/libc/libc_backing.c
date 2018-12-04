@@ -1,9 +1,10 @@
 #include "../runtime.h"
 
+// What should we tell the child program its UID and GID are?
 #define UID 0xFF
 #define GID 0xFE
 
-// Elf auxilary vector values
+// Elf auxilary vector values (see google for what those are)
 #define AT_NULL		0
 #define AT_IGNORE	1
 #define AT_EXECFD	2
@@ -24,10 +25,14 @@
 #define AT_BASE_PLATFORM 24
 #define AT_RANDOM	25
 
+// The symbol the binary gives us to init libc
 void wasmf___init_libc(i32 envp, i32 pn);
 
+// offset = a WASM ptr to memory the runtime can use
 void stub_init(i32 offset) {
+    // What program name will we put in the auxiliary vectors
     char program_name[] = "wasm_program";
+    // Copy the program name into WASM accessible memory
     i32 program_name_offset = offset;
     strcpy(get_memory_ptr_for_runtime(offset, sizeof(program_name)), program_name);
     offset += sizeof(program_name);
@@ -37,7 +42,7 @@ void stub_init(i32 offset) {
     i32 env_vec[] = {
         // Env variables would live here, but we don't supply any
         0,
-        // We supply nessesary
+        // We supply only the bare minimum AUX vectors
         AT_PAGESZ,
         WASM_PAGE_SIZE,
         AT_UID,
@@ -62,7 +67,7 @@ void stub_init(i32 offset) {
     switch_into_runtime();
 }
 
-// Syscall stuff
+// Emulated syscall implementations
 
 // We define our own syscall numbers, because WASM uses x86_64 values even on systems that are not x86_64
 #define SYS_READ 0
@@ -90,8 +95,7 @@ i32 wasm_write(i32 fd, i32 buf_offset, i32 buf_size) {
 
 #define SYS_OPEN 2
 i32 wasm_open(i32 path_off, i32 flags, i32 mode) {
-    // TODO: Handle string being bad
-    char* path = get_memory_ptr_void(path_off, 0);
+    char* path = get_memory_string(path_off);
     i32 res = (i32) open(path, flags, mode);
 
     if (res == -1) {
@@ -111,6 +115,8 @@ i32 wasm_close(i32 fd) {
     return res;
 }
 
+#define SYS_FSTAT 5
+// What the wasm stat structure looks like
 struct wasm_stat {
 	i64 st_dev;
 	u64 st_ino;
@@ -131,6 +137,7 @@ struct wasm_stat {
 	i32 __pad1[3];
 };
 
+// What the OSX stat structure looks like:
 //     struct stat { /* when _DARWIN_FEATURE_64_BIT_INODE is NOT defined */
 //         dev_t    st_dev;    /* device inode resides on */
 //         ino_t    st_ino;    /* inode's number */
@@ -150,7 +157,6 @@ struct wasm_stat {
 //     };
 
 
-#define SYS_FSTAT 5
 i32 wasm_fstat(i32 filedes, i32 stat_offset) {
     struct wasm_stat* stat_ptr = get_memory_ptr_void(stat_offset, sizeof(struct wasm_stat));
 
@@ -217,16 +223,13 @@ u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
 
 #define SYS_RT_SIGACTION 13
 
-
 #define SYS_RT_SIGPROGMASK 14
-//i32 wasm_sigprocmask(i32 how, i32 set_ptr, i32 oset_ptr) {
-//    return 0;
-//}
 
 #define SYS_IOCTL 16
 i32 wasm_ioctl(i32 fd, i32 request, i32 data_offet) {
-	/* musl libc does some ioctls to stdout, so just allow these to silently go through */
-	return 0;
+    // musl libc does some ioctls to stdout, so just allow these to silently go through
+    // FIXME: The above is idiotic
+    return 0;
 }
 
 #define SYS_READV 19
@@ -492,24 +495,3 @@ INLINE double env_cos(double d) {
     return cos(d);
 }
 
-
-// gdbm code
-//int gdbm_file = 0;
-//GDBM_FILE gdbm_files[100];
-//
-//i32 env_gdbm_open(i32 name_off, i32 block_size, i32 read_write, i32 mode, i32 fatal_func) {
-//    char* name = get_memory_ptr_void(name, 0);
-//    GDBM_FILE f = gdbm_open(name, block_size, read_write, mode, NULL);
-//    gdbm_files[gdbm_file] = f;
-//    gdbm_file++;
-//    return (i32) gdbm_file;
-//}
-//
-//i32 env_gdbm_close(i32 gf) {
-//
-//}
-//
-//
-//void env_gdbm_fetch(i32 a, i32 b, i32 c) {
-//}
-//

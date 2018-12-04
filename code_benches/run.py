@@ -1,26 +1,35 @@
-from collections import namedtuple
 import os
 import subprocess as sp
 import sys
 import timeit
 
+# Absolute path to the `code_benches` directory
 BENCH_ROOT = os.getcwd()
+# Absolute path to the `silverfish` directory
 ROOT_PATH = os.path.dirname(BENCH_ROOT)
+
 RUNTIME_PATH = ROOT_PATH + "/runtime"
 SILVERFISH_PATH = ROOT_PATH + "/target/release/silverfish"
 WASMCEPTION_PATH = ROOT_PATH + "/wasmception"
 
+# Our special WASM clang is under this wasmception path
 WASM_CLANG = WASMCEPTION_PATH + "/dist/bin/clang"
+# These flags are all somewhat important -- see @Others for more information
 WASM_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--no-threads,--stack-first,--no-entry,--export-all,--export=main,--export=dummy"
+# Point WASM to our custom libc
 WASM_SYSROOT_FLAGS = "--sysroot={}/sysroot".format(WASMCEPTION_PATH)
 WASM_FLAGS = WASM_LINKER_FLAGS + " --target=wasm32-unknown-unknown-wasm -nostartfiles -O3 -flto " + WASM_SYSROOT_FLAGS
 
+# What is the machine we're running on like?
 IS_64_BIT = sys.maxsize > 2**32
 IS_X86 = '86' in os.uname()[-1]
 IS_32_BIT_X86 = (not IS_64_BIT) and IS_X86
 
+# TODO: Add an option to output a CSV instead of human readable output
+
+# How many times should we run our benchmarks
 RUN_COUNT = 10
-ENABLE_DEBUG_SYMBOLS = False
+ENABLE_DEBUG_SYMBOLS = True
 
 
 # FIXME: Mibench runs many of these programs multiple times, which is probably worth replicating
@@ -73,7 +82,7 @@ programs = [
 ]
 
 
-# Now some helper methods for compiling code
+# Compile the C code in `program`'s directory into a native executable
 def compile_to_executable(program):
     opt = "-O3"
     if program.do_lto:
@@ -83,6 +92,7 @@ def compile_to_executable(program):
     sp.check_call("clang {} -lm {} *.c -o bin/{}".format(program.custom_arguments, opt, program.name), shell=True, cwd=program.name)
 
 
+# Compile the C code in `program`'s directory into WASM
 def compile_to_wasm(program):
     flags = WASM_FLAGS.format(stack_size=program.stack_size)
     command = "{clang} {flags} {args} -O3 -flto ../dummy.c *.c -o bin/{pname}.wasm" \
@@ -90,14 +100,17 @@ def compile_to_wasm(program):
     sp.check_call(command, shell=True, cwd=program.name)
 
 
+# Compile the WASM in `program`'s directory into llvm bytecode
 def compile_wasm_to_bc(program):
     command = "{silverfish} bin/{pname}.wasm -o bin/{pname}.bc".format(silverfish=SILVERFISH_PATH, pname=program.name)
     sp.check_call(command, shell=True, cwd=program.name)
-    # Compile a second version with runtime globlas
+    # Compile a second version with runtime globals
+    # FIXME: Runtime globals were a failed experiment -- evaluate removing all traces of it
     command = "{silverfish} -i --runtime_globals bin/{pname}.wasm -o bin/{pname}_rg.bc".format(silverfish=SILVERFISH_PATH, pname=program.name)
     sp.check_call(command, shell=True, cwd=program.name)
 
 
+# Compile the WASM in `program`'s directory into llvm bytecode
 def compile_wasm_to_executable(program, exe_postfix, memory_impl, runtime_globals=False):
     bc_file = "bin/{pname}.bc".format(pname=program.name)
     if runtime_globals:
@@ -112,11 +125,16 @@ def compile_wasm_to_executable(program, exe_postfix, memory_impl, runtime_global
     sp.check_call(command, shell=True, cwd=program.name)
 
 
+# Execute executable `p` with arguments `args` in directory `dir`
 def execute(p, args, dir):
     command = p + " " + args
     sp.check_call(command, shell=True, stdout=sp.DEVNULL, stderr=sp.DEVNULL, cwd=dir)
 
 
+# Benchmark the given program's executable
+#   p = the program
+#   exe_postfix = what postfix we gave the executable in `compile_wasm_to_executable`
+#   name = the human readable name for this version of the executable
 def bench(p, exe_postfix, name):
     print("Testing {} {}".format(p, name))
     path = "{broot}/{pname}/bin/{pname}{pf}".format(broot=BENCH_ROOT, pname=p.name, pf=exe_postfix)
@@ -124,6 +142,7 @@ def bench(p, exe_postfix, name):
     return min(timeit.repeat(command, 'from __main__ import execute', number=1, repeat=RUN_COUNT))
 
 
+# Output a run's execution time, telling us how much faster or slower it is
 def output_run(base_time, execution_time):
     base_time = round(base_time, 4)
     execution_time = round(execution_time, 4)
@@ -133,6 +152,7 @@ def output_run(base_time, execution_time):
         print("{:.4f} ({:.2f}% faster)".format(execution_time, ((base_time - execution_time) / base_time) * 100))
 
 
+# Compile all our programs
 for i, p in enumerate(programs):
     print("Compiling {} {}/{}".format(p.name, i + 1, len(programs)))
 
@@ -151,6 +171,7 @@ for i, p in enumerate(programs):
 
 print()
 
+# Benchmark and output timing info for each of our programs
 for p in programs:
     base_speed = bench(p, "", "native")
     print("{:.4f}".format(base_speed))

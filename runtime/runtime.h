@@ -59,6 +59,19 @@ static inline void* get_memory_ptr_void(u32 offset, u32 bounds_check) {
     return (void*) get_memory_ptr_for_runtime(offset, bounds_check);
 }
 
+static inline char* get_memory_string(u32 offset) {
+    char *naive_ptr = get_memory_ptr_for_runtime(offset, 1);
+    int i = 0;
+    while (1) {
+        // Keep bounds checking the waters over and over until we know it's safe (we find a terminating character)
+        char ith_element = get_memory_ptr_for_runtime(offset, i + 1)[i];
+        if (ith_element == '\0') {
+            return naive_ptr;
+        }
+        i++;
+    }
+}
+
 // memory/* also provides the table access functions
 // TODO: Change this to use a compiled in size
 #define INDIRECT_TABLE_SIZE 1024

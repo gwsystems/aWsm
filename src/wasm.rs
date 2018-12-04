@@ -48,9 +48,9 @@ pub enum Global {
 
 impl Global {
     pub fn set_name(&mut self, new_name: String) {
-        *self = match self {
-            &mut Global::Imported { .. } => panic!("Cannot remap the name of an import!"),
-            &mut Global::InModule {
+        *self = match *self {
+            Global::Imported { .. } => panic!("Cannot remap the name of an import!"),
+            Global::InModule {
                 content_type,
                 mutable,
                 ref initializer,
@@ -190,13 +190,15 @@ impl ImplementedFunction {
 
     pub fn get_return_type(&self) -> Option<Type> {
         match self.ty {
-            Some(ref ty) => if ty.returns.len() == 1 {
-                Some(ty.returns[0])
-            } else if ty.returns.is_empty() {
-                None
-            } else {
-                panic!("Malformed wasm, a function has too many return types")
-            },
+            Some(ref ty) => {
+                if ty.returns.len() == 1 {
+                    Some(ty.returns[0])
+                } else if ty.returns.is_empty() {
+                    None
+                } else {
+                    panic!("Malformed wasm, a function has too many return types")
+                }
+            }
             None => panic!("Malformed wasm, a function has no type"),
         }
     }
@@ -435,8 +437,13 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
                 depth: relative_depth,
             },
             Operator::BrTable { ref table } => {
-                let (table, default) = table.read_table();
-                Instruction::BrTable { table, default }
+                let (table, default) = table
+                    .read_table()
+                    .expect("well formed wasm must have good tables");
+                Instruction::BrTable {
+                    table: table.to_vec(),
+                    default,
+                }
             }
 
             Operator::Return => Instruction::Return,
@@ -809,6 +816,8 @@ impl WasmModule {
         result
     }
 
+    // What follows is 400 lines of code to load the data from the WASM parsing into this data structure
+    // I would avoid messing with it if possible
     fn process_outer_section(&mut self, p: &mut Parser) -> ProcessState {
         match p.read() {
             &ParserState::BeginWasm { .. } => ProcessState::Outer,
@@ -987,7 +996,7 @@ impl WasmModule {
     ) -> ProcessState {
         match p.read() {
             &ParserState::FunctionBodyLocals { ref locals } => {
-                for (i, ty) in locals {
+                for (i, ty) in locals.iter() {
                     for _ in 0..*i {
                         f.locals.push(ty.clone());
                     }
@@ -1134,9 +1143,9 @@ impl WasmModule {
         let mut function_indexes: Vec<u32> = Vec::new();
         loop {
             match p.read() {
-                &ParserState::ElementSectionEntryBody(ref v) => function_indexes.extend(v),
+                &ParserState::ElementSectionEntryBody(ref v) => function_indexes.extend(v.iter()),
                 &ParserState::EndElementSectionEntry => {
-                    assert!(table_id == 0);
+                    assert_eq!(table_id, 0);
                     let ti = TableInitializer {
                         offset_expression,
                         function_indexes,

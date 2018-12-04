@@ -72,7 +72,7 @@ pub fn wasm_func_type_to_llvm_type<'a>(
         wasm_type_to_llvm_type(ctx, f_type.returns[0])
     };
     let mut params: Vec<&llvm::Type> = Vec::new();
-    for t in &f_type.params {
+    for t in &*f_type.params {
         params.push(wasm_type_to_llvm_type(ctx, *t))
     }
 

@@ -1,7 +1,6 @@
 #![feature(nll)]
 
 extern crate llvm;
-#[macro_use]
 extern crate structopt;
 extern crate wasmparser;
 

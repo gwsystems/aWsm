@@ -47,7 +47,7 @@ pub fn generate_memory_initialization_stub(ctx: &ModuleCtx, initializers: Vec<Da
         initialization_data.push((&*offset_func, full_data));
     }
 
-    // The runtime assumes the existance of a setup_memory function that sets up the memory
+    // The runtime assumes the existence of a setup_memory function that sets up the memory
     // We provide this, by compiling it here
     let setup_function = ctx.llvm_module.add_function(
         "populate_memory",
@@ -92,8 +92,8 @@ pub fn generate_offset_function<'a>(
     let offset_func_name = format!("init_{}_offset_{}", prefix, n);
     let offset_func_type = wasmparser::FuncType {
         form: wasmparser::Type::Func,
-        params: Vec::new(),
-        returns: vec![wasmparser::Type::I32],
+        params: Box::new([]),
+        returns: Box::new([wasmparser::Type::I32]),
     };
 
     offset_expression.push(Instruction::End);

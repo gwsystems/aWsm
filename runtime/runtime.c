@@ -16,6 +16,8 @@ void add_function_to_table(u32 idx, u32 type_id, char* pointer) {
     indirect_table[idx] = (struct indirect_table_entry) { .type_id = type_id, .func_pointer = pointer };
 }
 
+// The below functions are for implementing WASM instructions
+
 // ROTL and ROTR helper functions
 INLINE u32 rotl_u32(u32 n, u32 c_u32) {
     // WASM requires a modulus here (usually a single bitwise op, but it means we need no assert)

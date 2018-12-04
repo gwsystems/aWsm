@@ -29,8 +29,6 @@ impl<'a> FunctionCtx<'a> {
 }
 
 pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
-    //    println!("function {}", f.generated_name);
-
     let llvm_f = ctx.llvm_module.get_function(&f.generated_name).unwrap();
 
     let mut locals: Vec<&Value> = Vec::new();

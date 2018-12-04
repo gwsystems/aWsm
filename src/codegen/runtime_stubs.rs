@@ -117,7 +117,8 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
             FunctionType::new(
                 <()>::get_type(ctx),
                 &[<u32>::get_type(ctx), <u32>::get_type(ctx)],
-            ).to_super(),
+            )
+            .to_super(),
         );
         m.add_function(
             GET_GLOBAL_I64,
@@ -128,7 +129,8 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
             FunctionType::new(
                 <()>::get_type(ctx),
                 &[<u32>::get_type(ctx), <u64>::get_type(ctx)],
-            ).to_super(),
+            )
+            .to_super(),
         );
     }
 
@@ -225,28 +227,32 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
         FunctionType::new(
             <i32>::get_type(ctx),
             &[<i32>::get_type(ctx), <bool>::get_type(ctx)],
-        ).to_super(),
+        )
+        .to_super(),
     );
     m.add_function(
         I64_CLZ,
         FunctionType::new(
             <i64>::get_type(ctx),
             &[<i64>::get_type(ctx), <bool>::get_type(ctx)],
-        ).to_super(),
+        )
+        .to_super(),
     );
     m.add_function(
         I32_CTZ,
         FunctionType::new(
             <i32>::get_type(ctx),
             &[<i32>::get_type(ctx), <bool>::get_type(ctx)],
-        ).to_super(),
+        )
+        .to_super(),
     );
     m.add_function(
         I64_CTZ,
         FunctionType::new(
             <i64>::get_type(ctx),
             &[<i64>::get_type(ctx), <bool>::get_type(ctx)],
-        ).to_super(),
+        )
+        .to_super(),
     );
     m.add_function(
         I32_CTPOP,
