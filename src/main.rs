@@ -1,5 +1,3 @@
-#![feature(nll)]
-
 extern crate llvm;
 extern crate structopt;
 extern crate wasmparser;
@@ -15,10 +13,10 @@ use structopt::StructOpt;
 use wasmparser::Parser;
 
 mod codegen;
-use codegen::process_to_llvm;
+use crate::codegen::process_to_llvm;
 
 mod wasm;
-use wasm::WasmModule;
+use crate::wasm::WasmModule;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "silverfish")]

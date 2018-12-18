@@ -6,9 +6,9 @@ use llvm::Module as LLVMModule;
 
 use wasmparser::FuncType;
 
-use wasm::Export;
-use wasm::Function;
-use wasm::WasmModule;
+use crate::wasm::Export;
+use crate::wasm::Function;
+use crate::wasm::WasmModule;
 
 use super::Opt;
 
