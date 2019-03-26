@@ -58,6 +58,24 @@ pub const U64_TRUNC_F64: &str = "u64_trunc_f64";
 pub const F32_TRUNC_F32: &str = "f32_trunc_f32";
 pub const F64_TRUNC_F64: &str = "f64_trunc_f64";
 
+pub const U32_DIV: &str = "u32_div";
+pub const U32_REM: &str = "u32_rem";
+
+pub const I32_DIV: &str = "i32_div";
+pub const I32_REM: &str = "i32_rem";
+
+pub const U64_DIV: &str = "u64_div";
+pub const U64_REM: &str = "u64_rem";
+
+pub const I64_DIV: &str = "i64_div";
+pub const I64_REM: &str = "i64_rem";
+
+pub const F32_MIN: &str = "f32_min";
+pub const F32_MAX: &str = "f32_max";
+
+pub const F64_MIN: &str = "f64_min";
+pub const F64_MAX: &str = "f64_max";
+
 // Intrinsic llvm functions
 pub const I32_CTPOP: &str = "llvm.ctpop.i32";
 pub const I64_CTPOP: &str = "llvm.ctpop.i64";
@@ -278,9 +296,113 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
         F64_SQRT,
         FunctionType::new(<f64>::get_type(ctx), &[<f64>::get_type(ctx)]).to_super(),
     );
+    m.add_function(
+        F32_MIN,
+        FunctionType::new(
+            <f32>::get_type(ctx),
+            &[<f32>::get_type(ctx), <f32>::get_type(ctx)],
+        )
+        .to_super(),
+    );
+    m.add_function(
+        F32_MAX,
+        FunctionType::new(
+            <f32>::get_type(ctx),
+            &[<f32>::get_type(ctx), <f32>::get_type(ctx)],
+        )
+        .to_super(),
+    );
+    m.add_function(
+        F64_MIN,
+        FunctionType::new(
+            <f64>::get_type(ctx),
+            &[<f64>::get_type(ctx), <f64>::get_type(ctx)],
+        )
+        .to_super(),
+    );
+    m.add_function(
+        F64_MAX,
+        FunctionType::new(
+            <f64>::get_type(ctx),
+            &[<f64>::get_type(ctx), <f64>::get_type(ctx)],
+        )
+        .to_super(),
+    );
+
+    m.add_function(
+        U32_DIV,
+        FunctionType::new(
+            <u32>::get_type(ctx),
+            &[<u32>::get_type(ctx), <u32>::get_type(ctx)],
+        )
+        .to_super(),
+    );
+    m.add_function(
+        U32_REM,
+        FunctionType::new(
+            <u32>::get_type(ctx),
+            &[<u32>::get_type(ctx), <u32>::get_type(ctx)],
+        )
+        .to_super(),
+    );
+
+    m.add_function(
+        I32_DIV,
+        FunctionType::new(
+            <i32>::get_type(ctx),
+            &[<i32>::get_type(ctx), <i32>::get_type(ctx)],
+        )
+        .to_super(),
+    );
+    m.add_function(
+        I32_REM,
+        FunctionType::new(
+            <i32>::get_type(ctx),
+            &[<i32>::get_type(ctx), <i32>::get_type(ctx)],
+        )
+        .to_super(),
+    );
+
+    m.add_function(
+        U64_DIV,
+        FunctionType::new(
+            <u64>::get_type(ctx),
+            &[<u64>::get_type(ctx), <u64>::get_type(ctx)],
+        )
+        .to_super(),
+    );
+    m.add_function(
+        U64_REM,
+        FunctionType::new(
+            <u64>::get_type(ctx),
+            &[<u64>::get_type(ctx), <u64>::get_type(ctx)],
+        )
+        .to_super(),
+    );
+
+    m.add_function(
+        I64_DIV,
+        FunctionType::new(
+            <i64>::get_type(ctx),
+            &[<i64>::get_type(ctx), <i64>::get_type(ctx)],
+        )
+        .to_super(),
+    );
+    m.add_function(
+        I64_REM,
+        FunctionType::new(
+            <i64>::get_type(ctx),
+            &[<i64>::get_type(ctx), <i64>::get_type(ctx)],
+        )
+        .to_super(),
+    );
+
     m.add_function(TRAP, FunctionType::new(<()>::get_type(ctx), &[]).to_super());
 }
 
 pub fn get_stub_function<'a>(m_ctx: &'a ModuleCtx, name: &str) -> &'a Function {
-    m_ctx.llvm_module.get_function(name).unwrap()
+    m_ctx
+        .llvm_module
+        .get_function(name)
+        .expect("a stub function name must be in the module!")
 }

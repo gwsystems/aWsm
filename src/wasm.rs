@@ -98,8 +98,7 @@ impl Function {
             Function::Declared { .. } => {
                 panic!("Malformed wasm, a function was declared but not implemented")
             }
-            // FIXME: Extra clone not needed
-            Function::Implemented { ref f } => f.clone().ty.unwrap().params.len(),
+            Function::Implemented { ref f } => f.ty.as_ref().unwrap().params.len(),
         }
     }
 
@@ -354,6 +353,9 @@ pub enum Instruction {
     F32Ge,
     F32Gt,
 
+    F32Min,
+    F32Max,
+
     F64Const(f64),
 
     F64PromoteF32,
@@ -380,6 +382,9 @@ pub enum Instruction {
     F64Lt,
     F64Ge,
     F64Gt,
+
+    F64Min,
+    F64Max,
 
     I32Load { flags: u32, offset: u32 },
     I32Store { flags: u32, offset: u32 },
@@ -586,6 +591,9 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
             Operator::F32Ge => Instruction::F32Ge,
             Operator::F32Gt => Instruction::F32Gt,
 
+            Operator::F32Min => Instruction::F32Min,
+            Operator::F32Max => Instruction::F32Max,
+
             Operator::F64Const { value } => {
                 let v: f64 = f64::from_bits(value.bits());
                 Instruction::F64Const(v)
@@ -615,6 +623,9 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
             Operator::F64Lt => Instruction::F64Lt,
             Operator::F64Ge => Instruction::F64Ge,
             Operator::F64Gt => Instruction::F64Gt,
+
+            Operator::F64Min => Instruction::F64Min,
+            Operator::F64Max => Instruction::F64Max,
 
             Operator::I32Load { ref memarg } => Instruction::I32Load {
                 flags: memarg.flags,

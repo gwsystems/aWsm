@@ -81,5 +81,5 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
     };
 }
 
-// NOTE: Handle loop at the call site by inserting phi instructions immedietly
+// NOTE: Handle loop at the call site by inserting phi instructions immediately
 // That means the recursive call doesn't need to care about what type it is

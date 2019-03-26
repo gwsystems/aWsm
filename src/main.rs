@@ -30,11 +30,15 @@ pub struct Opt {
     output: Option<String>,
 
     /// Force inlining of constant globals
-    #[structopt(short = "i", long = "inline_constant_globals")]
+    #[structopt(short = "i", long = "inline-constant-globals")]
     inline_constant_globals: bool,
 
+    /// Allow unsafe instruction implementations that may be faster
+    #[structopt(short = "u", long = "fast-unsafe-implementations")]
+    use_fast_unsafe_implementations: bool,
+
     /// Don't generate native globals, let the runtime handle it
-    #[structopt(long = "runtime_globals")]
+    #[structopt(long = "runtime-globals")]
     use_runtime_global_handling: bool,
 }
 

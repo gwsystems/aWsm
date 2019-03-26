@@ -1,7 +1,11 @@
+import csv
 import os
 import subprocess as sp
 import sys
 import timeit
+
+# CSV file name
+CSV_NAME = "benchmarks.csv"
 
 # Absolute path to the `code_benches` directory
 BENCH_ROOT = os.getcwd()
@@ -52,19 +56,27 @@ class Program(object):
 # TODO: Fix sphinx, which doesn't work properly on OS X
 # TODO: Do ghostscript, which has a ton of files
 programs = [
+    # Real world program benchmarks
+    Program("libjpeg", [], 2 ** 15,
+            custom_arguments=["-Wno-incompatible-library-redeclaration", "-Wno-implicit-function-declaration", "-Wno-shift-negative-value"]),
+    Program("sqlite", [], 2 ** 15),
+
+    # Synthetic benchmarks
+    Program("binarytrees", [16], 2 ** 14),
+    Program("function_pointers", [], 2 ** 14),
+    Program("matrix_multiply", [], 2 ** 14),
+
+    # Benchmark programs
     Program("adpcm", ["< large.pcm"], 2 ** 14,
             custom_arguments=["-Wno-implicit-int", "-Wno-implicit-function-declaration"]),
     Program("basic_math", [], 2 ** 14),
-    Program("binarytrees", [16], 2 ** 14),
     Program("bitcount", [2 ** 24], 2 ** 14),
     Program("crc", ["large.pcm"], 2 ** 14, custom_arguments=["-Wno-implicit-int", "-Wno-format"]),
     Program("dijkstra", ["input.dat"], 2 ** 14,
             custom_arguments=["-Wno-return-type"]),
     Program("fft", [8, 32768], 2 ** 14),
-    Program("function_pointers", [], 2 ** 14),
     Program("gsm", ["-fps", "-c", "large.au"], 2 ** 15, custom_arguments=["-DSASR", "-Wno-everything"]),
     Program("mandelbrot", [5000], 2 ** 14),
-    Program("matrix_multiply", [], 2 ** 14),
     Program("patricia", ["large.udp"], 2 ** 14),
     Program("qsort", ["input_small.dat"], 2 ** 18),
     Program("rsynth", ["-a", "-q", "-o", "/dev/null", "< largeinput.txt"], 2**14,
@@ -73,12 +85,10 @@ programs = [
     Program("susan", ["input_large.pgm", "/dev/null", "-s"], 2 ** 19, custom_arguments=["-Wno-everything"]),
     Program("stringsearch", [], 2 ** 13),
 
-
     # TODO: These programs segfault on my computer...
     # Program("blowfish", ["e", "input_large.asc", "/dev/null", "1234567890abcdeffedcba0987654321"], 2**14),
     # Program("pgp", ['-sa -z "this is a test" -u taustin@eecs.umich.edu testin.txt austin@umich.edu'], 2 ** 14,
     #         custom_arguments=["-DUNIX -D_BSD -DPORTABLE -DUSE_NBIO -DMPORTABLE", "-I.", "-Wno-everything"]),
-
 ]
 
 
@@ -104,17 +114,16 @@ def compile_to_wasm(program):
 def compile_wasm_to_bc(program):
     command = "{silverfish} bin/{pname}.wasm -o bin/{pname}.bc".format(silverfish=SILVERFISH_PATH, pname=program.name)
     sp.check_call(command, shell=True, cwd=program.name)
-    # Compile a second version with runtime globals
-    # FIXME: Runtime globals were a failed experiment -- evaluate removing all traces of it
-    command = "{silverfish} -i --runtime_globals bin/{pname}.wasm -o bin/{pname}_rg.bc".format(silverfish=SILVERFISH_PATH, pname=program.name)
+    # Also compile an unsafe version, so we can see the performance difference
+    command = "{silverfish} -u bin/{pname}.wasm -o bin/{pname}_us.bc".format(silverfish=SILVERFISH_PATH, pname=program.name)
     sp.check_call(command, shell=True, cwd=program.name)
 
 
 # Compile the WASM in `program`'s directory into llvm bytecode
-def compile_wasm_to_executable(program, exe_postfix, memory_impl, runtime_globals=False):
+def compile_wasm_to_executable(program, exe_postfix, memory_impl, unsafe_impls=False):
     bc_file = "bin/{pname}.bc".format(pname=program.name)
-    if runtime_globals:
-        bc_file = "bin/{pname}_rg.bc".format(pname=program.name)
+    if unsafe_impls:
+        bc_file = "bin/{pname}_us.bc".format(pname=program.name)
     opt = "-O3"
     if program.do_lto:
         opt += " -flto"
@@ -160,8 +169,9 @@ for i, p in enumerate(programs):
     compile_to_executable(p)
     compile_to_wasm(p)
     compile_wasm_to_bc(p)
-    compile_wasm_to_executable(p, "bc", "generic.c")
+    compile_wasm_to_executable(p, "np_us", "no_protection.c", True)
     compile_wasm_to_executable(p, "np", "no_protection.c")
+    compile_wasm_to_executable(p, "bc", "generic.c")
     if IS_64_BIT:
         compile_wasm_to_executable(p, "vm", "64bit_nix.c")
     if IS_X86:
@@ -170,26 +180,52 @@ for i, p in enumerate(programs):
         compile_wasm_to_executable(p, "sm", "segmented.c")
 
 print()
+print("Outputting to " + CSV_NAME)
+print()
 
-# Benchmark and output timing info for each of our programs
-for p in programs:
-    base_speed = bench(p, "", "native")
-    print("{:.4f}".format(base_speed))
+with open(CSV_NAME, 'w+', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file)
 
-    np_speed = bench(p, "_np", "wasm no protection")
-    output_run(base_speed, np_speed)
-
-    bc_speed = bench(p, "_bc", "wasm bounds checked")
-    output_run(base_speed, bc_speed)
-
+    columns = ["Program", "native", "wasm no protection unsafe", "wasm no protection", "wasm bounds checked"]
     if IS_X86:
-        mpx_speed = bench(p, "_mpx", "wasm using mpx")
-        output_run(base_speed, mpx_speed)
+        columns.append("wasm mpx")
     if IS_64_BIT:
-        vm_speed = bench(p, "_vm", "wasm virtual memory")
-        output_run(base_speed, vm_speed)
+        columns.append("wasm virtual memory")
     if IS_32_BIT_X86:
-        sm_speed = bench(p, "_sm", "wasm using segmentation")
-        output_run(base_speed, sm_speed)
-    print("")
+        columns.append("wasm segmentation")
+    csv_writer.writerow(columns)
 
+    # Benchmark and output timing info for each of our programs
+    for p in programs:
+        csv_row = [p.name]
+
+        base_speed = bench(p, "", "native")
+        print("{:.4f}".format(base_speed))
+        csv_row.append(base_speed / base_speed)
+
+        np_u_speed = bench(p, "_np_us", "wasm no protection unsafe")
+        output_run(base_speed, np_u_speed)
+        csv_row.append(np_u_speed / base_speed)
+
+        np_speed = bench(p, "_np", "wasm no protection")
+        output_run(base_speed, np_speed)
+        csv_row.append(np_speed / base_speed)
+
+        bc_speed = bench(p, "_bc", "wasm bounds checked")
+        output_run(base_speed, bc_speed)
+        csv_row.append(bc_speed / base_speed)
+
+        if IS_X86:
+            mpx_speed = bench(p, "_mpx", "wasm mpx")
+            output_run(base_speed, mpx_speed)
+            csv_row.append(mpx_speed / base_speed)
+        if IS_64_BIT:
+            vm_speed = bench(p, "_vm", "wasm virtual memory")
+            output_run(base_speed, vm_speed)
+            csv_row.append(vm_speed / base_speed)
+        if IS_32_BIT_X86:
+            sm_speed = bench(p, "_sm", "wasm using segmentation")
+            output_run(base_speed, sm_speed)
+            csv_row.append(sm_speed / base_speed)
+        csv_writer.writerow(csv_row)
+        print("")

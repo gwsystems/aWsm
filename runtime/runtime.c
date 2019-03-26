@@ -1,5 +1,8 @@
 #include "runtime.h"
 
+// TODO: Throughout here we use `assert` for error conditions, which isn't optimal
+// Instead we should use `unlikely` branches to a single trapping function (which should optimize better)
+
 // Region initialization helper function
 EXPORT void initialize_region(u32 offset, u32 data_count, char* data) {
     assert(memory_size >= data_count);
@@ -22,38 +25,80 @@ void add_function_to_table(u32 idx, u32 type_id, char* pointer) {
 INLINE u32 rotl_u32(u32 n, u32 c_u32) {
     // WASM requires a modulus here (usually a single bitwise op, but it means we need no assert)
     unsigned int c = c_u32 % (CHAR_BIT * sizeof(n));
-    const unsigned int mask = (CHAR_BIT*sizeof(n) - 1);  // assumes width is a power of 2.
+    const unsigned int mask = (CHAR_BIT * sizeof(n) - 1);  // assumes width is a power of 2.
 
     c &= mask;
-    return (n<<c) | (n>>( (-c)&mask ));
+    return (n << c) | (n >> ((-c) & mask));
 }
 
 INLINE u32 rotr_u32(u32 n, u32 c_u32) {
     // WASM requires a modulus here (usually a single bitwise op, but it means we need no assert)
     unsigned int c = c_u32 % (CHAR_BIT * sizeof(n));
-    const unsigned int mask = (CHAR_BIT*sizeof(n) - 1);
+    const unsigned int mask = (CHAR_BIT * sizeof(n) - 1);
 
     c &= mask;
-    return (n>>c) | (n<<( (-c)&mask ));
+    return (n>>c) | (n << ((-c) & mask));
 }
 
 INLINE u64 rotl_u64(u64 n, u64 c_u64) {
     // WASM requires a modulus here (usually a single bitwise op, but it means we need no assert)
     unsigned int c = c_u64 % (CHAR_BIT * sizeof(n));
-    const unsigned int mask = (CHAR_BIT*sizeof(n) - 1);  // assumes width is a power of 2.
+    const unsigned int mask = (CHAR_BIT * sizeof(n) - 1);  // assumes width is a power of 2.
 
     c &= mask;
-    return (n<<c) | (n>>( (-c)&mask ));
+    return (n << c) | (n >> ((-c) & mask));
 }
 
 INLINE u64 rotr_u64(u64 n, u64 c_u64) {
     // WASM requires a modulus here (usually a single bitwise op, but it means we need no assert)
     unsigned int c = c_u64 % (CHAR_BIT * sizeof(n));
-    const unsigned int mask = (CHAR_BIT*sizeof(n) - 1);
+    const unsigned int mask = (CHAR_BIT * sizeof(n) - 1);
 
     c &= mask;
-    return (n>>c) | (n<<( (-c)&mask ));
+    return (n >> c) | (n << ((-c) & mask));
 }
+
+// Now safe division and remainder
+INLINE u32 u32_div(u32 a, u32 b) {
+    assert(b);
+    return a / b;
+}
+
+INLINE u32 u32_rem(u32 a, u32 b) {
+    assert(b);
+    return a % b;
+}
+
+INLINE i32 i32_div(i32 a, i32 b) {
+    assert(b && (a != INT32_MIN || b != -1));
+    return a / b;
+}
+
+INLINE i32 i32_rem(i32 a, i32 b) {
+    assert(b && (a != INT32_MIN || b != -1));
+    return a % b;
+}
+
+INLINE u64 u64_div(u64 a, u64 b) {
+    assert(b);
+    return a / b;
+}
+
+INLINE u64 u64_rem(u64 a, u64 b) {
+    assert(b);
+    return a % b;
+}
+
+INLINE i64 i64_div(i64 a, i64 b) {
+    assert(b && (a != INT64_MIN || b != -1));
+    return a / b;
+}
+
+INLINE i64 i64_rem(i64 a, i64 b) {
+    assert(b && (a != INT64_MIN || b != -1));
+    return a % b;
+}
+
 
 
 // float to integer conversion methods
@@ -95,7 +140,7 @@ u64 u64_trunc_f64(double f) {
 }
 
 i64 i64_trunc_f64(double f) {
-    assert(INT64_MIN <= f && f <= INT64_MAX );
+    assert(INT64_MIN <= f && f <= INT64_MAX);
     return (i64) f;
 }
 
@@ -104,9 +149,23 @@ INLINE float f32_trunc_f32(float f) {
     return trunc(f);
 }
 
-INLINE double f64_trunc_f64(double f) {
-    return trunc(f);
+INLINE float f32_min(float a, float b) {
+    return a < b ? a : b;
 }
+
+INLINE float f32_max(float a, float b) {
+    return a > b ? a : b;
+}
+
+INLINE double f64_min(double a, double b) {
+    return a < b ? a : b;
+}
+
+INLINE double f64_max(double a, double b) {
+    return a > b ? a : b;
+}
+
+
 
 // If we are using runtime globals, we need to populate them
 WEAK void populate_globals() {}

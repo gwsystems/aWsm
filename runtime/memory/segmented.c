@@ -171,4 +171,3 @@ INLINE void switch_into_runtime() {
 INLINE void switch_out_of_runtime() {
     set_seg_registers();
 }
-

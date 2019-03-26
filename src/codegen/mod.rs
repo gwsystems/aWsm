@@ -37,6 +37,7 @@ mod type_conversions;
 use self::type_conversions::wasm_func_type_to_llvm_type;
 
 pub struct ModuleCtx<'a> {
+    opt: &'a Opt,
     llvm_ctx: &'a LLVMCtx,
     llvm_module: &'a LLVMModule,
     types: &'a [FuncType],
@@ -91,6 +92,7 @@ pub fn process_to_llvm(
 
     // The global information about a module makes up the module context
     let module_ctx = ModuleCtx {
+        opt,
         llvm_ctx,
         llvm_module,
         types: wasm_module.types.as_slice(),
@@ -123,7 +125,7 @@ pub fn process_to_llvm(
     }
 
     // TODO: Remove this debugging print
-    //    llvm_module.dump();
+    //        llvm_module.dump();
 
     llvm_module.write_bitcode(output_path)
 }
