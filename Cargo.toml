@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 llvm-alt = { git = "https://github.com/Others/llvm-rs.git"}
 structopt = "0.2"
-wasmparser = "0.22"
+wasmparser = "0.26"
 
 [profile.release]
 debug = true

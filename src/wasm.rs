@@ -844,7 +844,7 @@ impl WasmModule {
                 SectionCode::Element => ProcessState::TableElementSection,
                 SectionCode::Global => ProcessState::GlobalSection,
                 SectionCode::Custom { name, kind } => ProcessState::CustomSection {
-                    name: name.to_vec(),
+                    name: Vec::from(name.as_bytes()),
                     kind,
                 },
                 e => panic!("Have not implemented section code {:?}", e),
@@ -900,8 +900,8 @@ impl WasmModule {
             } => {
                 match ty {
                     ImportSectionEntryType::Function(i) => {
-                        let source = str::from_utf8(module).unwrap().to_string();
-                        let name = str::from_utf8(field).unwrap().to_string();
+                        let source = module.to_string();
+                        let name = field.to_string();
                         let appended = source.clone() + "_" + &name;
                         self.functions.push(Function::Imported {
                             source,
@@ -912,8 +912,8 @@ impl WasmModule {
                         });
                     }
                     ImportSectionEntryType::Global(global_ty) => {
-                        let source = str::from_utf8(module).unwrap().to_string();
-                        let name = str::from_utf8(field).unwrap().to_string();
+                        let source = module.to_string();
+                        let name = field.to_string();
                         let appended = source.clone() + "_" + &name;
 
                         self.globals.push(Global::Imported {
@@ -959,7 +959,7 @@ impl WasmModule {
     fn process_export_section(&mut self, p: &mut Parser) -> ProcessState {
         match p.read() {
             &ParserState::ExportSectionEntry { field, kind, index } => {
-                let name = str::from_utf8(field).unwrap().to_string();
+                let name = field.to_string();
                 let export = match kind {
                     ExternalKind::Function => Export::Function {
                         name,
