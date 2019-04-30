@@ -6,7 +6,10 @@ a.out*
 **/*.o
 input.wasm
 output.bc
+
 code_benches/*/bin/
+code_benches/sqlite/test.db
+code_benches/benchmarks.csv
 
 silverfish.iml
 .idea

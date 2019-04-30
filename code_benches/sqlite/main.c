@@ -18,10 +18,10 @@ int main(int argc, char* argv[]) {
    char *sql;
 
    /* Delete the database file if it exists */
-   remove("test3.db");
+   remove("test.db");
 
    /* Open database */
-   rc = sqlite3_open("test3.db", &db);
+   rc = sqlite3_open("test.db", &db);
 
    if( rc ) {
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));

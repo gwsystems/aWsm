@@ -1028,7 +1028,7 @@ impl WasmModule {
 
     fn process_data_section(&mut self, p: &mut Parser) -> ProcessState {
         match p.read() {
-            &ParserState::BeginDataSectionEntry(i) => ProcessState::DataSectionEntry {
+            &ParserState::BeginActiveDataSectionEntry(i) => ProcessState::DataSectionEntry {
                 memory_id: i,
                 offset_expression: None,
                 body: None,
@@ -1110,7 +1110,7 @@ impl WasmModule {
 
     fn process_table_element_section(&mut self, p: &mut Parser) -> ProcessState {
         match p.read() {
-            &ParserState::BeginElementSectionEntry(table_id) => {
+            &ParserState::BeginActiveElementSectionEntry(table_id) => {
                 ProcessState::TableElementEntry { table_id }
             }
             &ParserState::EndSection => ProcessState::Outer,
