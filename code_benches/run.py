@@ -29,8 +29,6 @@ IS_64_BIT = sys.maxsize > 2**32
 IS_X86 = '86' in os.uname()[-1]
 IS_32_BIT_X86 = (not IS_64_BIT) and IS_X86
 
-# TODO: Add an option to output a CSV instead of human readable output
-
 # How many times should we run our benchmarks
 RUN_COUNT = 10
 ENABLE_DEBUG_SYMBOLS = True

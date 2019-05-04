@@ -193,9 +193,8 @@ int main(int argc, char* argv[]) {
     expand_memory();
     switch_into_runtime();
 
-    // FIXME: Should do a real bounds check here
     i32* array_ptr = get_memory_ptr_void(page_offset, argc * sizeof(i32));
-    int string_offset = page_offset + argc * sizeof(i32);
+    i32 string_offset = page_offset + argc * sizeof(i32);
     for (int i = 0; i < argc; i++) {
         size_t str_size = strlen(argv[i]) + 1;
 

@@ -226,7 +226,7 @@ i32 wasm_stat(u32 path_str_offset, i32 stat_offset) {
             .st_blksize = stat.st_blksize,
             .st_blocks = stat.st_blocks,
         };
-
+#ifdef __APPLE__
         stat_ptr->st_atim.tv_sec = stat.st_atimespec.tv_sec;
         stat_ptr->st_atim.tv_nsec = stat.st_atimespec.tv_nsec;
 
@@ -235,6 +235,16 @@ i32 wasm_stat(u32 path_str_offset, i32 stat_offset) {
 
         stat_ptr->st_ctim.tv_sec = stat.st_ctimespec.tv_sec;
         stat_ptr->st_ctim.tv_nsec = stat.st_ctimespec.tv_nsec;
+#else
+        stat_ptr->st_atim.tv_sec = stat.st_atim.tv_sec;
+        stat_ptr->st_atim.tv_nsec = stat.st_atim.tv_nsec;
+
+        stat_ptr->st_mtim.tv_sec = stat.st_mtim.tv_sec;
+        stat_ptr->st_mtim.tv_nsec = stat.st_mtim.tv_nsec;
+
+        stat_ptr->st_ctim.tv_sec = stat.st_ctim.tv_sec;
+        stat_ptr->st_ctim.tv_nsec = stat.st_ctim.tv_nsec;
+#endif
     } else if (res == -1) {
         return -errno;
     }
@@ -261,6 +271,7 @@ i32 wasm_fstat(i32 filedes, i32 stat_offset) {
             .st_blksize = stat.st_blksize,
             .st_blocks = stat.st_blocks,
         };
+#ifdef __APPLE__
         stat_ptr->st_atim.tv_sec = stat.st_atimespec.tv_sec;
         stat_ptr->st_atim.tv_nsec = stat.st_atimespec.tv_nsec;
 
@@ -269,6 +280,16 @@ i32 wasm_fstat(i32 filedes, i32 stat_offset) {
 
         stat_ptr->st_ctim.tv_sec = stat.st_ctimespec.tv_sec;
         stat_ptr->st_ctim.tv_nsec = stat.st_ctimespec.tv_nsec;
+#else
+        stat_ptr->st_atim.tv_sec = stat.st_atim.tv_sec;
+        stat_ptr->st_atim.tv_nsec = stat.st_atim.tv_nsec;
+
+        stat_ptr->st_mtim.tv_sec = stat.st_mtim.tv_sec;
+        stat_ptr->st_mtim.tv_nsec = stat.st_mtim.tv_nsec;
+
+        stat_ptr->st_ctim.tv_sec = stat.st_ctim.tv_sec;
+        stat_ptr->st_ctim.tv_nsec = stat.st_ctim.tv_nsec;
+#endif
     } else if (res == -1) {
         return -errno;
     }
@@ -296,6 +317,7 @@ i32 wasm_lstat(i32 path_str_offset, i32 stat_offset) {
             .st_blksize = stat.st_blksize,
             .st_blocks = stat.st_blocks,
         };
+#ifdef __APPLE__
         stat_ptr->st_atim.tv_sec = stat.st_atimespec.tv_sec;
         stat_ptr->st_atim.tv_nsec = stat.st_atimespec.tv_nsec;
 
@@ -304,6 +326,16 @@ i32 wasm_lstat(i32 path_str_offset, i32 stat_offset) {
 
         stat_ptr->st_ctim.tv_sec = stat.st_ctimespec.tv_sec;
         stat_ptr->st_ctim.tv_nsec = stat.st_ctimespec.tv_nsec;
+#else
+        stat_ptr->st_atim.tv_sec = stat.st_atim.tv_sec;
+        stat_ptr->st_atim.tv_nsec = stat.st_atim.tv_nsec;
+
+        stat_ptr->st_mtim.tv_sec = stat.st_mtim.tv_sec;
+        stat_ptr->st_mtim.tv_nsec = stat.st_mtim.tv_nsec;
+
+        stat_ptr->st_ctim.tv_sec = stat.st_ctim.tv_sec;
+        stat_ptr->st_ctim.tv_nsec = stat.st_ctim.tv_nsec;
+#endif
     } else if (res == -1) {
         return -errno;
     }
