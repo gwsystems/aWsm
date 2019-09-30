@@ -55,8 +55,11 @@ pub fn process_to_llvm(
 
     // Setup to compile to the local target
     // FIXME: Should be able to use the local default target, but that doesn't work properly on OSX
-    llvm_module.set_target("x86_64-apple-macosx10.14.0");
-    //    llvm_module.set_target("i686-pc-linux-gnu");
+    llvm_module.set_target(
+        opt.target.as_ref()
+            .map(String::as_ref)
+            .unwrap_or("x86_64-apple-macosx10.14.0")
+    );
 
     // Remap WASM generated names to exported names
     for e in wasm_module.exports {

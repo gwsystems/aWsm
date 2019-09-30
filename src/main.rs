@@ -40,6 +40,10 @@ pub struct Opt {
     /// Don't generate native globals, let the runtime handle it
     #[structopt(long = "runtime-globals")]
     use_runtime_global_handling: bool,
+
+    /// Set compilation target
+    #[structopt(long = "target")]
+    target: Option<String>,
 }
 
 fn main() -> io::Result<()> {
