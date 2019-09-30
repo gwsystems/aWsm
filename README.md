@@ -19,9 +19,9 @@ FLAGS:
 
 OPTIONS:
     -o, --output <output>    Output bc file
+        --target <target>    Set compilation target
 
 ARGS:
     <input>    Input wasm file
-
 ```
 Relies on you having a sensible llvm toolchain on your computer (so we can call llvm-config)
