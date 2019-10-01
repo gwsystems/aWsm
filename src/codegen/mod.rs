@@ -1,6 +1,4 @@
 use std::io;
-use std::process::Command;
-use std::str;
 
 use llvm::Context as LLVMCtx;
 use llvm::Function as LLVMFunction;
@@ -55,22 +53,10 @@ pub fn process_to_llvm(
     let llvm_ctx = &*LLVMCtx::new();
     let llvm_module = &*LLVMModule::new(&wasm_module.source_name, llvm_ctx);
 
-    // Setup to compile to the local target unless overridden with --target
-    match opt.target {
-        Some(ref target) => {
-            llvm_module.set_target(target);
-        }
-        _ => {
-            let target = Command::new("llvm-config")
-                .arg("--host-target")
-                .output().ok()
-                .and_then(|output|
-                    str::from_utf8(&output.stdout).ok()
-                        .map(|stdout| String::from(stdout.trim()))
-                )
-                .expect("Could not determine target triple, please provide --target");
-            llvm_module.set_target(&target);
-        }
+    // Accept --target to compile for specific target, otherwise omit target
+    // triple from bytecode, this defaults to the host target in LLVM
+    if let Some(ref target) = opt.target {
+        llvm_module.set_target(target);
     }
 
     // Remap WASM generated names to exported names
