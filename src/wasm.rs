@@ -412,6 +412,9 @@ pub enum Instruction {
 
     F64Load { flags: u32, offset: u32 },
     F64Store { flags: u32, offset: u32 },
+
+    MemorySize,
+    MemoryGrow,
 }
 
 impl<'a> From<&'a Operator<'a>> for Instruction {
@@ -722,6 +725,8 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
                 flags: memarg.flags,
                 offset: memarg.offset,
             },
+            Operator::MemorySize { reserved: _ } => Instruction::MemorySize,
+            Operator::MemoryGrow { reserved: _ } => Instruction::MemoryGrow,
 
             ref e => unimplemented!("{:?}", e),
         }
@@ -922,7 +927,12 @@ impl WasmModule {
                             mutable: global_ty.mutable,
                         });
                     }
-                    e => panic!("Have not implemented import section entry type {:?}", e),
+                    ImportSectionEntryType::Memory(memory_ty) => {
+                        self.memories.push(*memory_ty);
+                    }
+                    ImportSectionEntryType::Table(table_ty) => {
+                        self.tables.push(*table_ty);
+                    }
                 }
                 ProcessState::ImportSection
             }

@@ -1020,6 +1020,13 @@ pub fn compile_block<'a, 'b>(
                 let v = stack.pop().unwrap();
                 store_val::<f64>(m_ctx, b, &mut stack, offset, v);
             }
+
+            Instruction::MemorySize => {
+                // FIXME: needs implementation?
+            }
+            Instruction::MemoryGrow => {
+                // FIXME: needs implementation?
+            }
         }
     }
 }
