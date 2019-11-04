@@ -11,6 +11,7 @@ use super::block::compile_block;
 use super::breakout::BreakoutTarget;
 use super::type_conversions::wasm_type_to_zeroed_value;
 use super::ModuleCtx;
+use wasmparser::TypeOrFuncType;
 
 pub struct FunctionCtx<'a> {
     pub llvm_f: &'a Function,
@@ -53,7 +54,7 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
     };
 
     let termination_block = llvm_f.append("exit");
-    let root_breakout_target = BreakoutTarget::new_wrapped(termination_block, f.get_return_type());
+    let root_breakout_target = BreakoutTarget::new_wrapped(termination_block, f.get_return_type().map(TypeOrFuncType::Type));
 
     // In WASM, a break out of the root block is the same as returning from the function
     // Thus the termination block needs to do that

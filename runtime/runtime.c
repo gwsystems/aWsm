@@ -166,6 +166,27 @@ INLINE double f64_max(double a, double b) {
 }
 
 
+// this provides a way to add a timeout for wasm execution, and support for that
+// TODO: Add a way for silverfish to give us this value
+WEAK unsigned int wasm_execution_timeout_ms = 0;
+sigjmp_buf timeout_jump;
+#define JUMPING_BACK 0xBACC
+
+// Precondition: you've already loaded timeout_jump with where we should jump after the timeout
+void handle_sigalarm(int sig) {
+    // TODO: We use siglongjmp which resets signal stuff, so perhaps this call is unnessesary
+    signal(sig, SIG_IGN);
+    siglongjmp(timeout_jump, JUMPING_BACK);
+}
+
+void schedule_timeout() {
+    signal(SIGALRM, handle_sigalarm);
+    ualarm(wasm_execution_timeout_ms * 1000, 0);
+}
+
+void cancel_timeout() {
+    ualarm(0, 0);
+}
 
 // If we are using runtime globals, we need to populate them
 WEAK void populate_globals() {}
@@ -178,10 +199,24 @@ int main(int argc, char* argv[]) {
     alloc_linear_memory();
     populate_table();
 
+    // Setup the global values (if needed), and populate the linear memory
     switch_out_of_runtime();
     populate_globals();
     switch_into_runtime();
     populate_memory();
+
+    // In the case of a real timeout being compiled in, handle that
+    if (wasm_execution_timeout_ms) {
+        // Set the jumpoint to here, and save the signal mask
+        int res = sigsetjmp(timeout_jump, 1);
+        if (res != 0) {
+            assert(res == JUMPING_BACK);
+            printf("WE DECIDED TO GIVE UP\n");
+            return -JUMPING_BACK;
+        }
+        schedule_timeout();
+    }
+
 
     // What follows is a huge cludge
     // We want to pass the program arguments to the program, so we need to copy them into an array in linear memory
@@ -212,6 +247,11 @@ int main(int argc, char* argv[]) {
     switch_out_of_runtime();
     int ret =  wasmf_main(argc, page_offset);
     switch_into_runtime();
+
+    // Cancel any pending timeout
+    if (wasm_execution_timeout_ms) {
+        cancel_timeout();
+    }
 
     return ret;
 }

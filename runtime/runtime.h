@@ -4,6 +4,8 @@
 #include <limits.h>
 #include <math.h>
 #include <printf.h>
+#include <setjmp.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -52,7 +54,6 @@ extern u32 memory_size;
 
 void alloc_linear_memory();
 void expand_memory();
-// Assumption: bounds_check < WASM_PAGE_SIZE
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check);
 
 static inline void* get_memory_ptr_void(u32 offset, u32 bounds_check) {
@@ -87,4 +88,3 @@ INLINE char* get_function_from_table(u32 idx, u32 type_id);
 
 // libc/* might need to do some setup for the libc setup
 void stub_init(i32 offset);
-

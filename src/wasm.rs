@@ -1,6 +1,6 @@
 use std::str;
 
-use wasmparser::CustomSectionKind;
+use wasmparser::{CustomSectionKind, TypeOrFuncType};
 use wasmparser::ExternalKind;
 use wasmparser::FuncType;
 use wasmparser::ImportSectionEntryType;
@@ -61,6 +61,32 @@ impl Global {
                 initializer: initializer.clone(),
                 generated_name: new_name,
             },
+        }
+    }
+
+    pub fn in_memory_size(&self) -> usize {
+        let typ = match self {
+            Global::Imported {
+                content_type,
+                ..
+            } => content_type,
+            Global::InModule {
+                content_type,
+                ..
+            } => content_type
+        };
+
+        match typ {
+            Type::I32 => 4,
+            Type::I64 => 8,
+            Type::F32 => 4,
+            Type::F64 => 8,
+            Type::V128 => 16,
+            Type::AnyFunc => 4,
+            Type::AnyRef => 8,
+            Type::Func => 4,
+            Type::EmptyBlockType => 0,
+            Type::Null => 0,
         }
     }
 }
@@ -217,8 +243,8 @@ pub struct TableInitializer {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Instruction {
-    BlockStart { produced_type: Option<Type> },
-    LoopStart { produced_type: Option<Type> },
+    BlockStart { produced_type: Option<TypeOrFuncType> },
+    LoopStart { produced_type: Option<TypeOrFuncType> },
     End,
 
     Br { depth: u32 },
@@ -418,7 +444,7 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
     fn from(o: &Operator<'a>) -> Self {
         match *o {
             Operator::Block { ty } => {
-                let produced_type = if ty == Type::EmptyBlockType {
+                let produced_type = if ty == TypeOrFuncType::Type(Type::EmptyBlockType) {
                     None
                 } else {
                     Some(ty)
@@ -426,7 +452,7 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
                 Instruction::BlockStart { produced_type }
             }
             Operator::Loop { ty } => {
-                let produced_type = if ty == Type::EmptyBlockType {
+                let produced_type = if ty == TypeOrFuncType::Type(Type::EmptyBlockType) {
                     None
                 } else {
                     Some(ty)
@@ -799,6 +825,25 @@ impl WasmModule {
         let mut m = WasmModule::new(input_filename);
         m.process_wasm(p);
         m
+    }
+
+    pub fn log_diagnostics(&self) {
+        let global_variable_memory_use: usize = self.globals.iter().map(|g| g.in_memory_size()).sum();
+        info!("Globals taking up {} bytes", global_variable_memory_use);
+
+        let mut data_initializer_memory_use = 0;
+        for initializer in &self.data_initializers {
+            for body_bytes in &initializer.body {
+                data_initializer_memory_use += body_bytes.len();
+            }
+        }
+        info!("Data initializers taking up {} bytes", data_initializer_memory_use);
+
+        let mut function_table_entries = 0;
+        for initializer in &self.table_initializers {
+            function_table_entries += initializer.function_indexes.len();
+        }
+        info!("Function table entries {} (ignoring fragmentation)", function_table_entries);
     }
 
     fn implement_function(&mut self, mut f: ImplementedFunction) {
