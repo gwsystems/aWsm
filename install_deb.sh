@@ -9,8 +9,6 @@ LLVM_VERSION=9
 sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
 sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
 sudo apt install libc++-dev libc++abi-dev --yes
-git clone https://github.com/gwsystems/silverfish.git
-cd silverfish
 cargo build --release
 mkdir -p $HOME/bin
 cp -t $HOME/bin target/release/silverfish
