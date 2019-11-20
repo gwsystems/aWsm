@@ -53,10 +53,11 @@ pub fn process_to_llvm(
     let llvm_ctx = &*LLVMCtx::new();
     let llvm_module = &*LLVMModule::new(&wasm_module.source_name, llvm_ctx);
 
-    // Setup to compile to the local target
-    // FIXME: Should be able to use the local default target, but that doesn't work properly on OSX
-    llvm_module.set_target("x86_64-apple-macosx10.14.0");
-    //    llvm_module.set_target("i686-pc-linux-gnu");
+    // Accept --target to compile for specific target, otherwise omit target
+    // triple from bytecode, this defaults to the host target in LLVM
+    if let Some(ref target) = opt.target {
+        llvm_module.set_target(target);
+    }
 
     // Remap WASM generated names to exported names
     for e in wasm_module.exports {
