@@ -54,6 +54,8 @@ class Program(object):
 # TODO: Fix sphinx, which doesn't work properly on OS X
 # TODO: Do ghostscript, which has a ton of files
 programs = [
+    Program("memcmp", [], 2 ** 14),
+
     # Real world program benchmarks
     Program("libjpeg", [], 2 ** 15,
             custom_arguments=["-Wno-incompatible-library-redeclaration", "-Wno-implicit-function-declaration", "-Wno-shift-negative-value"]),

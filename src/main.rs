@@ -1,4 +1,6 @@
 extern crate llvm;
+#[macro_use]
+extern crate log;
 extern crate structopt;
 extern crate wasmparser;
 
@@ -47,7 +49,11 @@ pub struct Opt {
 }
 
 fn main() -> io::Result<()> {
+    let log_spec = "debug";
+    flexi_logger::Logger::with_str(log_spec).start().unwrap();
+
     let opt = Opt::from_args();
+    info!("running silverfish({:?}, {:?})", opt.input, opt.output);
 
     let input_path: &Path = &opt.input;
     let input_filename = input_path.file_name().and_then(|s| s.to_str()).unwrap();
@@ -60,11 +66,15 @@ fn main() -> io::Result<()> {
     let mut parser = Parser::new(&wasm_bytes);
     let module = WasmModule::from_wasm_parser(input_filename, &mut parser);
 
+    // Get diagnostics
+    module.log_diagnostics();
+
     let output_path = opt
         .output
         .clone()
         .unwrap_or_else(|| "output.bc".to_string());
     process_to_llvm(&opt, module, &output_path)?;
 
+    info!("silverfish finished successfully");
     Ok(())
 }

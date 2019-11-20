@@ -6,14 +6,14 @@ use llvm::Builder;
 use llvm::Context;
 use llvm::Value;
 
-use wasmparser::Type;
+use wasmparser::TypeOrFuncType;
 
 use super::type_conversions::llvm_type_to_zeroed_value;
 use super::type_conversions::wasm_type_to_zeroed_value;
 
 pub struct BreakoutTarget<'a> {
     pub bb: &'a BasicBlock,
-    result_type: Option<Type>,
+    result_type: Option<TypeOrFuncType>,
     jumps: Vec<JumpFrom<'a>>,
 }
 
@@ -26,7 +26,7 @@ pub struct JumpFrom<'a> {
 pub type WBreakoutTarget<'a> = Rc<RefCell<BreakoutTarget<'a>>>;
 
 impl<'a> BreakoutTarget<'a> {
-    pub fn new(bb: &'a BasicBlock, result_type: Option<Type>) -> BreakoutTarget<'a> {
+    pub fn new(bb: &'a BasicBlock, result_type: Option<TypeOrFuncType>) -> BreakoutTarget<'a> {
         BreakoutTarget {
             bb,
             result_type,
@@ -34,7 +34,7 @@ impl<'a> BreakoutTarget<'a> {
         }
     }
 
-    pub fn new_wrapped(bb: &'a BasicBlock, result_type: Option<Type>) -> WBreakoutTarget<'a> {
+    pub fn new_wrapped(bb: &'a BasicBlock, result_type: Option<TypeOrFuncType>) -> WBreakoutTarget<'a> {
         let bt = Self::new(bb, result_type);
         Rc::new(RefCell::new(bt))
     }
@@ -112,7 +112,11 @@ impl<'a> BreakoutTarget<'a> {
             if vals.is_empty() {
                 // See above comment about unreachablity
                 // TODO: Figure out if we can instead produce an unreachable result
-                wasm_type_to_zeroed_value(ctx, ty)
+                if let TypeOrFuncType::Type(t) = ty {
+                    wasm_type_to_zeroed_value(ctx, t)
+                } else {
+                    panic!()
+                }
             } else if vals.len() == 1 {
                 vals[0].1
             } else {
