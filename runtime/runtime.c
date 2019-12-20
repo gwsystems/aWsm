@@ -157,6 +157,10 @@ INLINE float f32_max(float a, float b) {
     return a > b ? a : b;
 }
 
+INLINE float f32_floor(float a) {
+    return floor(a);
+}
+
 INLINE double f64_min(double a, double b) {
     return a < b ? a : b;
 }
@@ -165,6 +169,9 @@ INLINE double f64_max(double a, double b) {
     return a > b ? a : b;
 }
 
+INLINE double f64_floor(double a) {
+    return floor(a);
+}
 
 
 // If we are using runtime globals, we need to populate them
