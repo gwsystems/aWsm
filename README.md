@@ -19,10 +19,10 @@ FLAGS:
 
 OPTIONS:
     -o, --output <output>    Output bc file
+        --target <target>    Set compilation target
 
 ARGS:
     <input>    Input wasm file
-
 ```
 
 # Installation from Source
@@ -46,7 +46,6 @@ sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VER
 sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
 ```
 4. [Install the C++ Standard Library for LLVM](https://libcxx.llvm.org/)
-​
 5. Clone and build silverfish
 ```sh
 git clone https://github.com/gwsystems/silverfish.git
