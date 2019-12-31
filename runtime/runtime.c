@@ -5,8 +5,9 @@
 
 // Region initialization helper function
 EXPORT void initialize_region(u32 offset, u32 data_count, char* data) {
-    assert(memory_size >= data_count);
-    assert(offset < memory_size - data_count);
+    silverfish_assert(memory_size >= data_count);
+    silverfish_assert(offset < memory_size - data_count);
+//    silverfish_assert(offset <= memory_size - data_count);
 
     // FIXME: Hack around segmented and unsegmented access
     memcpy(get_memory_ptr_for_runtime(offset, data_count), data, data_count);
@@ -15,7 +16,7 @@ EXPORT void initialize_region(u32 offset, u32 data_count, char* data) {
 struct indirect_table_entry indirect_table[INDIRECT_TABLE_SIZE];
 
 void add_function_to_table(u32 idx, u32 type_id, char* pointer) {
-    assert(idx < INDIRECT_TABLE_SIZE);
+    silverfish_assert(idx < INDIRECT_TABLE_SIZE);
     indirect_table[idx] = (struct indirect_table_entry) { .type_id = type_id, .func_pointer = pointer };
 }
 
@@ -60,42 +61,42 @@ INLINE u64 rotr_u64(u64 n, u64 c_u64) {
 
 // Now safe division and remainder
 INLINE u32 u32_div(u32 a, u32 b) {
-    assert(b);
+    silverfish_assert(b);
     return a / b;
 }
 
 INLINE u32 u32_rem(u32 a, u32 b) {
-    assert(b);
+    silverfish_assert(b);
     return a % b;
 }
 
 INLINE i32 i32_div(i32 a, i32 b) {
-    assert(b && (a != INT32_MIN || b != -1));
+    silverfish_assert(b && (a != INT32_MIN || b != -1));
     return a / b;
 }
 
 INLINE i32 i32_rem(i32 a, i32 b) {
-    assert(b && (a != INT32_MIN || b != -1));
+    silverfish_assert(b && (a != INT32_MIN || b != -1));
     return a % b;
 }
 
 INLINE u64 u64_div(u64 a, u64 b) {
-    assert(b);
+    silverfish_assert(b);
     return a / b;
 }
 
 INLINE u64 u64_rem(u64 a, u64 b) {
-    assert(b);
+    silverfish_assert(b);
     return a % b;
 }
 
 INLINE i64 i64_div(i64 a, i64 b) {
-    assert(b && (a != INT64_MIN || b != -1));
+    silverfish_assert(b && (a != INT64_MIN || b != -1));
     return a / b;
 }
 
 INLINE i64 i64_rem(i64 a, i64 b) {
-    assert(b && (a != INT64_MIN || b != -1));
+    silverfish_assert(b && (a != INT64_MIN || b != -1));
     return a % b;
 }
 
@@ -105,42 +106,42 @@ INLINE i64 i64_rem(i64 a, i64 b) {
 // In C, float => int conversions always truncate
 // If a int2float(int::min_value) <= float <= int2float(int::max_value), it must always be safe to truncate it
 u32 u32_trunc_f32(float f) {
-    assert(0 <= f && f <= UINT32_MAX);
+    silverfish_assert(0 <= f && f <= UINT32_MAX);
     return (u32) f;
 }
 
 i32 i32_trunc_f32(float f) {
-    assert(INT32_MIN <= f && f <= INT32_MAX );
+    silverfish_assert(INT32_MIN <= f && f <= INT32_MAX );
     return (i32) f;
 }
 
 u32 u32_trunc_f64(double f) {
-    assert(0 <= f && f <= UINT32_MAX);
+    silverfish_assert(0 <= f && f <= UINT32_MAX);
     return (u32) f;
 }
 
 i32 i32_trunc_f64(double f) {
-    assert(INT32_MIN <= f && f <= INT32_MAX );
+    silverfish_assert(INT32_MIN <= f && f <= INT32_MAX );
     return (i32) f;
 }
 
 u64 u64_trunc_f32(float f) {
-    assert(0 <= f && f <= UINT64_MAX);
+    silverfish_assert(0 <= f && f <= UINT64_MAX);
     return (u64) f;
 }
 
 i64 i64_trunc_f32(float f) {
-    assert(INT64_MIN <= f && f <= INT64_MAX);
+    silverfish_assert(INT64_MIN <= f && f <= INT64_MAX);
     return (i64) f;
 }
 
 u64 u64_trunc_f64(double f) {
-    assert(0 <= f && f <= UINT64_MAX);
+    silverfish_assert(0 <= f && f <= UINT64_MAX);
     return (u64) f;
 }
 
 i64 i64_trunc_f64(double f) {
-    assert(INT64_MIN <= f && f <= INT64_MAX);
+    silverfish_assert(INT64_MIN <= f && f <= INT64_MAX);
     return (i64) f;
 }
 
@@ -166,27 +167,28 @@ INLINE double f64_max(double a, double b) {
 }
 
 
+// FIXME: Currently the timer support stuff is disabled, pending cortex_m results
 // this provides a way to add a timeout for wasm execution, and support for that
 // TODO: Add a way for silverfish to give us this value
-WEAK unsigned int wasm_execution_timeout_ms = 0;
-sigjmp_buf timeout_jump;
-#define JUMPING_BACK 0xBACC
+//WEAK unsigned int wasm_execution_timeout_ms = 0;
+//sigjmp_buf timeout_jump;
+//#define JUMPING_BACK 0xBACC
 
 // Precondition: you've already loaded timeout_jump with where we should jump after the timeout
-void handle_sigalarm(int sig) {
-    // TODO: We use siglongjmp which resets signal stuff, so perhaps this call is unnessesary
-    signal(sig, SIG_IGN);
-    siglongjmp(timeout_jump, JUMPING_BACK);
-}
-
-void schedule_timeout() {
-    signal(SIGALRM, handle_sigalarm);
-    ualarm(wasm_execution_timeout_ms * 1000, 0);
-}
-
-void cancel_timeout() {
-    ualarm(0, 0);
-}
+//void handle_sigalarm(int sig) {
+//    // TODO: We use siglongjmp which resets signal stuff, so perhaps this call is unnessesary
+//    signal(sig, SIG_IGN);
+//    siglongjmp(timeout_jump, JUMPING_BACK);
+//}
+//
+//void schedule_timeout() {
+//    signal(SIGALRM, handle_sigalarm);
+//    ualarm(wasm_execution_timeout_ms * 1000, 0);
+//}
+//
+//void cancel_timeout() {
+//    ualarm(0, 0);
+//}
 
 // If we are using runtime globals, we need to populate them
 WEAK void populate_globals() {}
@@ -194,7 +196,7 @@ WEAK void populate_globals() {}
 // Code that actually runs the wasm code
 IMPORT i32 wasmf_main(i32 a, i32 b);
 
-int main(int argc, char* argv[]) {
+int runtime_main(int argc, char** argv) {
     // Setup the linear memory and function table
     alloc_linear_memory();
     populate_table();
@@ -206,16 +208,16 @@ int main(int argc, char* argv[]) {
     populate_memory();
 
     // In the case of a real timeout being compiled in, handle that
-    if (wasm_execution_timeout_ms) {
-        // Set the jumpoint to here, and save the signal mask
-        int res = sigsetjmp(timeout_jump, 1);
-        if (res != 0) {
-            assert(res == JUMPING_BACK);
-            printf("WE DECIDED TO GIVE UP\n");
-            return -JUMPING_BACK;
-        }
-        schedule_timeout();
-    }
+//    if (wasm_execution_timeout_ms) {
+//        // Set the jumpoint to here, and save the signal mask
+//        int res = sigsetjmp(timeout_jump, 1);
+//        if (res != 0) {
+//            assert(res == JUMPING_BACK);
+//            printf("WE DECIDED TO GIVE UP\n");
+//            return -JUMPING_BACK;
+//        }
+//        schedule_timeout();
+//    }
 
 
     // What follows is a huge cludge
@@ -249,9 +251,8 @@ int main(int argc, char* argv[]) {
     switch_into_runtime();
 
     // Cancel any pending timeout
-    if (wasm_execution_timeout_ms) {
-        cancel_timeout();
-    }
-
+//    if (wasm_execution_timeout_ms) {
+//        cancel_timeout();
+//    }
     return ret;
 }

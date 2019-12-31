@@ -10,10 +10,10 @@ void alloc_linear_memory() {
 
 void expand_memory() {
     // max_pages = 0 => no limit
-    assert(max_pages == 0 || (memory_size / WASM_PAGE_SIZE < max_pages));
+    silverfish_assert(max_pages == 0 || (memory_size / WASM_PAGE_SIZE < max_pages));
 
     memory = realloc(memory, memory_size + WASM_PAGE_SIZE);
-    assert(memory);
+    silverfish_assert(memory);
 
     char* mem_as_chars = memory;
     memset(&mem_as_chars[memory_size], 0, WASM_PAGE_SIZE);
@@ -21,7 +21,7 @@ void expand_memory() {
 }
 
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
-    assert(memory_size > bounds_check && offset <= memory_size - bounds_check);
+    silverfish_assert(memory_size > bounds_check && offset <= memory_size - bounds_check);
 
     char* mem_as_chars = (char *) memory;
     char* address = &mem_as_chars[offset];
@@ -31,7 +31,7 @@ INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
 
 // All of these are pretty generic
 INLINE float get_f32(i32 offset) {
-    assert(offset <= memory_size - sizeof(float));
+    silverfish_assert(offset <= memory_size - sizeof(float));
 
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
@@ -40,7 +40,7 @@ INLINE float get_f32(i32 offset) {
 }
 
 INLINE double get_f64(i32 offset) {
-    assert(offset <= memory_size - sizeof(double));
+    silverfish_assert(offset <= memory_size - sizeof(double));
 
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
@@ -48,7 +48,7 @@ INLINE double get_f64(i32 offset) {
 }
 
 INLINE i8 get_i8(i32 offset) {
-    assert(offset <= memory_size - sizeof(i8));
+    silverfish_assert(offset <= memory_size - sizeof(i8));
 
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
@@ -56,7 +56,7 @@ INLINE i8 get_i8(i32 offset) {
 }
 
 INLINE i16 get_i16(i32 offset) {
-    assert(offset <= memory_size - sizeof(i16));
+    silverfish_assert(offset <= memory_size - sizeof(i16));
 
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
@@ -64,7 +64,7 @@ INLINE i16 get_i16(i32 offset) {
 }
 
 INLINE i32 get_i32(i32 offset) {
-    assert(offset <= memory_size - sizeof(i32));
+    silverfish_assert(offset <= memory_size - sizeof(i32));
 
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
@@ -72,7 +72,7 @@ INLINE i32 get_i32(i32 offset) {
 }
 
 INLINE i64 get_i64(i32 offset) {
-    assert(offset <= memory_size - sizeof(i64));
+    silverfish_assert(offset <= memory_size - sizeof(i64));
 
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
@@ -81,7 +81,7 @@ INLINE i64 get_i64(i32 offset) {
 
 // Now setting routines
 INLINE void set_f32(i32 offset, float v) {
-    assert(offset <= memory_size - sizeof(float));
+    silverfish_assert(offset <= memory_size - sizeof(float));
 
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
@@ -89,7 +89,7 @@ INLINE void set_f32(i32 offset, float v) {
 }
 
 INLINE void set_f64(i32 offset, double v) {
-    assert(offset <= memory_size - sizeof(double));
+    silverfish_assert(offset <= memory_size - sizeof(double));
 
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
@@ -97,7 +97,7 @@ INLINE void set_f64(i32 offset, double v) {
 }
 
 INLINE void set_i8(i32 offset, i8 v) {
-    assert(offset <= memory_size - sizeof(i8));
+    silverfish_assert(offset <= memory_size - sizeof(i8));
 
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
@@ -105,7 +105,7 @@ INLINE void set_i8(i32 offset, i8 v) {
 }
 
 INLINE void set_i16(i32 offset, i16 v) {
-    assert(offset <= memory_size - sizeof(i16));
+    silverfish_assert(offset <= memory_size - sizeof(i16));
 
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
@@ -113,7 +113,7 @@ INLINE void set_i16(i32 offset, i16 v) {
 }
 
 INLINE void set_i32(i32 offset, i32 v) {
-    assert(offset <= memory_size - sizeof(i32));
+    silverfish_assert(offset <= memory_size - sizeof(i32));
 
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
@@ -121,7 +121,7 @@ INLINE void set_i32(i32 offset, i32 v) {
 }
 
 INLINE void set_i64(i32 offset, i64 v) {
-    assert(offset <= memory_size - sizeof(i64));
+    silverfish_assert(offset <= memory_size - sizeof(i64));
 
     char* mem_as_chars = (char *) memory;
     void* address = &mem_as_chars[offset];
@@ -129,11 +129,11 @@ INLINE void set_i64(i32 offset, i64 v) {
 }
 
 INLINE char* get_function_from_table(u32 idx, u32 type_id) {
-    assert(idx < INDIRECT_TABLE_SIZE);
+    silverfish_assert(idx < INDIRECT_TABLE_SIZE);
 
     struct indirect_table_entry f = indirect_table[idx];
 
-    assert(f.type_id == type_id && f.func_pointer);
+    silverfish_assert(f.type_id == type_id && f.func_pointer);
 
     return f.func_pointer;
 }

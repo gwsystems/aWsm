@@ -4,6 +4,7 @@
 
 a.out*
 **/*.o
+**/*.elf
 input.wasm
 output.bc
 
@@ -13,3 +14,6 @@ code_benches/benchmarks.csv
 
 silverfish.iml
 .idea
+
+.vagrant
+Vagrantfile

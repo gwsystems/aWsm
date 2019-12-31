@@ -1,4 +1,25 @@
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <math.h>
+#include <printf.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <sys/stat.h>
+#include <sys/uio.h>
+
 #include "../runtime.h"
+
+int main(int argc, char* argv[]) {
+    runtime_main(argc, argv);
+}
 
 // What should we tell the child program its UID and GID are?
 #define UID 0xFF
@@ -354,6 +375,12 @@ i32 wasm_lseek(i32 filedes, i32 file_offset, i32 whence) {
 }
 
 #define SYS_MMAP 9
+
+#define MMAP_GRANULARITY 128
+
+u32 last_expansion_final_index = 0;
+u32 bump_ptr = 0;
+
 u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
 	if (addr != 0) {
 		printf("parameter void *addr is not supported!\n");
@@ -365,14 +392,23 @@ u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
 		assert(0);
 	}
 
-    assert(len % WASM_PAGE_SIZE == 0);
+	assert(len % MMAP_GRANULARITY == 0);
+    assert(WASM_PAGE_SIZE % MMAP_GRANULARITY == 0);
 
-    i32 result = memory_size;
-    for (int i = 0; i < len / WASM_PAGE_SIZE; i++) {
-        switch_out_of_runtime();
-        expand_memory();
-        switch_into_runtime();
+    // Check if someone else has messed with the memory
+    // If so start bumping from the end
+    if (memory_size != last_expansion_final_index) {
+        bump_ptr = memory_size;
     }
+
+    u32 result = bump_ptr;
+    bump_ptr += len;
+
+    while (bump_ptr > memory_size) {
+        expand_memory();
+    }
+
+    last_expansion_final_index = memory_size;
 
     return result;
 }
