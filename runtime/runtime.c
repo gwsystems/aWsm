@@ -222,10 +222,8 @@ int runtime_main(int argc, char** argv) {
 
     // What follows is a huge cludge
     // We want to pass the program arguments to the program, so we need to copy them into an array in linear memory
-    // This is about as nice as you would expect...
-
+    // This is about as nice as you would expect... (and wastes a page of memory)
     u32 page_offset = memory_size;
-
     switch_out_of_runtime();
     expand_memory();
     switch_into_runtime();

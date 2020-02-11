@@ -9,11 +9,14 @@ input.wasm
 output.bc
 
 code_benches/*/bin/
-code_benches/sqlite/test.db
+code_benches/custom_sqlite/test.db
 code_benches/benchmarks.csv
+
+runtime/cortex_m_glue/*.log
 
 silverfish.iml
 .idea
 
 .vagrant
 Vagrantfile
+*-cloudimg-console.log

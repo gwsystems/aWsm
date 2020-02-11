@@ -9,7 +9,7 @@ void* memory;
 u32 memory_size;
 
 
-#define TOTAL_PAGES 6
+#define TOTAL_PAGES 125
 char CORTEX_M_MEM[WASM_PAGE_SIZE * TOTAL_PAGES];
 
 int printf_(const char* format, ...);
@@ -26,9 +26,8 @@ void expand_memory() {
     // max_pages = 0 => no limit
     silverfish_assert(max_pages == 0 || (memory_size / WASM_PAGE_SIZE < max_pages));
 
-    memory_size += WASM_PAGE_SIZE;
-
-    silverfish_assert(memory_size <= sizeof(CORTEX_M_MEM));
+    printf_("Expanding to %d\n", memory_size / WASM_PAGE_SIZE + 1);
+    silverfish_assert(memory_size + WASM_PAGE_SIZE <= sizeof(CORTEX_M_MEM));
 
     char* mem_as_chars = memory;
     memset(&mem_as_chars[memory_size], 0, WASM_PAGE_SIZE);
@@ -36,6 +35,8 @@ void expand_memory() {
 }
 
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
+    silverfish_assert(offset <= memory_size - bounds_check);
+
     char* mem_as_chars = (char *) memory;
     char* address = &mem_as_chars[offset];
 

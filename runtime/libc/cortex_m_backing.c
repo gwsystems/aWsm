@@ -13,14 +13,9 @@ void cortexm_entry() {
 
     printf_("Entering runtime to start wasm...\n");
     runtime_main(argc, argv);
-    printf_("Program finished, spinning...\n");
-    for (;;) {}
+    printf_("Program finished.\n");
 }
 
-void _putchar(char c) {
-    char out[1] = {c};
-    write(1, out, 1);
-}
 
 void* memcpy(void* destination, const void* source, size_t num) {
 	int i;
@@ -56,21 +51,50 @@ char* strcpy(char* dest, const char* src) {
   return dest;
 }
 
-
-
-// HACK of HACKs
-void __aeabi_memcpy4(void* destination, const void* source, size_t num) {
-    memcpy(destination, source, num);
-}
-
-void __aeabi_memcpy(void* destination, const void* source, size_t num) {
-    memcpy(destination, source, num);
-}
-
 struct wasm_iovec {
     i32 base_offset;
     i32 len;
 };
+
+#define SYS_MMAP 9
+
+#define MMAP_GRANULARITY 128
+
+u32 last_expansion_final_index = 0;
+u32 bump_ptr = 0;
+
+u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
+	if (addr != 0) {
+		printf_("parameter void *addr is not supported!\n");
+		silverfish_assert(0);
+	}
+
+	if (fd != -1) {
+		printf_("file mapping is not supported!\n");
+		silverfish_assert(0);
+	}
+
+	silverfish_assert(len % MMAP_GRANULARITY == 0);
+    silverfish_assert(WASM_PAGE_SIZE % MMAP_GRANULARITY == 0);
+
+    // Check if someone else has messed with the memory
+    // If so start bumping from the end
+    if (memory_size != last_expansion_final_index) {
+        bump_ptr = memory_size;
+    }
+
+    u32 result = bump_ptr;
+    bump_ptr += len;
+
+    while (bump_ptr > memory_size) {
+        expand_memory();
+    }
+
+    last_expansion_final_index = memory_size;
+
+    return result;
+}
+
 
 #define SYS_WRITEV 20
 i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
@@ -99,20 +123,51 @@ i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
     return sum;
 }
 
+#define SYS_MUNMAP 11
+
+#define SYS_BRK 12
+
+#define SYS_RT_SIGACTION 13
+
+#define SYS_RT_SIGPROGMASK 14
+
 #define SYS_IOCTL 16
 
 #define SYS_SET_THREAD_AREA 205
 
 #define SYS_SET_TID_ADDRESS 218
 
+#define SYS_GET_TIME 228
+struct wasm_time_spec {
+    u32 sec;
+    u32 nanosec;
+};
+
+i32 wasm_get_time(i32 clock_id, i32 timespec_off) {
+    struct wasm_time_spec* timespec = get_memory_ptr_void(timespec_off, sizeof(struct wasm_time_spec));
+    timespec->sec = 0;
+    timespec->nanosec = 0;
+
+    return -1;
+}
+
+
 
 i32 inner_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
+    if (n == SYS_MMAP) {
+        return wasm_mmap(a, b, c, d, e, f);
+    }
+
     if (n == SYS_WRITEV) {
         return wasm_writev(a, b, c);
     }
 
-    if (n == SYS_IOCTL || n == SYS_SET_THREAD_AREA || n == SYS_SET_TID_ADDRESS) {
+    if (n == SYS_MUNMAP || n == SYS_BRK || n == SYS_RT_SIGACTION || n == SYS_RT_SIGPROGMASK || n == SYS_IOCTL || n == SYS_SET_THREAD_AREA || n == SYS_SET_TID_ADDRESS) {
         return 0;
+    }
+
+    if (n == SYS_GET_TIME) {
+        return wasm_get_time(a, b);
     }
 
     printf_("unknown syscall %d\n", n);
@@ -200,8 +255,7 @@ void stub_init(i32 offset) {
 }
 
 void env_do_crash(i32 i) {
-    char out[] = "crashing!!!\n";
-    write(1, out, sizeof(out));
+    printf_("env_do_crash triggered, spinning!!!\n");
     while (1);
 }
 
@@ -230,15 +284,23 @@ void abort() { env_do_crash(1); }
 //    return env_sin(x + 1.57080);
 //}
 
+INLINE i32 env_a_ctz_32(u32 x) {
+	static const char debruijn32[32] = {
+		0, 1, 23, 2, 29, 24, 19, 3, 30, 27, 25, 11, 20, 8, 4, 13,
+		31, 22, 28, 18, 26, 10, 7, 12, 21, 17, 9, 6, 16, 5, 15, 14
+	};
+	return debruijn32[(x&-x)*0x076be629 >> 27];
+}
 
-i32 env_a_cas(i32 p_off, i32 t, i32 s) {
-    env_do_crash(1);
-//    assert(sizeof(i32) == sizeof(volatile int));
-//    volatile int* p = get_memory_ptr_void(p_off, sizeof(i32));
-//
-//	__asm__( "lock ; cmpxchg %3, %1"
-//		: "=a"(t), "=m"(*p) : "a"(t), "r"(s) : "memory" );
-	return t;
+
+i32 env_a_cas(i32 p_off, i32 old_val, i32 new_val) {
+    silverfish_assert(sizeof(i32) == sizeof(volatile int));
+    i32* p = get_memory_ptr_void(p_off, sizeof(i32));
+
+    i32 val = *p;
+    if (val == old_val)
+        *p = new_val;
+    return val;
 }
 
 i32 env_a_swap(i32 x_off, i32 v) {
@@ -260,6 +322,67 @@ i32 env_a_fetch_add(i32 x_off, i32 v) {
 //	__asm__( "lock ; xadd %0, %1" : "=r"(v), "=m"(*x) : "0"(v) : "memory" );
 	return v;
 }
+
+int env_a_ctz_l(u32 x) {
+	static const char debruijn32[32] = {
+		0, 1, 23, 2, 29, 24, 19, 3, 30, 27, 25, 11, 20, 8, 4, 13,
+		31, 22, 28, 18, 26, 10, 7, 12, 21, 17, 9, 6, 16, 5, 15, 14
+	};
+	return debruijn32[(x&-x)*0x076be629 >> 27];
+}
+
+int env_a_ctz_64(u64 x) {
+	u32 y = x;
+	if (!y) {
+		y = x>>32;
+		return 32 + env_a_ctz_l(y);
+	}
+	return env_a_ctz_l(y);
+}
+
+void env_a_store(i32 p_off, i32 x) {
+//    assert(sizeof(i32) == sizeof(volatile int));
+    volatile int* p = get_memory_ptr_void(p_off, sizeof(i32));
+    *p = x;
+}
+
+void env_a_dec(i32 x_off) {
+    volatile int* x = get_memory_ptr_void(x_off, sizeof(i32));
+    *x--;
+}
+
+void env_do_spin(i32 i) {
+    printf_("Spinning! %d\n", i);
+    while(1);
+}
+
+void env_a_inc(i32 x_off) {
+    volatile int* x = get_memory_ptr_void(x_off, sizeof(i32));
+    *x++;
+}
+
+INLINE void env_a_and_64(i32 p_off, u64 v) {
+    u64* p = get_memory_ptr_void(p_off, sizeof(u64));
+    *p &= v;
+}
+
+INLINE void env_a_or_64(i32 p_off, u64 v) {
+    u64* p = get_memory_ptr_void(p_off, sizeof(u64));
+    *p |= v;
+}
+
+
+// HACK of HACKs
+int __aeabi_unwind_cpp_pr0() {
+    printf_("UNWIND 0 triggered! spinning...");
+    while(1);
+}
+
+int __aeabi_unwind_cpp_pr1() {
+    printf_("UNWIND 1 triggered! spinning...");
+    while(1);
+}
+
 
 // MUSL magic:
 
@@ -1073,4 +1196,3 @@ double env_cos(double x) {
 		return  __sin(y[0], y[1], 1);
 	}
 }
-
