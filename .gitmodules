@@ -1,6 +1,3 @@
-[submodule "musl"]
-	path = musl
-	url = git@github.com:Others/musl.git
 [submodule "wasmception"]
 	path = wasmception
 	url = https://github.com/gwsystems/wasmception.git

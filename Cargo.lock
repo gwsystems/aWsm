@@ -71,17 +71,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "llvm-alt"
 version = "0.5.0"
-source = "git+https://github.com/Others/llvm-rs.git#754fdf857f83e64d371a046dcb8fa3587a176cf8"
+source = "git+https://github.com/gwsystems/llvm-rs.git#754fdf857f83e64d371a046dcb8fa3587a176cf8"
 dependencies = [
  "cbox 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.51 (registry+https://github.com/rust-lang/crates.io-index)",
- "llvm-sys 0.3.0 (git+https://github.com/Others/llvm-sys.rs)",
+ "llvm-sys 0.3.0 (git+https://github.com/gwsystems/llvm-sys.rs)",
 ]
 
 [[package]]
 name = "llvm-sys"
 version = "0.3.0"
-source = "git+https://github.com/Others/llvm-sys.rs#f4d6b7523e9c3e71a45aa8155f0ef0911689033a"
+source = "git+https://github.com/gwsystems/llvm-sys.rs#f4d6b7523e9c3e71a45aa8155f0ef0911689033a"
 dependencies = [
  "bitflags 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gcc 0.3.55 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -127,7 +127,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "silverfish"
 version = "0.1.0"
 dependencies = [
- "llvm-alt 0.5.0 (git+https://github.com/Others/llvm-rs.git)",
+ "llvm-alt 0.5.0 (git+https://github.com/gwsystems/llvm-rs.git)",
  "structopt 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmparser 0.29.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -239,8 +239,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum gcc 0.3.55 (registry+https://github.com/rust-lang/crates.io-index)" = "8f5f3913fa0bfe7ee1fd8248b6b9f42a5af4b9d65ec2dd2c3c26132b950ecfc2"
 "checksum heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "20564e78d53d2bb135c343b3f47714a56af2061f1c928fdb541dc7b9fdd94205"
 "checksum libc 0.2.51 (registry+https://github.com/rust-lang/crates.io-index)" = "bedcc7a809076656486ffe045abeeac163da1b558e963a31e29fbfbeba916917"
-"checksum llvm-alt 0.5.0 (git+https://github.com/Others/llvm-rs.git)" = "<none>"
-"checksum llvm-sys 0.3.0 (git+https://github.com/Others/llvm-sys.rs)" = "<none>"
+"checksum llvm-alt 0.5.0 (git+https://github.com/gwsystems/llvm-rs.git)" = "<none>"
+"checksum llvm-sys 0.3.0 (git+https://github.com/gwsystems/llvm-sys.rs)" = "<none>"
 "checksum proc-macro2 0.4.27 (registry+https://github.com/rust-lang/crates.io-index)" = "4d317f9caece796be1980837fd5cb3dfec5613ebdb04ad0956deea83ce168915"
 "checksum quote 0.6.11 (registry+https://github.com/rust-lang/crates.io-index)" = "cdd8e04bd9c52e0342b406469d494fcb033be4bdbe5c606016defbb1681411e1"
 "checksum redox_syscall 0.1.52 (registry+https://github.com/rust-lang/crates.io-index)" = "d32b3053e5ced86e4bc0411fec997389532bf56b000e66cb4884eeeb41413d69"
