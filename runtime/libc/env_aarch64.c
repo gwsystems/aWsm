@@ -1,6 +1,6 @@
 #if defined(AARCH64) || defined(aarch64)
 
-#include <runtime.h>
+#include "../runtime.h"
 
 unsigned long long int
 __getcycles(void)

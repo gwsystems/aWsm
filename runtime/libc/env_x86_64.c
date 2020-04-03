@@ -1,5 +1,7 @@
 #if defined(x86_64) || defined(X86_64)
 
+#include "../runtime.h"
+
 // Atomic functions, with definitions stolen from musl
 
 i32 env_a_ctz_64(u64 x) {
