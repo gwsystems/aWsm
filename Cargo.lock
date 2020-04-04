@@ -71,7 +71,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "llvm-alt"
 version = "0.5.0"
-source = "git+https://github.com/gwsystems/llvm-rs.git#906d4830515efa1330fc7167d221278cb3cd1b0f"
+source = "git+https://github.com/gwsystems/llvm-rs.git#63365ae7743f5c907f5bb9a9e735f83e5b0f465d"
 dependencies = [
  "cbox 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.51 (registry+https://github.com/rust-lang/crates.io-index)",
