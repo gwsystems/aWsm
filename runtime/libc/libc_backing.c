@@ -602,11 +602,6 @@ i32 env___syscall(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
     return env_syscall_handler(n, a, b, c, d, e, f);
 }
 
-void env_do_barrier(i32 x) {
-    __asm__ __volatile__( "" : : : "memory" );
-}
-
-
 void env___unmapself(u32 base, u32 size) {
     // Just do some no op
 }

@@ -88,3 +88,4 @@ INLINE char* get_function_from_table(u32 idx, u32 type_id);
 // libc/* might need to do some setup for the libc setup
 void stub_init(i32 offset);
 
+unsigned long long __getcycles(void);
