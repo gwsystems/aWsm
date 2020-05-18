@@ -149,10 +149,10 @@ int main(int argc, char *argv[]) {
   int i,j,k;
   FILE *fp;
   
-  if (argc<2) {
-    fprintf(stderr, "Usage: dijkstra <filename>\n");
-    fprintf(stderr, "Only supports matrix size is #define'd.\n");
-  }
+//  if (argc<2) {
+//    fprintf(stderr, "Usage: dijkstra <filename>\n");
+//    fprintf(stderr, "Only supports matrix size is #define'd.\n");
+//  }
 
   /* make a fully connected matrix */
   int data_idx = 0;

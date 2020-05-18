@@ -12,6 +12,8 @@ void expand_memory() {
     // max_pages = 0 => no limit
     silverfish_assert(max_pages == 0 || (memory_size / WASM_PAGE_SIZE < max_pages));
 
+    printf("Expanding to %d\n", memory_size + WASM_PAGE_SIZE);
+
     memory = realloc(memory, memory_size + WASM_PAGE_SIZE);
     silverfish_assert(memory);
 

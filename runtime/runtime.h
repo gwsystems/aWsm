@@ -4,12 +4,12 @@
 #define INLINE __attribute__((always_inline))
 #define WEAK __attribute__((weak))
 
-#if __has_include("assert.h")
+#if __has_include("assert.h") && (defined(__APPLE__) || defined(__linux__))
 #include <assert.h>
 #define silverfish_assert assert
 #else
-void write ( unsigned int, char *, unsigned int );
-#define silverfish_assert(x) do { if(!(x)) { char msg[] = "" #x ""; write(1, msg, sizeof(msg)); while(1); } } while(0);
+int printf_(const char* format, ...);
+#define silverfish_assert(x) do { if(!(x)) { char msg[] = "" #x ""; printf_("%s\n", msg); while(1); } } while(0);
 #endif
 
 // Type alias's so I don't have to write uint32_t a million times
@@ -116,6 +116,8 @@ static inline char* get_memory_string(u32 offset) {
     }
 }
 
+u32 allocate_n_bytes(u32 n);
+
 // memory/* also provides the table access functions
 // TODO: Change this to use a compiled in size
 #define INDIRECT_TABLE_SIZE 1024
@@ -130,7 +132,7 @@ extern struct indirect_table_entry indirect_table[INDIRECT_TABLE_SIZE];
 INLINE char* get_function_from_table(u32 idx, u32 type_id);
 
 // libc/* might need to do some setup for the libc setup
-void stub_init(i32 offset);
+void stub_init();
 
 // The runtime entrypoint must be called
 int runtime_main(int argc, char** argv);

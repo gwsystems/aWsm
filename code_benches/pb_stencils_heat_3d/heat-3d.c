@@ -18,6 +18,7 @@
 #include "polybench.h"
 
 /* Include benchmark-specific header. */
+#define MINI_DATASET
 #include "heat-3d.h"
 
 
@@ -126,6 +127,7 @@ int main(int argc, char** argv)
 
   /* Be clean. */
   POLYBENCH_FREE_ARRAY(A);
+  POLYBENCH_FREE_ARRAY(B);
 
   return 0;
 }

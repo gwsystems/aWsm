@@ -1,31 +1,29 @@
 #include "../runtime.h"
 
-void PUT32 ( unsigned int, unsigned int );
-unsigned int GET32 ( unsigned int );
-void dummy ( unsigned int );
-void write ( unsigned int, char *, unsigned int );
-
 u32 memory_size = 0;
 
-#define MEM_SIZE (WASM_PAGE_SIZE * 1 << 4)
+#define MEM_SIZE (WASM_PAGE_SIZE * 1 << 2)
 char CORTEX_M_MEM[MEM_SIZE + sizeof(u64)] = { 0 };
+
+u32 cortex_mem_size = MEM_SIZE;
 
 int printf_(const char* format, ...);
 
 void alloc_linear_memory() {
-    printf_("8 = (%d %d) 16 = (%d %d) 32 = (%d %d) 64 = (%d %d)\n", sizeof(u8), sizeof(i8), sizeof(u16), sizeof(i16), sizeof(u32), sizeof(i32), sizeof(u64), sizeof(i64));
+//    printf_("8 = (%d %d) 16 = (%d %d) 32 = (%d %d) 64 = (%d %d)\n", sizeof(u8), sizeof(i8), sizeof(u16), sizeof(i16), sizeof(u32), sizeof(i32), sizeof(u64), sizeof(i64));
+//    printf_("starting pages = %d, starting mem size = %d\n", starting_pages, starting_pages * WASM_PAGE_SIZE);
     silverfish_assert(MEM_SIZE >= starting_pages * WASM_PAGE_SIZE);
     memory_size = starting_pages * WASM_PAGE_SIZE;
 }
 
 void expand_memory() {
     // max_pages = 0 => no limit
-    u32 new_page_count = memory_size / WASM_PAGE_SIZE + 1;
+    silverfish_assert(max_pages == 0 || (memory_size + WASM_PAGE_SIZE <= max_pages * WASM_PAGE_SIZE));
 
-    silverfish_assert(max_pages == 0 || (new_page_count <= max_pages));
-    silverfish_assert(new_page_count * WASM_PAGE_SIZE <= MEM_SIZE);
+//    printf_("Expanding to %d\n", memory_size + WASM_PAGE_SIZE);
+    silverfish_assert(memory_size + WASM_PAGE_SIZE <= sizeof(CORTEX_M_MEM));
 
-    printf_("Expanding to %d\n", new_page_count);
+    memset(&CORTEX_M_MEM[memory_size], 0, WASM_PAGE_SIZE);
     memory_size += WASM_PAGE_SIZE;
 }
 

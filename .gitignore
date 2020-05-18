@@ -8,6 +8,8 @@ a.out*
 input.wasm
 output.bc
 
+obj_zips/*
+
 code_benches/*/bin/
 code_benches/custom_sqlite/test.db
 code_benches/benchmarks.csv

@@ -3,6 +3,9 @@
 // TODO: Throughout here we use `assert` for error conditions, which isn't optimal
 // Instead we should use `unlikely` branches to a single trapping function (which should optimize better)
 
+// Needed to support C++
+void env___cxa_pure_virtual() { silverfish_assert("env___cxa_pure_virtual" == 0); }
+
 // Region initialization helper function
 EXPORT void initialize_region(u32 offset, u32 data_count, char* data) {
     silverfish_assert(memory_size >= data_count);
@@ -18,6 +21,12 @@ struct indirect_table_entry indirect_table[INDIRECT_TABLE_SIZE];
 void add_function_to_table(u32 idx, u32 type_id, char* pointer) {
     silverfish_assert(idx < INDIRECT_TABLE_SIZE);
     indirect_table[idx] = (struct indirect_table_entry) { .type_id = type_id, .func_pointer = pointer };
+}
+
+void clear_table() {
+    for (int i = 0; i < INDIRECT_TABLE_SIZE; i++) {
+        indirect_table[i] = (struct indirect_table_entry) { 0 };
+    }
 }
 
 // The below functions are for implementing WASM instructions
@@ -106,42 +115,42 @@ INLINE i64 i64_rem(i64 a, i64 b) {
 // In C, float => int conversions always truncate
 // If a int2float(int::min_value) <= float <= int2float(int::max_value), it must always be safe to truncate it
 u32 u32_trunc_f32(float f) {
-    silverfish_assert(0 <= f && f <= UINT32_MAX);
+    silverfish_assert(0 <= f && f <= (float) UINT32_MAX);
     return (u32) f;
 }
 
 i32 i32_trunc_f32(float f) {
-    silverfish_assert(INT32_MIN <= f && f <= INT32_MAX );
+    silverfish_assert(INT32_MIN <= f && f <= (float) INT32_MAX);
     return (i32) f;
 }
 
 u32 u32_trunc_f64(double f) {
-    silverfish_assert(0 <= f && f <= UINT32_MAX);
+    silverfish_assert(0 <= f && f <= (float) UINT32_MAX);
     return (u32) f;
 }
 
 i32 i32_trunc_f64(double f) {
-    silverfish_assert(INT32_MIN <= f && f <= INT32_MAX );
+    silverfish_assert(INT32_MIN <= f && f <= (float) INT32_MAX );
     return (i32) f;
 }
 
 u64 u64_trunc_f32(float f) {
-    silverfish_assert(0 <= f && f <= UINT64_MAX);
+    silverfish_assert(0 <= f && f <= (float) UINT64_MAX);
     return (u64) f;
 }
 
 i64 i64_trunc_f32(float f) {
-    silverfish_assert(INT64_MIN <= f && f <= INT64_MAX);
+    silverfish_assert(INT64_MIN <= f && f <= (float) INT64_MAX);
     return (i64) f;
 }
 
 u64 u64_trunc_f64(double f) {
-    silverfish_assert(0 <= f && f <= UINT64_MAX);
+    silverfish_assert(0 <= f && f <= (double) UINT64_MAX);
     return (u64) f;
 }
 
 i64 i64_trunc_f64(double f) {
-    silverfish_assert(INT64_MIN <= f && f <= INT64_MAX);
+    silverfish_assert(INT64_MIN <= f && f <= (double) INT64_MAX);
     return (i64) f;
 }
 
@@ -166,6 +175,24 @@ INLINE double f64_max(double a, double b) {
     return a > b ? a : b;
 }
 
+// We want to have some allocation logic
+WEAK u32 wasmg___heap_base = 0;
+u32 runtime_heap_base;
+
+u32 allocate_n_bytes(u32 n) {
+    u32 res = runtime_heap_base;
+    runtime_heap_base += n;
+    while (memory_size < runtime_heap_base) {
+        expand_memory();
+    }
+    printf("rhb %d\n", runtime_heap_base);
+    return res;
+}
+
+void* allocate_n_bytes_ptr(u32 n) {
+    u32 addr = allocate_n_bytes(n);
+    return get_memory_ptr_for_runtime(addr, n);
+}
 
 // FIXME: Currently the timer support stuff is disabled, pending cortex_m results
 // this provides a way to add a timeout for wasm execution, and support for that
@@ -201,6 +228,13 @@ int runtime_main(int argc, char** argv) {
     alloc_linear_memory();
     populate_table();
 
+    // Setup our allocation logic
+    runtime_heap_base = wasmg___heap_base;
+    printf("starting rhb %d\n", runtime_heap_base);
+    if (runtime_heap_base == 0) {
+        runtime_heap_base = memory_size;
+    }
+
     // Setup the global values (if needed), and populate the linear memory
     switch_out_of_runtime();
     populate_globals();
@@ -219,33 +253,20 @@ int runtime_main(int argc, char** argv) {
 //        schedule_timeout();
 //    }
 
-
-    // What follows is a huge cludge
-    // We want to pass the program arguments to the program, so we need to copy them into an array in linear memory
-    // This is about as nice as you would expect... (and wastes a page of memory)
-    u32 page_offset = memory_size;
-    switch_out_of_runtime();
-    expand_memory();
-    switch_into_runtime();
-
-    i32* array_ptr = get_memory_ptr_void(page_offset, argc * sizeof(i32));
-    i32 string_offset = page_offset + argc * sizeof(i32);
+    u32 array_offset = allocate_n_bytes(argc * sizeof(i32));
+    u32* array_ptr = get_memory_ptr_void(array_offset, argc * sizeof(i32));
     for (int i = 0; i < argc; i++) {
         size_t str_size = strlen(argv[i]) + 1;
-
-        switch_out_of_runtime();
-        array_ptr[i] = string_offset;
-        switch_into_runtime();
-
-        strcpy(get_memory_ptr_for_runtime(string_offset, strlen(argv[i]) + 1), argv[i]);
-
-        string_offset += str_size;
+        u32 str_offset = allocate_n_bytes(str_size);
+        char* str_ptr = get_memory_ptr_for_runtime(str_offset, str_size);
+        strcpy(str_ptr, argv[i]);
+        array_ptr[i] = str_offset;
     }
 
-    stub_init(string_offset);
+    stub_init();
 
     switch_out_of_runtime();
-    int ret =  wasmf_main(argc, page_offset);
+    int ret = wasmf_main(argc, array_offset);
     switch_into_runtime();
 
     // Cancel any pending timeout

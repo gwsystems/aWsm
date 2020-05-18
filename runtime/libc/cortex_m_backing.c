@@ -1,19 +1,16 @@
 #include "../runtime.h"
 
-void PUT32 ( unsigned int, unsigned int );
-unsigned int GET32 ( unsigned int );
-void dummy ( unsigned int );
-void write ( unsigned int, char *, unsigned int );
-
 int printf_(const char* format, ...);
 
-void cortexm_entry() {
-    int argc = 0;
-    char* argv[] = {};
+volatile int CORTEX_M_ARG_C = 0;
 
-    printf_("Entering runtime to start wasm...\n");
-    runtime_main(argc, argv);
-    printf_("Program finished.\n");
+int cortexm_entry() {
+    char* argv[] = { "", "", "" };
+
+//    printf_("Entering runtime to start wasm...\n");
+    runtime_main(CORTEX_M_ARG_C, argv);
+//    printf_("Program finished.\n");
+    return memory_size;
 }
 
 
@@ -27,7 +24,7 @@ void* memcpy(void* destination, const void* source, size_t num) {
 	return destination;
 }
 
-void *memset(void *s, int c, size_t n) {
+void* memset(void* s, int c, size_t n) {
     unsigned char* p=s;
     while(n--)
         *p++ = (unsigned char)c;
@@ -58,10 +55,10 @@ struct wasm_iovec {
 
 #define SYS_MMAP 9
 
-#define MMAP_GRANULARITY 128
+// We HACK here to improve memory usage
 
-u32 last_expansion_final_index = 0;
-u32 bump_ptr = 0;
+// This symbol let's us hackilly get our max capacity
+extern u32 cortex_mem_size;
 
 u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
 	if (addr != 0) {
@@ -74,25 +71,9 @@ u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
 		silverfish_assert(0);
 	}
 
-	silverfish_assert(len % MMAP_GRANULARITY == 0);
-    silverfish_assert(WASM_PAGE_SIZE % MMAP_GRANULARITY == 0);
+//    printf_("MMAP: expanding %d to %d\n", len, memory_size + len);
 
-    // Check if someone else has messed with the memory
-    // If so start bumping from the end
-    if (memory_size != last_expansion_final_index) {
-        bump_ptr = memory_size;
-    }
-
-    u32 result = bump_ptr;
-    bump_ptr += len;
-
-    while (bump_ptr > memory_size) {
-        expand_memory();
-    }
-
-    last_expansion_final_index = memory_size;
-
-    return result;
+    return allocate_n_bytes(len);
 }
 
 
@@ -100,7 +81,7 @@ u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
 i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
     struct wasm_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
 
-    if (fd == 1) {
+    if (fd == 1 || fd == 2) {
         int sum = 0;
         for (int i = 0; i < iovcnt; i++) {
             i32 len = iov[i].len;
@@ -111,16 +92,7 @@ i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
         }
         return sum;
     }
-
-    int sum = 0;
-    for (int i = 0; i < iovcnt; i++) {
-        i32 len = iov[i].len;
-        void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
-        write(fd, ptr, len);
-        sum += len;
-    }
-
-    return sum;
+    silverfish_assert(0);
 }
 
 #define SYS_MUNMAP 11
@@ -171,7 +143,7 @@ i32 inner_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
     }
 
     printf_("unknown syscall %d\n", n);
-    while(1);
+    silverfish_assert(0);
 }
 
 i32 env_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
@@ -206,19 +178,24 @@ i32 env___syscall(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
 #define AT_BASE_PLATFORM 24
 #define AT_RANDOM	25
 
+#define UID 0xFF
+#define GID 0xFE
+
+
 // The symbol the binary gives us to init libc
 void wasmf___init_libc(i32 envp, i32 pn);
 
 char program_name[] = "wasm_program";
 
+#define LC_PAGE_SIZE 128
+
 // offset = a WASM ptr to memory the runtime can use
 void stub_init(i32 offset) {
     // What program name will we put in the auxiliary vectors
-    printf_("%s\n", program_name);
+    char program_name[] = "wasm_program";
     // Copy the program name into WASM accessible memory
-    i32 program_name_offset = offset;
-    strcpy(get_memory_ptr_for_runtime(offset, sizeof(program_name)), program_name);
-    offset += sizeof(program_name);
+    u32 program_name_offset = allocate_n_bytes(sizeof(program_name));
+    strcpy(get_memory_ptr_for_runtime(program_name_offset, sizeof(program_name)), program_name);
 
     // The construction of this is:
     // evn1, env2, ..., NULL, auxv_n1, auxv_1, auxv_n2, auxv_2 ..., NULL
@@ -229,29 +206,25 @@ void stub_init(i32 offset) {
         AT_PAGESZ,
         WASM_PAGE_SIZE,
         AT_UID,
-        123,
+        UID,
         AT_EUID,
-        123,
+        UID,
         AT_GID,
-        123,
+        GID,
         AT_EGID,
-        123,
+        GID,
         AT_SECURE,
         0,
         AT_RANDOM,
-        (i32) 0xCAFEBABE, // It's pretty stupid to use rand here, but w/e
+        (i32) rand(), // It's pretty stupid to use rand here, but w/e
         0,
     };
-    i32 env_vec_offset = offset;
+    u32 env_vec_offset = allocate_n_bytes(sizeof(env_vec));
     memcpy(get_memory_ptr_for_runtime(env_vec_offset, sizeof(env_vec)), env_vec, sizeof(env_vec));
 
-    printf_("Initializing libc\n");
     switch_out_of_runtime();
     wasmf___init_libc(env_vec_offset, program_name_offset);
     switch_into_runtime();
-    printf_("Done Initializing libc\n");
-
-//    write(1, program_name, sizeof(program_name));
 }
 
 void env_do_crash(i32 i) {
@@ -259,7 +232,11 @@ void env_do_crash(i32 i) {
     while (1);
 }
 
-void abort() { env_do_crash(1); }
+void abort() {
+    printf_("abort triggered, crashing!!!\n");
+    env_do_crash(1);
+    while (1);
+}
 
 //INLINE double env_sin(double x) {
 //   int terms = 5;
@@ -304,23 +281,23 @@ i32 env_a_cas(i32 p_off, i32 old_val, i32 new_val) {
 }
 
 i32 env_a_swap(i32 x_off, i32 v) {
-    env_do_crash(1);
+    silverfish_assert(sizeof(i32) == sizeof(volatile int));
+    volatile int* p = get_memory_ptr_void(x_off, sizeof(i32));
 
-//    assert(sizeof(i32) == sizeof(volatile int));
-//    volatile int* x = get_memory_ptr_void(x_off, sizeof(i32));
-//
-//	__asm__( "xchg %0, %1" : "=r"(v), "=m"(*x) : "0"(v) : "memory" );
-	return v;
+    int old;
+    do old = *p;
+    while (env_a_cas(x_off, old, v) != old);
+    return old;
 }
 
 i32 env_a_fetch_add(i32 x_off, i32 v) {
-    env_do_crash(1);
+    silverfish_assert(sizeof(i32) == sizeof(volatile int));
+    volatile int* p = get_memory_ptr_void(x_off, sizeof(i32));
 
-//    assert(sizeof(i32) == sizeof(volatile int));
-//    volatile int* x = get_memory_ptr_void(x_off, sizeof(i32));
-//
-//	__asm__( "lock ; xadd %0, %1" : "=r"(v), "=m"(*x) : "0"(v) : "memory" );
-	return v;
+    i32 old = *p;
+    *p += v;
+
+	return old;
 }
 
 int env_a_ctz_l(u32 x) {

@@ -27,6 +27,7 @@
 #ifndef POLYBENCH_H
 # define POLYBENCH_H
 
+extern int posix_memalign(void **__memptr, size_t __alignment, size_t __size);
 # include <stdlib.h>
 
 /* Array padding. By default, none is used. */

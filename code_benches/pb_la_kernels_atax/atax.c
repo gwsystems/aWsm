@@ -15,6 +15,7 @@
 #include <math.h>
 
 /* Include polybench common header. */
+#define POLYBENCH_DUMP_ARRAYS
 #include "polybench.h"
 
 /* Include benchmark-specific header. */
