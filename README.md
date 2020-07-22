@@ -88,6 +88,12 @@ cd awsm
 
 The compiler can now be run via `silverfish`
 
+The tests can run with
+
+```
+cd code_benches; python run.py
+```
+
 ### Other Systems
 
 1. [Install Rust](https://www.rust-lang.org/tools/install)
@@ -117,7 +123,6 @@ Please make a PR with support for additional instructions if you need them!
 *Limited support for future Wasm features.*
 The features on the [Wasm roadmap](https://webassembly.org/roadmap/) are not supported.
 We're quite interested in supporting as many of these feature sets as possible, and would happily accept PRs.
-
 
 # Advice for Wasm Standardization
 
