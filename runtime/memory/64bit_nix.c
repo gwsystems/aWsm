@@ -126,9 +126,10 @@ INLINE char* get_function_from_table(u32 idx, u32 type_id) {
 
     struct indirect_table_entry f = indirect_table[idx];
 
-    // FIXME: temporary as there is some issue in type id of a typecasted function pointer.
-//    assert(f.type_id == type_id);
-	   assert(f.func_pointer);
+    // NOTE: Legacy C applications could fail this check if they typecast function pointers.
+    // Additional reference: https://emscripten.org/docs/porting/guidelines/function_pointer_issues.html
+    assert(f.type_id == type_id);
+    assert(f.func_pointer);
 
     return f.func_pointer;
 }
