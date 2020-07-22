@@ -136,6 +136,7 @@ The main limitations:
 	That is far too large for embedded systems.
 	aWsm uses smaller pages, while simulating the larger default pages.
 	Enabling smaller pages would make Wasm's use on microcontrollers -- often with only 64KiB of memory total -- easier.
+	In aWsm, the page size is configurable.
 2. *Separation of read-only and read-write memory.*
 	In Wasm, all data is accessed in linear memory, which provides strong sandboxing, but does not discriminate between RW and RO data.
 	Microcontrollers often use [Execute in Place](https://en.wikipedia.org/wiki/Execute_in_place) (XIP) read-only memory, which allows RO data to be accessed and executed *directly from flash*.
@@ -143,4 +144,4 @@ The main limitations:
 	Wasm does not separate RO and RW memory, preventing this optimization that is essential for density on such systems.
 3. *Allow undefined behavior on Out of Bounds (OoB) accesses.*
 	The specification requires any access outside of the allocated bounds of linear memory to be caught, and the sandbox terminated.
-	We show in the publication that relaxing this requirement, and allowing undefined behavior on OoB accesses can significantly speed up execution, and shrink code sizes.
+	We show in the publication that relaxing this requirement, and allowing undefined behavior on OoB accesses can significantly speed up execution, and shrink code sizes, while maintaining strong sandboxed isolation.
