@@ -165,3 +165,12 @@ The main limitations:
 3. *Allow undefined behavior on Out of Bounds (OoB) accesses.*
 	The specification requires any access outside of the allocated bounds of linear memory to be caught, and the sandbox terminated.
 	We show in the publication that relaxing this requirement, and allowing undefined behavior on OoB accesses can significantly speed up execution, and shrink code sizes, while maintaining strong sandboxed isolation.
+
+# About Us & Acknowledgments
+
+The GWU Systems group focuses on low-level system design and implementation.
+One of our main research vehicles is the [Composite](composite.seas.gwu.edu) component-based operating system, which we aim to integrate with Wasm through aWsm.
+If you're interested in low-level hacking, in secure and reliable systems, in embedded systems, or in models for parallelism, don't hesitate to contact [Gabe](www.seas.gwu.edu/~gparmer) about doing a PhD or becoming involved with the group.
+
+Our collaborations with Arm Research during a lot of the maturation of the aWsm infrastructure have been instrumental in its development.
+Support from SRC, ARM, and NSF have all contributed to Wasm's research.
