@@ -93,7 +93,7 @@ The compiler can now be run via `silverfish`
 
 The tests can run with
 
-```
+```sh
 cd code_benches; python run.py
 ```
 
@@ -115,6 +115,23 @@ cd awsm
 cargo build --release
 ```
 6. The awsm binary is built at `target/release/silverfish`. Copy this to the appropriaate place for your platform and add to your PATH if neccessary.
+
+## Tour of the Source
+
+The source is organized as such:
+
+- `src/` - the Rust source of the compiler, and the `silverfish` binary.
+	Look here for the logic for taking in Wasm, and generating LLVM bytecode.
+	`cargo` guides the compilation of this code.
+- `code_benches/` - This is a relatively large set of benchmarks, many of which are derived from Polybench (`pb_*`), MiBench (`mb_*`), or various applications (`custom_*` including NN inference, sqlite, a PID controller, and an extended Kalman filter).
+	The `run.py` file guides the compilation and execution of these as effectively a set of unit tests, and is an example of the compilation structure of an application with the runtime in aWsm.
+- `example_code/` - More atomic tests for specific Wasm features (bounds checks, indirect function invocations, etc...).
+	This ensures that changes to the compiler don't break Wasm sandboxing, and provides regression tests.
+- `runtime/` - The aWsm runtime.
+	This includes most of the code that provides the sandboxing guarantees (for example, including bounds checks, indirect function call  type checks and indirection).
+	Microcontroller-specific runtime code (for Arm Cortex-M processors) referred to in [`eWasm`](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf), is in `cortex_m_glue/` and `libc/cortex_m_backing.c`.
+	Various pluggable bounds checks can be found in `runtime/memory/`.
+	The runtime is compiled separately, and combined with the LLVM IR output by aWsm (using LTO) to generate the final sandboxed object.
 
 # Limitations and Assumptions
 
