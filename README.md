@@ -1,4 +1,4 @@
-aWsm
+aWsm - An Awesome Wasm Compiler and Runtime
 ==========
 
 # What is aWsm?
@@ -32,12 +32,12 @@ Please have patience as we update those to `awsm`.
 
 ## Why aWsm?
 
-Why would we implement a Wasm compiler and runtime.
+Why would we implement a Wasm compiler and runtime?
 The Web Assembly eco-system is still developing, and we see the need for a system focusing on:
 
 - *Performance.*
 	aWsm is an ahead-of-time compiler that leverages the LLVM compiler to optimize code, and target different architectural backends.
-	We have evaluated the compiler on x86-64, aarch64 (Raspberry Pi), ARM Cortex-M7 (and M4), and performance on the microprocessors is within 10% of native, and within 40% on the microcontrollers.
+	We have evaluated aWsm on x86-64, aarch64 (Raspberry Pi), ARM Cortex-M7 (and M4), and performance on the  microprocessors is within 10% of native, and within 40% on the microcontrollers on Polybench benchmarks.
 - *Simplicity.*
 	The entire code base for the compiler and runtime is relatively small.
 	The compiler is <3.5K lines of Rust, and the runtime (for *all* platforms) is <5K lines of C.
@@ -45,8 +45,11 @@ The Web Assembly eco-system is still developing, and we see the need for a syste
 	We've implemented *seven* different mechanisms for this!
 - *Portability.*
 	Both the compiler and runtime are mostly platform-independent code, and porting to a new platform only really requires additional work if you need to tweak stack sizes (microcontrollers), or use architectural features (e.g., MPX, segmentation, etc...).
+- *Composability.*
+	The final output of aWsm is simple `*.o` elf objects that can be linked into larger systems.
+	This enables the trivial composition of sandboxes together, and sandboxes into larger programs.
 
-We believe that aWsm is one of the best options for ahead-of-time compilation for outside of the browser.
+We believe that aWsm is one of the best options for ahead-of-time compilation for Wasm execution outside of the browser.
 
 # Performance
 
