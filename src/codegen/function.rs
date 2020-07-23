@@ -1,8 +1,12 @@
 use std::cell::Cell;
+#[cfg(feature = "cortex-m-attrs")]
 use std::ffi::CString;
+#[cfg(feature = "cortex-m-attrs")]
 use std::mem;
 
-use llvm::{BasicBlock, Sub};
+use llvm::BasicBlock;
+#[cfg(feature = "cortex-m-attrs")]
+use llvm::Sub;
 use llvm::Builder;
 use llvm::Function;
 use llvm::Value;
@@ -31,6 +35,7 @@ impl<'a> FunctionCtx<'a> {
     }
 }
 
+#[cfg(feature = "cortex-m-attrs")]
 unsafe fn add_string_attr(k: &str, v: &str, v_ref: *mut llvm_sys::LLVMValue, ctx: &ModuleCtx) {
     let idx = llvm_sys::LLVMAttributeFunctionIndex;
 
@@ -54,9 +59,8 @@ unsafe fn add_string_attr(k: &str, v: &str, v_ref: *mut llvm_sys::LLVMValue, ctx
 
 }
 
-pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
-    let llvm_f = ctx.llvm_module.get_function(&f.generated_name).unwrap();
-
+#[cfg(feature = "cortex-m-attrs")]
+fn add_cortex_m_attrs(llvm_f: &Function, ctx: &ModuleCtx) {
     // FIXME: This is a performance hack to include target features for cortex-m
     // The version of clang we're using for the cortex-m work needs these (at least for lto),
     // otherwise it falls back to slow defaults
@@ -79,12 +83,6 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
     // "target-features"="+armv7e-m,+dsp,+fp-armv8d16,+fp-armv8d16sp,+fp16,+fp64,+fpregs,+hwdiv,+thumb-mode,+vfp2,+vfp2d16,+vfp2d16sp,+vfp2sp,+vfp3d16,+vfp3d16sp,+vfp4d16,+vfp4d16sp,-aes,-crc,-crypto,-dotprod,-fp16fml,-fullfp16,-hwdiv-arm,-lob,-mve,-mve.fp,-ras,-sb,-sha2"
     // "unsafe-fp-math"="false"
     // "use-soft-float"="false" }
-    let cm_override = if let Some(target) = &ctx.opt.target {
-        target.contains("thumbv7em-none-unknown-eabi")
-    } else {
-        false
-    };
-
     unsafe {
         let v_ref: *mut llvm_sys::LLVMValue = mem::transmute(llvm_f.to_super() as &Value);
         let llvm_ctx: *mut llvm_sys::LLVMContext = mem::transmute(ctx.llvm_ctx as &llvm::Context);
@@ -98,114 +96,125 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
             llvm_sys::LLVMAttributeFunctionIndex,
             attr_ref
         );
-        if cm_override {
-            info!("engaging cortex-m override");
 
-            add_string_attr(
-                "correctly-rounded-divide-sqrt-fp-math",
-                "false",
-                v_ref,
-                ctx
-            );
+        info!("engaging cortex-m override");
 
-            add_string_attr(
-                "disable-tail-calls",
-                "false",
-                v_ref,
-                ctx
-            );
+        add_string_attr(
+            "correctly-rounded-divide-sqrt-fp-math",
+            "false",
+            v_ref,
+            ctx
+        );
 
-            add_string_attr(
-                "less-precise-fpmad",
-                "false",
-                v_ref,
-                ctx
-            );
+        add_string_attr(
+            "disable-tail-calls",
+            "false",
+            v_ref,
+            ctx
+        );
 
-            add_string_attr(
-                "min-legal-vector-width",
-                "0",
-                v_ref,
-                ctx
-            );
+        add_string_attr(
+            "less-precise-fpmad",
+            "false",
+            v_ref,
+            ctx
+        );
 
-            add_string_attr(
-                "no-frame-pointer-elim",
-                "false",
-                v_ref,
-                ctx
-            );
+        add_string_attr(
+            "min-legal-vector-width",
+            "0",
+            v_ref,
+            ctx
+        );
 
-            add_string_attr(
-                "no-infs-fp-math",
-                "false",
-                v_ref,
-                ctx
-            );
+        add_string_attr(
+            "no-frame-pointer-elim",
+            "false",
+            v_ref,
+            ctx
+        );
 
-            add_string_attr(
-                "no-jump-tables",
-                "false",
-                v_ref,
-                ctx
-            );
+        add_string_attr(
+            "no-infs-fp-math",
+            "false",
+            v_ref,
+            ctx
+        );
 
-            add_string_attr(
-                "no-nans-fp-math",
-                "false",
-                v_ref,
-                ctx
-            );
+        add_string_attr(
+            "no-jump-tables",
+            "false",
+            v_ref,
+            ctx
+        );
 
-            add_string_attr(
-                "no-signed-zeros-fp-math",
-                "false",
-                v_ref,
-                ctx
-            );
+        add_string_attr(
+            "no-nans-fp-math",
+            "false",
+            v_ref,
+            ctx
+        );
 
-            add_string_attr(
-                "no-trapping-math",
-                "false",
-                v_ref,
-                ctx
-            );
+        add_string_attr(
+            "no-signed-zeros-fp-math",
+            "false",
+            v_ref,
+            ctx
+        );
 
-            // add_string_attr(
-            //     "stack-protector-buffer-size",
-            //     "8",
-            //     v_ref,
-            //     ctx
-            // );
+        add_string_attr(
+            "no-trapping-math",
+            "false",
+            v_ref,
+            ctx
+        );
 
-            add_string_attr(
-                "target-cpu",
-                "cortex-m7",
-                v_ref,
-                ctx
-            );
+        // add_string_attr(
+        //     "stack-protector-buffer-size",
+        //     "8",
+        //     v_ref,
+        //     ctx
+        // );
 
-            add_string_attr(
-                "unsafe-fp-math",
-                "false",
-                v_ref,
-                ctx
-            );
+        add_string_attr(
+            "target-cpu",
+            "cortex-m7",
+            v_ref,
+            ctx
+        );
 
-            add_string_attr(
-                "use-soft-float",
-                "false",
-                v_ref,
-                ctx
-            );
+        add_string_attr(
+            "unsafe-fp-math",
+            "false",
+            v_ref,
+            ctx
+        );
+
+        add_string_attr(
+            "use-soft-float",
+            "false",
+            v_ref,
+            ctx
+        );
 
 
-            add_string_attr(
-                "target-features",
-                "+armv7e-m,+dsp,+fp-armv8d16,+fp-armv8d16sp,+fp16,+fp64,+fpregs,+hwdiv,+thumb-mode,+vfp2,+vfp2d16,+vfp2d16sp,+vfp2sp,+vfp3d16,+vfp3d16sp,+vfp4d16,+vfp4d16sp,-aes,-crc,-crypto,-dotprod,-fp16fml,-fullfp16,-hwdiv-arm,-lob,-mve,-mve.fp,-ras,-sb,-sha2",
-                v_ref,
-                ctx
-            );
+        add_string_attr(
+            "target-features",
+            "+armv7e-m,+dsp,+fp-armv8d16,+fp-armv8d16sp,+fp16,+fp64,+fpregs,+hwdiv,+thumb-mode,+vfp2,+vfp2d16,+vfp2d16sp,+vfp2sp,+vfp3d16,+vfp3d16sp,+vfp4d16,+vfp4d16sp,-aes,-crc,-crypto,-dotprod,-fp16fml,-fullfp16,-hwdiv-arm,-lob,-mve,-mve.fp,-ras,-sb,-sha2",
+            v_ref,
+            ctx
+        );
+    }
+}
+
+pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
+    let llvm_f = ctx.llvm_module.get_function(&f.generated_name).unwrap();
+
+    // Add Cortex-M attributes?
+    #[cfg(feature = "cortex-m-attrs")]
+    if let Some(target) = &ctx.opt.target {
+        if target.contains("thumbv7em-none-unknown-eabi") {
+            add_cortex_m_attrs(&llvm_f, ctx);
         }
     }
 
