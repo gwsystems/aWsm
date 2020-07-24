@@ -51,6 +51,8 @@ The Web Assembly eco-system is still developing, and we see the need for a syste
 
 We believe that aWsm is one of the best options for ahead-of-time compilation for Wasm execution outside of the browser.
 
+If you want to learn more about aWsm, see the [design](doc/design.md), or the [publication](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf).
+
 # Performance
 
 Give us a little time, we'll post benchmarks here!
@@ -132,6 +134,8 @@ The source is organized as such:
 	Microcontroller-specific runtime code (for Arm Cortex-M processors) referred to in [`eWasm`](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf), is in `cortex_m_glue/` and `libc/cortex_m_backing.c`.
 	Various pluggable bounds checks can be found in `runtime/memory/`.
 	The runtime is compiled separately, and combined with the LLVM IR output by aWsm (using LTO) to generate the final sandboxed object.
+- `doc/` - Documentation directory.
+	See the `*.md` files there.
 
 # Limitations and Assumptions
 
