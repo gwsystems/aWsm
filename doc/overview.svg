@@ -72,7 +72,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.75814088"
-     inkscape:cx="682.022"
+     inkscape:cx="594.96694"
      inkscape:cy="214.29228"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
@@ -293,19 +293,6 @@
          x="84.414787"
          y="81.615761"
          style="stroke-width:0.26458332">Wasm</tspan></text>
-    <rect
-       style="opacity:0.5;fill:#efefef;fill-opacity:1;stroke:none;stroke-width:0.53141129;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-       id="rect9219"
-       width="17.570549"
-       height="46.984962"
-       x="161.81686"
-       y="55.495056" />
-    <path
-       style="fill:#efefef;fill-opacity:1;stroke:#030303;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 175.08904,55.490404 116.63667,-9e-6 V 161.32061 l -129.90344,2e-5 v -60.85238 l 13.26677,-1e-5 z"
-       id="path9217"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="ccccccc" />
     <rect
        style="opacity:0.5;fill:#97caff;fill-opacity:1;stroke:none;stroke-width:0.21367031;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect929-3-61-9"
