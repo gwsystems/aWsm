@@ -151,7 +151,7 @@ We provide details in Section 7 of our [EMSOFT publication](https://www2.seas.gw
 We believe that some changes to the specification, or the creation of an embedded profile might be warranted.
 The main limitations:
 
-1. *Variant, runtime selected page sizes.*
+1. *Variant page sizes selected by the runtime.*
 	Wasm uses 64KiB pages.
 	That is far too large for embedded systems.
 	aWsm uses smaller pages, while simulating the larger default pages.
@@ -173,4 +173,4 @@ One of our main research vehicles is the [Composite](composite.seas.gwu.edu) com
 If you're interested in low-level hacking and system building, in secure and reliable systems, in embedded systems, or in models for parallelism, don't hesitate to contact [Gabe](www.seas.gwu.edu/~gparmer) about doing a PhD or becoming involved with the group.
 
 Our collaborations with Arm Research during a lot of the maturation of the aWsm infrastructure have been instrumental in its development.
-Support from SRC, ARM, and NSF have all contributed to Wasm's research.
+Support from SRC, ARM, and NSF have all contributed greatly to Wasm's research.
