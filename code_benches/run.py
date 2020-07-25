@@ -3,6 +3,8 @@ import os
 import subprocess as sp
 import sys
 import timeit
+import glob
+import itertools as it
 
 # Note: This is a major configuration option, you probably want to set this if you're doing anything non-trivial
 SILVERFISH_TARGET = None
@@ -61,6 +63,16 @@ class Program(object):
     def __str__(self):
         return "{}({})".format(self.name, " ".join(map(str, self.parameters)))
 
+    def sources(self):
+        # glob here, avoids issues with glob expansion in shell
+        if self.is_cpp:
+            patterns = ["*.c", "*.cpp"]
+        else:
+            patterns = ["*.c"]
+
+        sources = it.chain.from_iterable(glob.glob(os.path.join(self.name, pattern)) for pattern in patterns)
+        return " ".join(source[len(self.name)+1:] for source in sources)
+
 
 # These are the programs we're going to test with
 # TODO: Fix ispell, which doesn't compile on OS X
@@ -76,13 +88,13 @@ programs = [
                               "-Wno-shift-negative-value"]),
     Program("custom_matrix_multiply", [], 2 ** 14),
     Program("custom_memcmp", [], 2 ** 14),
-    Program("custom_sqlite", [], 2 ** 15),
+    Program("custom_sqlite", [], 2 ** 15, custom_arguments=["-DSQLITE_MUTEX_NOOP", "-ldl"]),
 
     # == Apps ==
-    Program("app_nn", [], 2 ** 14, custom_arguments=["-std=c99", "-Wno-unknown-attributes", "-DARM_MATH_CM3", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/DSP/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/Core/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/NN/Include"]),
+    # Program("app_nn", [], 2 ** 14, custom_arguments=["-std=c99", "-Wno-unknown-attributes", "-DARM_MATH_CM3", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/DSP/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/Core/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/NN/Include"]),
     Program("app_pid", ["-std=c++11", "-Wall"], 2 ** 8, custom_arguments=[], is_cpp=True),
     Program("app_tiny_ekf", ["-std=c++11", "-Wall"], 2 ** 14, custom_arguments=[], is_cpp=True),
-    Program("app_tinycrypt", [], 2 ** 15 + 2**14, custom_arguments=[ "-Wall", "-Wpedantic", "-Wno-gnu-zero-variadic-macro-arguments", "-std=c11", "-I/Users/peachg/Projects/silverfish/code_benches/app_tinycrypt/", "-DENABLE_TESTS"]),
+    Program("app_tinycrypt", [], 2 ** 15 + 2**14, custom_arguments=[ "-Wall", "-Wpedantic", "-Wno-gnu-zero-variadic-macro-arguments", "-std=c11", "-I/Users/peachg/Projects/silverfish/code_benches/app_tinycrypt/", "-DENABLE_TESTS", "-I."]),
     # Program("app_v9", [], 2 ** 18, custom_arguments=[], do_lto=False),
 
     # == MiBench ==
@@ -165,17 +177,17 @@ def compile_to_executable(program):
     if ENABLE_DEBUG_SYMBOLS:
         opt += " -g"
     if program.is_cpp:
-        sp.check_call("shopt -s nullglob; clang++ {} -lm {} *.c *.cpp -o bin/{}".format(program.custom_arguments, opt, program.name), shell=True, cwd=program.name)
+        sp.check_call("clang++ {} -lm {} {} -o bin/{}".format(program.custom_arguments, opt, program.sources(), program.name), shell=True, cwd=program.name)
     else:
-        sp.check_call("clang {} -lm {} *.c -o bin/{}".format(program.custom_arguments, opt, program.name), shell=True, cwd=program.name)
+        sp.check_call("clang {} -lm {} {} -o bin/{}".format(program.custom_arguments, opt, program.sources(), program.name), shell=True, cwd=program.name)
         # sp.check_call("clang {} -lm {} *.c -o bin/{}".format(program.custom_arguments, opt, program.name), shell=True, cwd=program.name)
 
 
 # Compile the C code in `program`'s directory into WASM
 def compile_to_wasm(program):
     flags = WASM_FLAGS.format(stack_size=program.stack_size)
-    command = "shopt -s nullglob; {clang} {flags} {args} -O3 -flto ../dummy.c *.c *.cpp -o bin/{pname}.wasm" \
-        .format(clang=WASM_CLANG, flags=flags, args=program.custom_arguments, pname=program.name)
+    command = "{clang} {flags} {args} -O3 -flto ../dummy.c {sources} -o bin/{pname}.wasm" \
+        .format(clang=WASM_CLANG, flags=flags, sources=program.sources(), args=program.custom_arguments, pname=program.name)
     print(command)
     sp.check_call(command, shell=True, cwd=program.name)
 
