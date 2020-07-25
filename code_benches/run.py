@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import csv
 import os
 import subprocess as sp
@@ -15,13 +17,19 @@ SILVERFISH_TARGET = None
 # CSV file name
 CSV_NAME = "benchmarks.csv"
 
+# Make sure we're in the code_benches directory
+if os.path.dirname(sys.argv[0]):
+    os.chdir(os.path.dirname(sys.argv[0]))
 # Absolute path to the `code_benches` directory
 BENCH_ROOT = os.getcwd()
 # Absolute path to the `silverfish` directory
 ROOT_PATH = os.path.dirname(BENCH_ROOT)
 
 RUNTIME_PATH = ROOT_PATH + "/runtime"
-SILVERFISH_PATH = ROOT_PATH + "/target/release/silverfish"
+if "--release" in sys.argv:
+    SILVERFISH_PATH = ROOT_PATH + "/target/release/silverfish"
+else:
+    SILVERFISH_PATH = ROOT_PATH + "/target/debug/silverfish"
 
 WASMCEPTION_PATH = ROOT_PATH + "/wasmception"
 
@@ -92,9 +100,9 @@ programs = [
 
     # == Apps ==
     # Program("app_nn", [], 2 ** 14, custom_arguments=["-std=c99", "-Wno-unknown-attributes", "-DARM_MATH_CM3", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/DSP/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/Core/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/NN/Include"]),
-    Program("app_pid", ["-std=c++11", "-Wall"], 2 ** 8, custom_arguments=[], is_cpp=True),
-    Program("app_tiny_ekf", ["-std=c++11", "-Wall"], 2 ** 14, custom_arguments=[], is_cpp=True),
-    Program("app_tinycrypt", [], 2 ** 15 + 2**14, custom_arguments=[ "-Wall", "-Wpedantic", "-Wno-gnu-zero-variadic-macro-arguments", "-std=c11", "-I/Users/peachg/Projects/silverfish/code_benches/app_tinycrypt/", "-DENABLE_TESTS", "-I."]),
+#    Program("app_pid", ["-std=c++11", "-Wall"], 2 ** 8, custom_arguments=[], is_cpp=True),
+#    Program("app_tiny_ekf", ["-std=c++11", "-Wall"], 2 ** 14, custom_arguments=[], is_cpp=True),
+#    Program("app_tinycrypt", [], 2 ** 15 + 2**14, custom_arguments=[ "-Wall", "-Wpedantic", "-Wno-gnu-zero-variadic-macro-arguments", "-std=c11", "-I/Users/peachg/Projects/silverfish/code_benches/app_tinycrypt/", "-DENABLE_TESTS", "-I."]),
     # Program("app_v9", [], 2 ** 18, custom_arguments=[], do_lto=False),
 
     # == MiBench ==
