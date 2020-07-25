@@ -177,11 +177,14 @@ def compile_to_executable(program):
     if ENABLE_DEBUG_SYMBOLS:
         opt += " -g"
     if program.is_cpp:
-        sp.check_call("clang++ {} -lm {} {} -o bin/{}".format(program.custom_arguments, opt, program.sources(), program.name), shell=True, cwd=program.name)
+        clang = "clang++"
     else:
-        sp.check_call("clang {} -lm {} {} -o bin/{}".format(program.custom_arguments, opt, program.sources(), program.name), shell=True, cwd=program.name)
-        # sp.check_call("clang {} -lm {} *.c -o bin/{}".format(program.custom_arguments, opt, program.name), shell=True, cwd=program.name)
+        clang = "clang"
 
+    command = "{clang} {args} -lm {opt} {sources} -o bin/{pname}" \
+        .format(clang=clang, args=program.custom_arguments, opt=opt, sources=program.sources(), pname=program.name)
+    print(command)
+    sp.check_call(command, shell=True, cwd=program.name)
 
 # Compile the C code in `program`'s directory into WASM
 def compile_to_wasm(program):
