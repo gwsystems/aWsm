@@ -90,11 +90,6 @@ The compiler can now be run via `silverfish`
 
 The tests can run with
 
-## Debian-based Systems
-```sh
-git clone https://github.com/gwsystems/silverfish.git
-cd silverfish
-./install_deb.sh
 ```
 cd code_benches; python run.py
 ```
