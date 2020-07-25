@@ -26,8 +26,8 @@ Wasm provides a number of benefits outside of the web including:
 	This has the potential to provide a universal specification of computation that can execute in the cloud, on the edge, or in an embedded device.
 
 **A note on naming.**
-aWsm started out as the `awsm` compiler, the brainchild of Gregor Peach when he was a researcher in the group.
-There are still quite a few lingering `awsm` references.
+aWsm started out as the `silverfish` compiler, the brainchild of Gregor Peach when he was a researcher in the group.
+There are still quite a few lingering `silverfish` references.
 Please have patience as we update those to `awsm`.
 
 ## Why aWsm?
