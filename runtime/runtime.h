@@ -1,35 +1,80 @@
-#include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <math.h>
-#include <printf.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
-
-#include <sys/stat.h>
-#include <sys/uio.h>
-
 #define EXPORT __attribute__ ((visibility ("default")))
 #define IMPORT __attribute__ ((visibility ("default")))
 
 #define INLINE __attribute__((always_inline))
 #define WEAK __attribute__((weak))
 
+#if __has_include("assert.h") && (defined(__APPLE__) || defined(__linux__))
+#include <assert.h>
+#define silverfish_assert assert
+#else
+int printf_(const char* format, ...);
+#define silverfish_assert(x) do { if(!(x)) { char msg[] = "" #x ""; printf_("%s\n", msg); while(1); } } while(0);
+#endif
 
 // Type alias's so I don't have to write uint32_t a million times
 typedef signed char i8;
 typedef unsigned char u8;
+
+#if __has_include("stdint.h")
+#include <stdint.h>
 typedef int16_t i16;
 typedef uint16_t u16;
 typedef int32_t i32;
 typedef uint32_t u32;
 typedef int64_t i64;
 typedef uint64_t u64;
+#else
+// FIXME: Cortex-m specific hack
+typedef signed short i16;
+typedef unsigned short u16;
+typedef signed int i32;
+typedef unsigned int u32;
+typedef signed long long i64;
+typedef unsigned long long u64;
+#endif
+
+#if __has_include("string.h") && __has_include("math.h") && __has_include("stdio.h") && __has_include("stdlib.h")
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+#else
+
+#define size_t u32
+
+#define CORTEX_M
+
+void* memcpy(void *dest, const void *src, size_t len);
+void *memset(void *s, int c, size_t n);
+char* strcpy(char* dest, const char* src);
+size_t strlen(const char* str);
+
+double trunc(double x);
+float truncf(float x);
+
+#endif
+
+#if __has_include("limits.h")
+#include <limits.h>
+#else
+#define CHAR_BIT 8
+
+#define INT8_MIN   (-1-0x7f)
+#define INT16_MIN  (-1-0x7fff)
+#define INT32_MIN  (-1-0x7fffffff)
+#define INT64_MIN  (-1-0x7fffffffffffffff)
+
+#define INT8_MAX   (0x7f)
+#define INT16_MAX  (0x7fff)
+#define INT32_MAX  (0x7fffffff)
+#define INT64_MAX  (0x7fffffffffffffff)
+
+#define UINT8_MAX  (0xff)
+#define UINT16_MAX (0xffff)
+#define UINT32_MAX (0xffffffff)
+#define UINT64_MAX (0xffffffffffffffff)
+#endif
 
 #define WASM_PAGE_SIZE (1024 * 64)
 
@@ -52,7 +97,6 @@ extern u32 memory_size;
 
 void alloc_linear_memory();
 void expand_memory();
-// Assumption: bounds_check < WASM_PAGE_SIZE
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check);
 
 static inline void* get_memory_ptr_void(u32 offset, u32 bounds_check) {
@@ -72,6 +116,8 @@ static inline char* get_memory_string(u32 offset) {
     }
 }
 
+u32 allocate_n_bytes(u32 n);
+
 // memory/* also provides the table access functions
 // TODO: Change this to use a compiled in size
 #define INDIRECT_TABLE_SIZE 1024
@@ -86,6 +132,7 @@ extern struct indirect_table_entry indirect_table[INDIRECT_TABLE_SIZE];
 INLINE char* get_function_from_table(u32 idx, u32 type_id);
 
 // libc/* might need to do some setup for the libc setup
-void stub_init(i32 offset);
+void stub_init();
 
-unsigned long long __getcycles(void);
+// The runtime entrypoint must be called
+int runtime_main(int argc, char** argv);

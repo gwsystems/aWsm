@@ -119,8 +119,31 @@ env_do_barrier(i32 x)
 	__sync_synchronize();
 }
 
+// Get cycles logic
+
+
 INLINE unsigned long long
 env_getcycles(void)
 {
-	return __getcycles();
+    #if defined(AARCH64) || defined(aarch64)
+
+    unsigned long long virtual_timer_value;
+    asm volatile("mrs %0, cntvct_el0" : "=r"(virtual_timer_value));
+    return virtual_timer_value;
+
+    #elif defined(X86_64) || defined(x86_64)
+
+    unsigned long long int cpu_time_in_cycles = 0;
+    unsigned int           cycles_lo;
+    unsigned int           cycles_hi;
+    __asm__ volatile("rdtsc" : "=a"(cycles_lo), "=d"(cycles_hi));
+    cpu_time_in_cycles = (unsigned long long int)cycles_hi << 32 | cycles_lo;
+
+    return cpu_time_in_cycles;
+
+    #else
+    silverfish_assert(0);
+    return 0;
+
+    #endif
 }

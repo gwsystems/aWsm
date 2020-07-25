@@ -4,12 +4,21 @@
 
 a.out*
 **/*.o
+**/*.elf
 input.wasm
 output.bc
 
+obj_zips/*
+
 code_benches/*/bin/
-code_benches/sqlite/test.db
+code_benches/custom_sqlite/test.db
 code_benches/benchmarks.csv
+
+runtime/cortex_m_glue/*.log
 
 silverfish.iml
 .idea
+
+.vagrant
+Vagrantfile
+*-cloudimg-console.log

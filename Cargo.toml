@@ -5,9 +5,12 @@ authors = ["Gregor Peach <gregorpeach@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-llvm-alt = { git = "https://github.com/gwsystems/llvm-rs.git"}
-structopt = "0.2"
-wasmparser = "0.29"
+flexi_logger = "0.14.4"
+llvm-sys = "90.0.0"
+llvm-alt = { git = "https://github.com/Others/llvm-rs.git"}
+log = "0.4.8"
+structopt = "0.3.2"
+wasmparser = "0.39.2"
 
 [profile.release]
 debug = true

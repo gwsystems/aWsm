@@ -20,6 +20,7 @@ use super::ModuleCtx;
 // We add in globals to tell the runtime how much memory to allocate and startup
 // (And what the max amount of allocated memory should be)
 pub fn add_memory_size_globals(ctx: &ModuleCtx, limits: &ResizableLimits) {
+    info!("memory limits {:?}", limits);
     let starting_pages_global = ctx
         .llvm_module
         .add_global_variable("starting_pages", limits.initial.compile(ctx.llvm_ctx));
