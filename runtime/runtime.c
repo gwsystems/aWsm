@@ -167,12 +167,20 @@ INLINE float f32_max(float a, float b) {
     return a > b ? a : b;
 }
 
+INLINE float f32_floor(float a) {
+    return floorf(a);
+}
+
 INLINE double f64_min(double a, double b) {
     return a < b ? a : b;
 }
 
 INLINE double f64_max(double a, double b) {
     return a > b ? a : b;
+}
+
+INLINE double f64_floor(double a) {
+    return floor(a);
 }
 
 // We want to have some allocation logic

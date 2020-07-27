@@ -835,6 +835,12 @@ pub fn compile_block<'a, 'b>(
             Instruction::F32Max => perform_bin_op(m_ctx, &mut stack, Type::F32, |v1, v2| {
                 b.build_call(get_stub_function(m_ctx, F32_MAX), &[v1, v2])
             }),
+            Instruction::F32Floor => {
+                let v = stack.pop().unwrap();
+                assert_type(m_ctx, v, Type::F32);
+                let result = b.build_call(get_stub_function(m_ctx, F32_FLOOR), &[v]);
+                stack.push(result);
+            }
 
             Instruction::F64Const(i) => {
                 let v = i.compile(m_ctx.llvm_ctx);
@@ -929,6 +935,12 @@ pub fn compile_block<'a, 'b>(
             Instruction::F64Max => perform_bin_op(m_ctx, &mut stack, Type::F64, |v1, v2| {
                 b.build_call(get_stub_function(m_ctx, F64_MAX), &[v1, v2])
             }),
+            Instruction::F64Floor => {
+                let v = stack.pop().unwrap();
+                assert_type(m_ctx, v, Type::F64);
+                let result = b.build_call(get_stub_function(m_ctx, F64_FLOOR), &[v]);
+                stack.push(result);
+            }
 
             Instruction::I32Load { offset, .. } => {
                 let v = load_val::<i32>(m_ctx, b, &mut stack, offset);

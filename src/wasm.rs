@@ -381,6 +381,7 @@ pub enum Instruction {
 
     F32Min,
     F32Max,
+    F32Floor,
 
     F64Const(f64),
 
@@ -411,6 +412,7 @@ pub enum Instruction {
 
     F64Min,
     F64Max,
+    F64Floor,
 
     I32Load { flags: u32, offset: u32 },
     I32Store { flags: u32, offset: u32 },
@@ -619,6 +621,7 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
 
             Operator::F32Min => Instruction::F32Min,
             Operator::F32Max => Instruction::F32Max,
+            Operator::F32Floor => Instruction::F32Floor,
 
             Operator::F64Const { value } => {
                 let v: f64 = f64::from_bits(value.bits());
@@ -652,6 +655,7 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
 
             Operator::F64Min => Instruction::F64Min,
             Operator::F64Max => Instruction::F64Max,
+            Operator::F64Floor => Instruction::F64Floor,
 
             Operator::I32Load { ref memarg } => Instruction::I32Load {
                 flags: memarg.flags,

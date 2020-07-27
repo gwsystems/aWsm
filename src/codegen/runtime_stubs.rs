@@ -70,11 +70,13 @@ pub const U64_REM: &str = "u64_rem";
 pub const I64_DIV: &str = "i64_div";
 pub const I64_REM: &str = "i64_rem";
 
-pub const F32_MIN: &str = "f32_min";
+pub const F32_FLOOR: &str = "f32_floor";
 pub const F32_MAX: &str = "f32_max";
+pub const F32_MIN: &str = "f32_min";
 
-pub const F64_MIN: &str = "f64_min";
+pub const F64_FLOOR: &str = "f64_floor";
 pub const F64_MAX: &str = "f64_max";
+pub const F64_MIN: &str = "f64_min";
 
 // Intrinsic llvm functions
 pub const I32_CTPOP: &str = "llvm.ctpop.i32";
@@ -313,6 +315,11 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
         .to_super(),
     );
     m.add_function(
+        F32_FLOOR,
+        FunctionType::new(<f32>::get_type(ctx), &[<f32>::get_type(ctx)]).to_super(),
+    );
+
+    m.add_function(
         F64_MIN,
         FunctionType::new(
             <f64>::get_type(ctx),
@@ -327,6 +334,10 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
             &[<f64>::get_type(ctx), <f64>::get_type(ctx)],
         )
         .to_super(),
+    );
+    m.add_function(
+        F64_FLOOR,
+        FunctionType::new(<f64>::get_type(ctx), &[<f64>::get_type(ctx)]).to_super(),
     );
 
     m.add_function(
