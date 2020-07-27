@@ -57,6 +57,34 @@ If you want to learn more about aWsm, see the [design](doc/design.md), or the [p
 
 Give us a little time, we'll post benchmarks here!
 
+## Comparison to Existing Wasm Ecosystems
+
+There are many existing compilers and runtimes.
+aWsm fills the niche of a compiler
+
+- based on ahead-of-time compilation using the popular LLVM infrastructure,
+- that generates fast, safe code (even on microcontrollers), and
+- that is designed for simplicity and easy extension.
+
+Adding runtime functions and changing safety checking mechanisms are trivial operations.
+
+We annotate if - to the best of our knowledge - each system uses *Interpretation (Int)*, *Just in Time (JIT)*, or *Ahead-of-Time (AoT)*, and if the infrastructure supports *Arm* (Cortex-A processors) and *Microcontrollers (uCs)* (all support x86).
+
+- Browser compilers (JIT, Arm) -
+	All the major browsers support JIT compilation of Wasm with a focus on speedy interactivity, and fast enough code execution.
+- [Cranelift](https://github.com/bytecodealliance/wasmtime/tree/main/cranelift) (AoT, Arm) -
+	A brilliant compiler that focuses on fast compilation, and good quality output.
+	`awsm` is not a fast compiler, but focuses on producing exceptionally fast code.
+- [Wasmer](https://github.com/wasmerio/wasmer) (AoT, Arm) -
+	A whole environment around Wasm with multiple backends.
+- [WAMR](https://github.com/bytecodealliance/wasm-micro-runtime) (Int, Jit, and some AoT, Arm, uCs) -
+	Micro-runtime that is quite flexible.
+- [WASM3](https://github.com/wasm3/wasm3) (Int, Arm, uCs) -
+	A high-performance interpreter that can run in many places.
+- [wasmi](https://github.com/paritytech/wasmi) (Int, Arm, uCs) -
+	Another high-performance interpreter.
+- Many others! This is a pretty active area.
+
 # Getting started!
 
 ```
