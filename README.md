@@ -174,6 +174,13 @@ cd code_benches; python run.py
 
 Please see the [design](doc/design.md) to understand the pipeline, and see `run.py` for an example of how to connect existing compilers (to generate Wasm, and generate machine code from LLVM IR) with aWsm.
 
+Note that aWsm is still a research prototype, so might have some rough edges.
+It is not currently turn-key.
+You likely need to understand how to generate Wasm, and use an LLVM compile chain.
+We're happy to accept PRs with fixes, and "quality of life" improvements.
+
+We're in the processes of standing up a CI infrastructure.
+
 ## Tour of the Source
 
 The source is organized as such:
