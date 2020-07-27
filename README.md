@@ -55,7 +55,30 @@ If you want to learn more about aWsm, see the [design](doc/design.md), or the [p
 
 # Performance
 
-Give us a little time, we'll post benchmarks here!
+PolyBench/C benchmarks for **x86-64** (slowdown over native C):
+
+| | Wasmer | WAVM | Node.js + Emscripten | Lucent | aWsm |
+| --- | --- | --- | --- | --- | --- |
+| Avg. Slowdown | 149.8% | 28.1% | 84.0% | 92.8% | 13.4% |
+| Stdev. | 194.09 | 53.09 | 107.84 | 117.25 | 34.65 |
+
+PolyBench/C benchmarks for **Arm Aarch64** (slowdown over native C):
+
+| | aWsm |
+| --- | --- |
+| Avg. Slowdown | 6.7% |
+| Stdev. | 19.38 |
+
+Polybench/C benchmarks for **Arm Cortex-M7** (slowdown over native C):
+
+| Architectures | aWsm |
+| Cortex-M7 Avg. slowdown | 40.2% |
+| Cortex-M4 Avg. slowdown | 24.9% |
+
+In comparison, the `wasm3` interpreter's slowdown on microcontrollers is more than 10x.
+For more details (including other bounds checking mechanisms), see the [paper](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf).
+
+There are many compelling runtimes, but we believe that aWsm is useful in generating very fast code, while being simple and extensible.
 
 ## Comparison to Existing Wasm Ecosystems
 
