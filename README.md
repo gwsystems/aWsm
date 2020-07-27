@@ -60,16 +60,16 @@ PolyBench/C benchmarks for **x86-64** (slowdown over native C):
 | | Wasmer | WAVM | Node.js + Emscripten | Lucent | aWsm |
 | --- | --- | --- | --- | --- | --- |
 | Avg. Slowdown | 149.8% | 28.1% | 84.0% | 92.8% | 13.4% |
-| Stdev. | 194.09 | 53.09 | 107.84 | 117.25 | 34.65 |
+| Stdev. in Slowdown | 194.09 | 53.09 | 107.84 | 117.25 | 34.65 |
 
 PolyBench/C benchmarks for **Arm Aarch64** (slowdown over native C):
 
 | | aWsm |
 | --- | --- |
 | Avg. Slowdown | 6.7% |
-| Stdev. | 19.38 |
+| Stdev. of Slowdown | 19.38 |
 
-Polybench/C benchmarks for **Arm Cortex-M7** (slowdown over native C):
+Polybench/C benchmarks for **Arm Cortex-M** microcontrollers (slowdown over native C):
 
 | Architectures | aWsm |
 | --- | --- |
