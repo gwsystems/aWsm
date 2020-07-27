@@ -72,6 +72,7 @@ PolyBench/C benchmarks for **Arm Aarch64** (slowdown over native C):
 Polybench/C benchmarks for **Arm Cortex-M7** (slowdown over native C):
 
 | Architectures | aWsm |
+| --- | --- |
 | Cortex-M7 Avg. slowdown | 40.2% |
 | Cortex-M4 Avg. slowdown | 24.9% |
 
