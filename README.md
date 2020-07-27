@@ -145,12 +145,6 @@ cd awsm
 
 The compiler can now be run via `silverfish`
 
-The tests can run with
-
-```sh
-cd code_benches; python run.py
-```
-
 ### Other Systems
 
 1. [Install Rust](https://www.rust-lang.org/tools/install)
@@ -169,6 +163,16 @@ cd awsm
 cargo build --release
 ```
 6. The awsm binary is built at `target/release/silverfish`. Copy this to the appropriaate place for your platform and add to your PATH if neccessary.
+
+## Executing and Testing aWsm
+
+The tests can run with
+
+```sh
+cd code_benches; python run.py
+```
+
+Please see the [design](doc/design.md) to understand the pipeline, and see `run.py` for an example of how to connect existing compilers (to generate Wasm, and generate machine code from LLVM IR) with aWsm.
 
 ## Tour of the Source
 
