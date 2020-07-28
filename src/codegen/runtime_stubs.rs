@@ -12,6 +12,9 @@ use crate::codegen::Opt;
 // Backing functions for wasm operations
 pub const INITIALIZE_REGION_STUB: &str = "initialize_region";
 
+pub const MEMORY_SIZE: &str = "instruction_memory_size";
+pub const MEMORY_GROW: &str = "instruction_memory_grow";
+
 pub const GET_F32: &str = "get_f32";
 pub const SET_F32: &str = "set_f32";
 
@@ -108,6 +111,12 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
         ],
     );
     m.add_function(INITIALIZE_REGION_STUB, initialize_region_type.to_super());
+
+    // Memory region manipulation stubs
+    let memory_size_ty = FunctionType::new(<i32>::get_type(ctx), &[]);
+    m.add_function(MEMORY_SIZE, memory_size_ty.to_super());
+    let memory_grow_ty = FunctionType::new(<i32>::get_type(ctx), &[<i32>::get_type(ctx)]);
+    m.add_function(MEMORY_GROW, memory_grow_ty.to_super());
 
     // Table interaction function stubs
     let table_add_type = FunctionType::new(

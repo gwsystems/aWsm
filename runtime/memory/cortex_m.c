@@ -32,6 +32,19 @@ void expand_memory() {
     memory_size += WASM_PAGE_SIZE;
 }
 
+i32 instruction_memory_size() {
+    return memory_size / WASM_PAGE_SIZE;
+}
+
+i32 instruction_memory_grow(i32 count) {
+    i32 prev_size = instruction_memory_size();
+    for (int i = 0; i < count; i++) {
+        expand_memory();
+    }
+
+    return prev_size;
+}
+
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
     silverfish_assert(offset <= memory_size - bounds_check);
 
