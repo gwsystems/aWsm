@@ -17,6 +17,12 @@
 
 #include "../runtime.h"
 
+// TODO should these all be declared here?
+extern INLINE i32 get_i32(i32 offset);
+extern INLINE void set_i32(i32 offset, i32 v);
+extern INLINE i64 get_i64(i32 offset);
+extern INLINE void set_i64(i32 offset, i64 v);
+
 int main(int argc, char* argv[]) {
     runtime_main(argc, argv);
     printf("mem use = %d\n", (int) memory_size);
@@ -48,7 +54,9 @@ int main(int argc, char* argv[]) {
 #define AT_RANDOM	25
 
 // The symbol the binary gives us to init libc
-void wasmf___init_libc(i32 envp, i32 pn);
+//void wasmf___init_libc(i32 envp, i32 pn);
+extern void wasmf___wasm_call_ctors(void);
+
 
 // offset = a WASM ptr to memory the runtime can use
 void stub_init() {
@@ -84,7 +92,8 @@ void stub_init() {
     memcpy(get_memory_ptr_for_runtime(env_vec_offset, sizeof(env_vec)), env_vec, sizeof(env_vec));
 
     switch_out_of_runtime();
-    wasmf___init_libc(env_vec_offset, program_name_offset);
+    //wasmf___init_libc(env_vec_offset, program_name_offset);
+    wasmf___wasm_call_ctors();
     switch_into_runtime();
 }
 
@@ -176,8 +185,60 @@ i32 wasm_open(i32 path_off, i32 flags, i32 mode) {
 
 }
 
+i32 wasi_unstable_path_open(
+        i32 dirfd,
+        u32 lookupflags,
+        u32 path_off,
+        u32 path_len,
+        u32 oflags,
+        u64 fs_rights_base,
+        u64 fs_rights_inheriting,
+        u32 fdflags,
+        u32 fd_off) {
+    // get path
+    char* path = get_memory_string(path_off);
+
+    // translate o_flags and fs_flags into flags and mode
+    int flags = (
+            ((oflags & 0x0001) ? O_CREAT     : 0) |
+            ((oflags & 0x0002) ? O_DIRECTORY : 0) |
+            ((oflags & 0x0004) ? O_EXCL      : 0) |
+            ((oflags & 0x0008) ? O_TRUNC     : 0) |
+            ((fdflags & 0x0001) ? O_APPEND   : 0) |
+            ((fdflags & 0x0002) ? O_DSYNC    : 0) |
+            ((fdflags & 0x0004) ? O_NONBLOCK : 0) |
+            ((fdflags & 0x0008) ? O_RSYNC    : 0) |
+            ((fdflags & 0x0010) ? O_SYNC     : 0));
+    if ((fs_rights_base & 0x0000000000000040ULL) &&
+        (fs_rights_base & 0x0000000000000002ULL)) {
+        flags |= O_RDWR;
+    } else if (fs_rights_base & 0x0000000000000040ULL) {
+        flags |= O_WRONLY;
+    } else if (fs_rights_base & 0x0000000000000002ULL) {
+        flags |= O_RDONLY; // no-op because O_RDONLY is 0
+    }
+
+    int mode = 0644;
+    int fd = openat(dirfd, path, flags, mode);
+    if (fd < 0) {
+        return -errno;
+    }
+
+    set_i32(fd_off, fd);
+    return 0;
+}
+
 #define SYS_CLOSE 3
 i32 wasm_close(i32 fd) {
+    i32 res = (i32) close(fd);
+
+    if (res == -1) {
+        return -errno;
+    }
+    return res;
+}
+
+i32 wasi_unstable_fd_close(i32 fd) {
     i32 res = (i32) close(fd);
 
     if (res == -1) {
@@ -317,6 +378,61 @@ i32 wasm_fstat(i32 filedes, i32 stat_offset) {
     return res;
 }
 
+struct __wasi_fdstat {
+    u8  fs_filetype;
+    u16 fs_flags;
+    u64 fs_rights_base;
+    u64 fs_rights_inheriting;
+};
+
+i32 wasi_unstable_fd_fdstat_get(i32 fd, u32 buf_offset) {
+    struct __wasi_fdstat* fdstat = get_memory_ptr_void(buf_offset, sizeof(struct __wasi_fdstat));
+
+    struct stat stat;
+    i32 res = fstat(fd, &stat);
+    if (res == -1) {
+        return -errno;
+    }
+    int mode = stat.st_mode;
+
+    i32 fl = fcntl(fd, F_GETFL);
+    if (fl < 0) {
+        return -errno;
+    }
+
+    fdstat->fs_filetype = (
+            (S_ISBLK(mode)  ? 1 : 0) |
+            (S_ISCHR(mode)  ? 2 : 0) |
+            (S_ISDIR(mode)  ? 3 : 0) |
+            (S_ISREG(mode)  ? 4 : 0) |
+            (S_ISSOCK(mode) ? 6 : 0) |
+            (S_ISLNK(mode)  ? 7 : 0));
+    fdstat->fs_flags = (
+            ((fl & O_APPEND)   ? 0x0001 : 0) |
+            ((fl & O_DSYNC)    ? 0x0002 : 0) |
+            ((fl & O_NONBLOCK) ? 0x0004 : 0) |
+            ((fl & O_RSYNC)    ? 0x0008 : 0) |
+            ((fl & O_SYNC)     ? 0x0010 : 0));
+    fdstat->fs_rights_base = 0; // all rights
+    fdstat->fs_rights_inheriting = 0; // all rights
+
+    return 0;
+}
+
+i32 wasi_unstable_fd_fdstat_set_flags(i32 fd, u32 fdflags) {
+    int flags = (
+        ((flags & 0x0001) ? O_APPEND   : 0) |
+        ((flags & 0x0002) ? O_DSYNC    : 0) |
+        ((flags & 0x0004) ? O_NONBLOCK : 0) |
+        ((flags & 0x0008) ? O_RSYNC    : 0) |
+        ((flags & 0x0010) ? O_SYNC     : 0));
+    int err = fcntl(fd, F_SETFL, fdflags);
+    if (err < 0) {
+        return -errno;
+    }
+    return 0;
+}
+
 #define SYS_LSTAT 6
 i32 wasm_lstat(i32 path_str_offset, i32 stat_offset) {
     char *path = get_memory_string(path_str_offset);
@@ -374,6 +490,17 @@ i32 wasm_lseek(i32 filedes, i32 file_offset, i32 whence) {
     return res;
 }
 
+i32 wasi_unstable_fd_seek(i32 fd, i64 file_offset, i32 whence, u32 newoffset_off) {
+    off_t res = lseek(fd, (off_t)file_offset, whence);
+
+    if (res == -1) {
+        return -errno;
+    }
+
+    set_i64(newoffset_off, res);
+    return 0;
+}
+
 #define SYS_MMAP 9
 
 #define MMAP_GRANULARITY 128
@@ -428,6 +555,16 @@ i32 wasm_readv(i32 fd, i32 iov_offset, i32 iovcnt) {
     return read;
 }
 
+i32 wasi_unstable_fd_read(i32 fd, i32 iov_offset, i32 iovcnt, i32 nread_off) {
+    i32 read = 0;
+    struct wasm_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
+    for (int i = 0; i < iovcnt; i++) {
+        read += wasm_read(fd, iov[i].base_offset, iov[i].len);
+    }
+    set_i32(nread_off, read);
+    return 0;
+}
+
 #define SYS_WRITEV 20
 i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
     struct wasm_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
@@ -459,6 +596,42 @@ i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
         return -errno;
     }
     return res;
+}
+
+i32 wasi_unstable_fd_write(i32 fd, i32 iov_offset, i32 iovcnt, i32 nwritten_off) {
+    struct wasm_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
+
+    // If we aren't on MUSL, pass writev to printf if possible
+    #if defined(__APPLE__) || defined(__GLIBC__)
+    if (fd == 1) {
+        int sum = 0;
+        for (int i = 0; i < iovcnt; i++) {
+            i32 len = iov[i].len;
+            void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
+
+            printf("%.*s", len, ptr);
+            sum += len;
+        }
+
+        set_i32(nwritten_off, sum);
+        return 0;
+    }
+    #endif
+
+    struct iovec vecs[iovcnt];
+    for (int i = 0; i < iovcnt; i++) {
+        i32 len = iov[i].len;
+        void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
+        vecs[i] = (struct iovec) {ptr, len};
+    }
+
+    i32 res = (i32) writev(fd, vecs, iovcnt);
+    if (res == -1) {
+        return -errno;
+    }
+
+    set_i32(nwritten_off, res);
+    return 0;
 }
 
 #define SYS_MADVISE 28
@@ -575,6 +748,12 @@ i32 wasm_exit_group(i32 status) {
     return 0;
 }
 
+__attribute__((noreturn))
+void wasi_unstable_proc_exit(i32 exitcode) {
+    exit(exitcode);
+}
+
+#if 0
 i32 inner_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
 //    printf("n %d\n", n);
     i32 res;
@@ -622,6 +801,8 @@ i32 env_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
 i32 env___syscall(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
     return env_syscall_handler(n, a, b, c, d, e, f);
 }
+
+#endif
 
 void env___unmapself(u32 base, u32 size) {
     // Just do some no op
