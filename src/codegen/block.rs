@@ -1032,6 +1032,17 @@ pub fn compile_block<'a, 'b>(
                 let v = stack.pop().unwrap();
                 store_val::<f64>(m_ctx, b, &mut stack, offset, v);
             }
+
+            Instruction::MemorySize => {
+                let result = b.build_call(get_stub_function(m_ctx, MEMORY_SIZE), &[]);
+                stack.push(result);
+            }
+            Instruction::MemoryGrow => {
+                let v = stack.pop().unwrap();
+                assert_type(m_ctx, v, Type::I32);
+                let result = b.build_call(get_stub_function(m_ctx, MEMORY_GROW), &[v]);
+                stack.push(result);
+            }
         }
     }
 }

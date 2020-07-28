@@ -440,6 +440,9 @@ pub enum Instruction {
 
     F64Load { flags: u32, offset: u32 },
     F64Store { flags: u32, offset: u32 },
+
+    MemorySize,
+    MemoryGrow,
 }
 
 impl<'a> From<&'a Operator<'a>> for Instruction {
@@ -752,6 +755,9 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
                 flags: memarg.flags,
                 offset: memarg.offset,
             },
+
+            Operator::MemorySize { .. } => Instruction::MemorySize,
+            Operator::MemoryGrow { .. } => Instruction::MemoryGrow,
 
             ref e => unimplemented!("{:?}", e),
         }
