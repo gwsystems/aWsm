@@ -43,6 +43,6 @@ To enable this, the compiler generates LLVM IR that calls the runtime for common
 We rely on the Link-Time Optimization (LTO) of LLVM to remove the boundaries between executable and runtime.
 Similarly, indirect function calls (function pointer invocations) are implemented within the C of the runtime.
 
-aWsm uses a `musl` libc implementation (by default), and we interpose on the system calls by instead converting them to calls to the runtime.
+aWsm uses a [`musl`](https://musl.libc.org/) libc implementation (by default), and we interpose on the system calls by instead converting them to calls to the runtime.
 In this way, system calls can be sanitized, constrained, or transformed by the runtime.
 WASI support is of significant interest, but is not yet enabled.
