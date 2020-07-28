@@ -977,7 +977,12 @@ impl WasmModule {
                             mutable: global_ty.mutable,
                         });
                     }
-                    e => panic!("Have not implemented import section entry type {:?}", e),
+                    ImportSectionEntryType::Memory(memory_ty) => {
+                        self.memories.push(*memory_ty);
+                    }
+                    ImportSectionEntryType::Table(table_ty) => {
+                        self.tables.push(*table_ty);
+                    }
                 }
                 ProcessState::ImportSection
             }
