@@ -98,8 +98,8 @@ Adding runtime functions and changing safety checking mechanisms are trivial ope
 | Runtime |	Method | x86_64 | x86 | aarch64 | thumb | URL |
 | --- | --- | --- | --- | --- | --- | --- |
 | aWsm | 	AoT | 	✓ | 	✓ | 	✓ | 	✓ | You are here |
-| Wasmtime | 	AoT | 	✓ | 	✓ | 	✓ | 	https://github.com/bytecodealliance/wasmtime |
-| Wasmer |  	AoT |  	✓ |  	✓ |  	✓ |  		https://github.com/wasmerio/wasmer |
+| Wasmtime | 	AoT | 	✓ | 	✓ | 	✓ | 	| https://github.com/bytecodealliance/wasmtime |
+| Wasmer |  	AoT |  	✓ |  	✓ |  	✓ |  	|	https://github.com/wasmerio/wasmer |
 | WAMR |  	Pseudo-AoT/Int |  	✓ |  	✓ |  	✓ |  	✓ |  	https://github.com/bytecodealliance/wasm-micro-runtime |
 | Wasm3 |  	Int |  	✓ |  	✓ |  	✓ |  	✓ |  	https://github.com/wasm3/wasm3 |
 | Wasmi |  	Int |  	✓ |  	✓ |  	✓ |  	✓ |  	https://github.com/paritytech/wasmi |
