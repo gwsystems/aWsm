@@ -37,7 +37,7 @@ The Web Assembly eco-system is still developing, and we see the need for a syste
 
 - *Performance.*
 	aWsm is an ahead-of-time compiler that leverages the LLVM compiler to optimize code, and target different architectural backends.
-	We have evaluated aWsm on x86-64, aarch64 (Raspberry Pi), ARM Cortex-M7 (and M4), and performance on the  microprocessors is within 10% of native, and within 40% on the microcontrollers on Polybench benchmarks.
+	We have evaluated aWsm on x86-64, aarch64 (Raspberry Pi), and thumb (ARM Cortex-M4 and M7), and performance on the  microprocessors is within 10% of native, and within 40% on the microcontrollers on Polybench benchmarks.
 - *Simplicity.*
 	The entire code base for the compiler and runtime is relatively small.
 	The compiler is <3.5K lines of Rust, and the runtime (for *all* platforms) is <5K lines of C.
@@ -45,6 +45,7 @@ The Web Assembly eco-system is still developing, and we see the need for a syste
 	We've implemented *seven* different mechanisms for this!
 - *Portability.*
 	Both the compiler and runtime are mostly platform-independent code, and porting to a new platform only really requires additional work if you need to tweak stack sizes (microcontrollers), or use architectural features (e.g., MPX, segmentation, etc...).
+	aWsm only links what is needed, so it's possible to avoid microcontroller-expensive operations such as f64, f32, and even dynamic memory.
 - *Composability.*
 	The final output of aWsm is simple `*.o` elf objects that can be linked into larger systems.
 	This enables the trivial composition of sandboxes together, and sandboxes into larger programs.
@@ -57,12 +58,12 @@ If you want to learn more about aWsm, see the [design](doc/design.md), or the [p
 
 PolyBench/C benchmarks for **x86-64** (slowdown over native C):
 
-| | Wasmer | WAVM | Node.js + Emscripten | Lucent | aWsm |
+| | Wasmer | WAVM | Node.js + Emscripten | Lucet | aWsm |
 | --- | --- | --- | --- | --- | --- |
 | Avg. Slowdown | 149.8% | 28.1% | 84.0% | 92.8% | 13.4% |
 | Stdev. in Slowdown | 194.09 | 53.09 | 107.84 | 117.25 | 34.65 |
 
-PolyBench/C benchmarks for **Arm Aarch64** (slowdown over native C):
+PolyBench/C benchmarks for **Arm aarch64** (slowdown over native C):
 
 | | aWsm |
 | --- | --- |
@@ -76,8 +77,10 @@ Polybench/C benchmarks for **Arm Cortex-M** microcontrollers (slowdown over nati
 | Cortex-M7 Avg. slowdown | 40.2% |
 | Cortex-M4 Avg. slowdown | 24.9% |
 
-In comparison, the `wasm3` interpreter's slowdown on microcontrollers is more than 10x.
+In comparison, the [`wasm3` interpreter's slowdown](https://github.com/wasm3/wasm3/blob/master/docs/Performance.md) on microcontrollers is more than 10x.
 For more details (including other bounds checking mechanisms), see the [paper](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf).
+
+*Note: these numbers are from May 2020.*
 
 There are many compelling runtimes, but we believe that aWsm is useful in generating very fast code, while being simple and extensible.
 
@@ -88,26 +91,23 @@ aWsm fills the niche of a compiler
 
 - based on ahead-of-time compilation using the popular LLVM infrastructure,
 - that generates fast, safe code (even on microcontrollers), and
-- that is designed for simplicity and easy extension.
+- that is designed for to be lightweight and easily extended.
 
 Adding runtime functions and changing safety checking mechanisms are trivial operations.
 
-We annotate if - to the best of our knowledge - each system uses *Interpretation (Int)*, *Just in Time (JIT)*, or *Ahead-of-Time (AoT)*, and if the infrastructure supports *Arm* (Cortex-A processors) and *Microcontrollers (uCs)* (all support x86).
+| Runtime |	Method | x86_64 | x86 | aarch64 | thumb | URL |
+| --- | --- | --- | --- | --- | --- | --- |
+| aWsm | 	AoT | 	✓ | 	✓ | 	✓ | 	✓ | You are here |
+| Wasmtime | 	AoT | 	✓ | 	✓ | 	✓ | 	https://github.com/bytecodealliance/wasmtime |
+| Wasmer |  	AoT |  	✓ |  	✓ |  	✓ |  		https://github.com/wasmerio/wasmer |
+| WAMR |  	Pseudo-AoT/Int |  	✓ |  	✓ |  	✓ |  	✓ |  	https://github.com/bytecodealliance/wasm-micro-runtime |
+| Wasm3 |  	Int |  	✓ |  	✓ |  	✓ |  	✓ |  	https://github.com/wasm3/wasm3 |
+| Wasmi |  	Int |  	✓ |  	✓ |  	✓ |  	✓ |  	https://github.com/paritytech/wasmi |
 
-- Browser compilers (JIT, Arm) -
-	All the major browsers support JIT compilation of Wasm with a focus on speedy interactivity, and fast enough code execution.
-- [Cranelift](https://github.com/bytecodealliance/wasmtime/tree/main/cranelift) (AoT, Arm) -
-	A brilliant compiler that focuses on fast compilation, and good quality output.
-	`awsm` is not a fast compiler, but focuses on producing exceptionally fast code.
-- [Wasmer](https://github.com/wasmerio/wasmer) (AoT, Arm) -
-	A whole environment around Wasm with multiple backends.
-- [WAMR](https://github.com/bytecodealliance/wasm-micro-runtime) (Int, Jit, and some AoT, Arm, uCs) -
-	Micro-runtime that is quite flexible.
-- [WASM3](https://github.com/wasm3/wasm3) (Int, Arm, uCs) -
-	A high-performance interpreter that can run in many places.
-- [wasmi](https://github.com/paritytech/wasmi) (Int, Arm, uCs) -
-	Another high-performance interpreter.
-- Many others! This is a pretty active area.
+This is not an exhaustive list!
+There are many others as this is a pretty active area.
+
+*Note: this table is from the best of our understanding of each system in July 2020.*
 
 # Getting started!
 

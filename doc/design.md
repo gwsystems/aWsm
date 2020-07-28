@@ -46,4 +46,3 @@ Similarly, indirect function calls (function pointer invocations) are implemente
 aWsm uses a `musl` libc implementation (by default), and we interpose on the system calls by instead converting them to calls to the runtime.
 In this way, system calls can be sanitized, constrained, or transformed by the runtime.
 WASI support is of significant interest, but is not yet enabled.
-As it is trivial to provide runtime functions that can be exported to the WASM sandbox, WASI is simply a matter of providing the interface implementation.
