@@ -4,7 +4,7 @@ import subprocess as sp
 import sys
 import timeit
 
-# Note: This is a major configuration option, you probably want to set this if you're doing anything advanced
+# Note: This is a major configuration option, you probably want to set this if you're doing anything non-trivial
 SILVERFISH_TARGET = None
 # SILVERFISH_TARGET = "thumbv7em-none-unknown-eabi"
 # SILVERFISH_TARGET = "x86_64-apple-macosx10.15.0"

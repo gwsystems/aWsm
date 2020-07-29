@@ -7,19 +7,19 @@ use llvm::Value;
 
 use wasmparser::Type;
 
-use super::super::wasm::Instruction;
+use crate::codegen::ModuleCtx;
 
-use super::ModuleCtx;
+use crate::codegen::breakout::BreakoutTarget;
+use crate::codegen::breakout::WBreakoutTarget;
 
-use super::breakout::BreakoutTarget;
-use super::breakout::WBreakoutTarget;
+use crate::codegen::function::FunctionCtx;
 
-use super::function::FunctionCtx;
+use crate::codegen::runtime_stubs::*;
 
-use super::runtime_stubs::*;
+use crate::codegen::type_conversions::llvm_type_to_wasm_type;
+use crate::codegen::type_conversions::wasm_func_type_to_llvm_type;
 
-use super::type_conversions::llvm_type_to_wasm_type;
-use super::type_conversions::wasm_func_type_to_llvm_type;
+use crate::wasm::Instruction;
 
 // TODO: Double check each instruction to make sure it does the right thing in both the safe and unsafe case
 

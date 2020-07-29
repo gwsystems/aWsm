@@ -1,19 +1,21 @@
 use std::cell::Cell;
 use std::ffi::CString;
 use std::mem;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use llvm::{BasicBlock, Sub};
 use llvm::Builder;
 use llvm::Function;
 use llvm::Value;
 
-use super::super::wasm::ImplementedFunction;
-
-use super::block::compile_block;
-use super::breakout::BreakoutTarget;
-use super::type_conversions::wasm_type_to_zeroed_value;
-use super::ModuleCtx;
 use wasmparser::TypeOrFuncType;
+
+use crate::codegen::block::compile_block;
+use crate::codegen::breakout::BreakoutTarget;
+use crate::codegen::type_conversions::wasm_type_to_zeroed_value;
+use crate::codegen::ModuleCtx;
+
+use crate::wasm::ImplementedFunction;
 
 pub struct FunctionCtx<'a> {
     pub llvm_f: &'a Function,
@@ -31,14 +33,14 @@ impl<'a> FunctionCtx<'a> {
     }
 }
 
-unsafe fn add_string_attr(k: &str, v: &str, v_ref: *mut llvm_sys::LLVMValue, ctx: &ModuleCtx) {
-    let idx = llvm_sys::LLVMAttributeFunctionIndex;
+unsafe fn add_string_attr(k: &str, v: &str, v_ref: *mut llvm::ffi::LLVMValue, ctx: &ModuleCtx) {
+    let idx = crate::llvm_externs::LLVMAttributeFunctionIndex;
 
     let target_features_key = CString::new(k).unwrap();
     let target_features_value = CString::new(v).unwrap();
 
-    let llvm_ctx: *mut llvm_sys::LLVMContext = mem::transmute(ctx.llvm_ctx as &llvm::Context);
-    let attr_ref = llvm_sys::core::LLVMCreateStringAttribute(
+    let llvm_ctx: *mut llvm::ffi::LLVMContext = mem::transmute(ctx.llvm_ctx as &llvm::Context);
+    let attr_ref = crate::llvm_externs::LLVMCreateStringAttribute(
         llvm_ctx,
         target_features_key.as_ptr(),
         target_features_key.as_bytes().len() as u32,
@@ -46,13 +48,17 @@ unsafe fn add_string_attr(k: &str, v: &str, v_ref: *mut llvm_sys::LLVMValue, ctx
         target_features_value.as_bytes().len() as u32,
     );
 
-    llvm_sys::core::LLVMAddAttributeAtIndex(
+    crate::llvm_externs::LLVMAddAttributeAtIndex(
         v_ref,
         idx,
         attr_ref
     );
 
 }
+
+// HACK: We only want to emit a note about the cortex-m override once
+// TODO: Is this clearer than doing it up a level in the code?
+static CORTEX_OVERRIDE_MESSAGE_SENT: AtomicBool = AtomicBool::new(false);
 
 pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
     let llvm_f = ctx.llvm_module.get_function(&f.generated_name).unwrap();
@@ -86,20 +92,25 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
     };
 
     unsafe {
-        let v_ref: *mut llvm_sys::LLVMValue = mem::transmute(llvm_f.to_super() as &Value);
-        let llvm_ctx: *mut llvm_sys::LLVMContext = mem::transmute(ctx.llvm_ctx as &llvm::Context);
+        let v_ref: *mut llvm::ffi::LLVMValue = mem::transmute(llvm_f.to_super() as &Value);
+        let llvm_ctx: *mut llvm::ffi::LLVMContext = mem::transmute(ctx.llvm_ctx as &llvm::Context);
 
         let nounwind = CString::new("nounwind").unwrap();
-        let kind = llvm_sys::core::LLVMGetEnumAttributeKindForName(nounwind.as_ptr(), nounwind.as_bytes().len());
-        let attr_ref = llvm_sys::core::LLVMCreateEnumAttribute(llvm_ctx, kind, 0);
+        let kind = crate::llvm_externs::LLVMGetEnumAttributeKindForName(nounwind.as_ptr(), nounwind.as_bytes().len());
+        let attr_ref = crate::llvm_externs::LLVMCreateEnumAttribute(llvm_ctx, kind, 0);
 
-        llvm_sys::core::LLVMAddAttributeAtIndex(
+        crate::llvm_externs::LLVMAddAttributeAtIndex(
             v_ref,
-            llvm_sys::LLVMAttributeFunctionIndex,
+            crate::llvm_externs::LLVMAttributeFunctionIndex,
             attr_ref
         );
         if cm_override {
-            info!("engaging cortex-m override");
+            if !CORTEX_OVERRIDE_MESSAGE_SENT.load(Ordering::Relaxed) {
+                info!("engaging cortex-m override");
+
+                // Only send the message once!
+                CORTEX_OVERRIDE_MESSAGE_SENT.store(true, Ordering::Relaxed);
+            }
 
             add_string_attr(
                 "correctly-rounded-divide-sqrt-fp-math",

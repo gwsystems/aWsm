@@ -963,7 +963,7 @@ impl WasmModule {
                     ImportSectionEntryType::Global(global_ty) => {
                         let source = module.to_string();
                         let name = field.to_string();
-                        let appended = source.clone() + "_" + &name;
+                        let appended = source + "_" + &name;
 
                         self.globals.push(Global::Imported {
                             name: appended,
@@ -1058,7 +1058,7 @@ impl WasmModule {
             &ParserState::FunctionBodyLocals { ref locals } => {
                 for (i, ty) in locals.iter() {
                     for _ in 0..*i {
-                        f.locals.push(ty.clone());
+                        f.locals.push(*ty);
                     }
                 }
                 ProcessState::FunctionCode(f)

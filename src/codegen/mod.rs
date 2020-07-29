@@ -6,11 +6,11 @@ use llvm::Module as LLVMModule;
 
 use wasmparser::FuncType;
 
+use crate::Opt;
+
 use crate::wasm::Export;
 use crate::wasm::Function;
 use crate::wasm::WasmModule;
-
-use super::Opt;
 
 mod block;
 

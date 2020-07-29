@@ -6,8 +6,8 @@ use llvm::Module as LLVMModule;
 use llvm::PointerType;
 use llvm::Sub;
 
-use super::ModuleCtx;
-use super::Opt;
+use crate::codegen::ModuleCtx;
+use crate::codegen::Opt;
 
 // Backing functions for wasm operations
 pub const INITIALIZE_REGION_STUB: &str = "initialize_region";

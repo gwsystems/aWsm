@@ -57,12 +57,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cc"
-version = "1.0.58"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9a06fb2e53271d7c279ec1efea6ab691c35a2ae67ec0d91d7acec0caf13b518"
-
-[[package]]
 name = "cfg-if"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -145,9 +139,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.73"
+version = "0.2.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd7d4bd64732af4bf3a67f367c27df8520ad7e230c5817b8ff485864d80242b9"
+checksum = "a2f02823cf78b754822df5f7f268fb59822e7296276d3e069d8e8cb26a14bd10"
 
 [[package]]
 name = "llvm-alt"
@@ -156,7 +150,7 @@ source = "git+https://github.com/Others/llvm-rs.git#4f825ff10f7bdc20a3beb2bca648
 dependencies = [
  "cbox",
  "libc",
- "llvm-sys 0.3.0",
+ "llvm-sys",
 ]
 
 [[package]]
@@ -167,20 +161,7 @@ dependencies = [
  "bitflags 0.5.0",
  "gcc",
  "libc",
- "semver 0.1.20",
-]
-
-[[package]]
-name = "llvm-sys"
-version = "90.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4a37c65d26686a37e9a32ef9a41a74333e6dee8b780cc9d29eb33cacdbb12f5"
-dependencies = [
- "cc",
- "lazy_static",
- "libc",
- "regex",
- "semver 0.9.0",
+ "semver",
 ]
 
 [[package]]
@@ -286,27 +267,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4f410fedcf71af0345d7607d246e7ad15faaadd49d240ee3b24e5dc21a820ac"
 
 [[package]]
-name = "semver"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
-dependencies = [
- "semver-parser",
-]
-
-[[package]]
-name = "semver-parser"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
-
-[[package]]
 name = "silverfish"
 version = "0.1.0"
 dependencies = [
  "flexi_logger",
  "llvm-alt",
- "llvm-sys 90.1.0",
  "log",
  "structopt",
  "wasmparser",

@@ -1,4 +1,3 @@
-use llvm;
 use llvm::Builder;
 use llvm::Compile;
 use llvm::FunctionType;
@@ -6,16 +5,15 @@ use llvm::PointerType;
 use llvm::Sub;
 use llvm::Value;
 
-use wasmparser;
 use wasmparser::ResizableLimits;
 
-use super::super::wasm::DataInitializer;
-use super::super::wasm::ImplementedFunction;
-use super::super::wasm::Instruction;
+use crate::wasm::DataInitializer;
+use crate::wasm::ImplementedFunction;
+use crate::wasm::Instruction;
 
-use super::function::compile_function;
-use super::type_conversions::wasm_func_type_to_llvm_type;
-use super::ModuleCtx;
+use crate::codegen::ModuleCtx;
+use crate::codegen::function::compile_function;
+use crate::codegen::type_conversions::wasm_func_type_to_llvm_type;
 
 // We add in globals to tell the runtime how much memory to allocate and startup
 // (And what the max amount of allocated memory should be)
