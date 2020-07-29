@@ -1,4 +1,4 @@
-aWsm
+aWsm - An Awesome Wasm Compiler and Runtime
 ==========
 
 # What is aWsm?
@@ -32,12 +32,12 @@ Please have patience as we update those to `awsm`.
 
 ## Why aWsm?
 
-Why would we implement a Wasm compiler and runtime.
+Why would we implement a Wasm compiler and runtime?
 The Web Assembly eco-system is still developing, and we see the need for a system focusing on:
 
 - *Performance.*
 	aWsm is an ahead-of-time compiler that leverages the LLVM compiler to optimize code, and target different architectural backends.
-	We have evaluated the compiler on x86-64, aarch64 (Raspberry Pi), ARM Cortex-M7 (and M4), and performance on the microprocessors is within 10% of native, and within 40% on the microcontrollers.
+	We have evaluated aWsm on x86-64, aarch64 (Raspberry Pi), and thumb (ARM Cortex-M4 and M7), and performance on the  microprocessors is within 10% of native, and within 40% on the microcontrollers on Polybench benchmarks.
 - *Simplicity.*
 	The entire code base for the compiler and runtime is relatively small.
 	The compiler is <3.5K lines of Rust, and the runtime (for *all* platforms) is <5K lines of C.
@@ -45,12 +45,69 @@ The Web Assembly eco-system is still developing, and we see the need for a syste
 	We've implemented *seven* different mechanisms for this!
 - *Portability.*
 	Both the compiler and runtime are mostly platform-independent code, and porting to a new platform only really requires additional work if you need to tweak stack sizes (microcontrollers), or use architectural features (e.g., MPX, segmentation, etc...).
+	aWsm only links what is needed, so it's possible to avoid microcontroller-expensive operations such as f64, f32, and even dynamic memory.
+- *Composability.*
+	The final output of aWsm is simple `*.o` elf objects that can be linked into larger systems.
+	This enables the trivial composition of sandboxes together, and sandboxes into larger programs.
 
-We believe that aWsm is one of the best options for ahead-of-time compilation for outside of the browser.
+We believe that aWsm is one of the best options for ahead-of-time compilation for Wasm execution outside of the browser.
+
+If you want to learn more about aWsm, see the [design](doc/design.md), or the [publication](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf).
 
 # Performance
 
-Give us a little time, we'll post benchmarks here!
+PolyBench/C benchmarks for **x86-64** (slowdown over native C):
+
+| | Wasmer | WAVM | Node.js + Emscripten | Lucet | aWsm |
+| --- | --- | --- | --- | --- | --- |
+| Avg. Slowdown | 149.8% | 28.1% | 84.0% | 92.8% | 13.4% |
+| Stdev. in Slowdown | 194.09 | 53.09 | 107.84 | 117.25 | 34.65 |
+
+PolyBench/C benchmarks for **Arm aarch64** (slowdown over native C):
+
+| | aWsm |
+| --- | --- |
+| Avg. Slowdown | 6.7% |
+| Stdev. of Slowdown | 19.38 |
+
+Polybench/C benchmarks for **Arm Cortex-M** microcontrollers (slowdown over native C):
+
+| Architectures | aWsm |
+| --- | --- |
+| Cortex-M7 Avg. slowdown | 40.2% |
+| Cortex-M4 Avg. slowdown | 24.9% |
+
+In comparison, the [`wasm3` interpreter's slowdown](https://github.com/wasm3/wasm3/blob/master/docs/Performance.md) on microcontrollers is more than 10x.
+For more details (including other bounds checking mechanisms), see the [paper](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf).
+
+*Note: these numbers are from May 2020.*
+
+There are many compelling runtimes, but we believe that aWsm is useful in generating very fast code, while being simple and extensible.
+
+## Comparison to Existing Wasm Ecosystems
+
+There are many existing compilers and runtimes.
+aWsm fills the niche of a compiler
+
+- based on ahead-of-time compilation using the popular LLVM infrastructure,
+- that generates fast, safe code (even on microcontrollers), and
+- that is designed for to be lightweight and easily extended.
+
+Adding runtime functions and changing safety checking mechanisms are trivial operations.
+
+| Runtime |	Method | x86_64 | x86 | aarch64 | thumb | URL |
+| --- | --- | --- | --- | --- | --- | --- |
+| aWsm | 	AoT | 	✓ | 	✓ | 	✓ | 	✓ | You are here |
+| Wasmtime | 	AoT | 	✓ | 	✓ | 	✓ | 	| https://github.com/bytecodealliance/wasmtime |
+| Wasmer |  	AoT |  	✓ |  	✓ |  	✓ |  	|	https://github.com/wasmerio/wasmer |
+| WAMR |  	Pseudo-AoT/Int |  	✓ |  	✓ |  	✓ |  	✓ |  	https://github.com/bytecodealliance/wasm-micro-runtime |
+| Wasm3 |  	Int |  	✓ |  	✓ |  	✓ |  	✓ |  	https://github.com/wasm3/wasm3 |
+| Wasmi |  	Int |  	✓ |  	✓ |  	✓ |  	✓ |  	https://github.com/paritytech/wasmi |
+
+This is not an exhaustive list!
+There are many others as this is a pretty active area.
+
+*Note: this table is from the best of our understanding of each system in July 2020.*
 
 # Getting started!
 
@@ -88,12 +145,6 @@ cd awsm
 
 The compiler can now be run via `silverfish`
 
-The tests can run with
-
-```
-cd code_benches; python run.py
-```
-
 ### Other Systems
 
 1. [Install Rust](https://www.rust-lang.org/tools/install)
@@ -113,6 +164,42 @@ cargo build --release
 ```
 6. The awsm binary is built at `target/release/silverfish`. Copy this to the appropriaate place for your platform and add to your PATH if neccessary.
 
+## Executing and Testing aWsm
+
+The tests can run with
+
+```sh
+cd code_benches; python run.py
+```
+
+Please see the [design](doc/design.md) to understand the pipeline, and see `run.py` for an example of how to connect existing compilers (to generate Wasm, and generate machine code from LLVM IR) with aWsm.
+
+Note that aWsm is still a research prototype, so might have some rough edges.
+It is not currently turn-key.
+You likely need to understand how to generate Wasm, and use an LLVM compile chain.
+We're happy to accept PRs with fixes, and "quality of life" improvements.
+
+We're in the processes of standing up a CI infrastructure.
+
+## Tour of the Source
+
+The source is organized as such:
+
+- `src/` - the Rust source of the compiler, and the `silverfish` binary.
+	Look here for the logic for taking in Wasm, and generating LLVM bytecode.
+	`cargo` guides the compilation of this code.
+- `code_benches/` - This is a relatively large set of benchmarks, many of which are derived from Polybench (`pb_*`), MiBench (`mb_*`), or various applications (`custom_*` including NN inference, sqlite, a PID controller, and an extended Kalman filter).
+	The `run.py` file guides the compilation and execution of these as effectively a set of unit tests, and is an example of the compilation structure of an application with the runtime in aWsm.
+- `example_code/` - More atomic tests for specific Wasm features (bounds checks, indirect function invocations, etc...).
+	This ensures that changes to the compiler don't break Wasm sandboxing, and provides regression tests.
+- `runtime/` - The aWsm runtime.
+	This includes most of the code that provides the sandboxing guarantees (for example, including bounds checks, indirect function call  type checks and indirection).
+	Microcontroller-specific runtime code (for Arm Cortex-M processors) referred to in [`eWasm`](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf), is in `cortex_m_glue/` and `libc/cortex_m_backing.c`.
+	Various pluggable bounds checks can be found in `runtime/memory/`.
+	The runtime is compiled separately, and combined with the LLVM IR output by aWsm (using LTO) to generate the final sandboxed object.
+- `doc/` - Documentation directory.
+	See the `*.md` files there.
+
 # Limitations and Assumptions
 
 *Additional Wasm instruction support needed.*
@@ -131,7 +218,7 @@ We provide details in Section 7 of our [EMSOFT publication](https://www2.seas.gw
 We believe that some changes to the specification, or the creation of an embedded profile might be warranted.
 The main limitations:
 
-1. *Invariant page size.*
+1. *Variant page sizes selected by the runtime.*
 	Wasm uses 64KiB pages.
 	That is far too large for embedded systems.
 	aWsm uses smaller pages, while simulating the larger default pages.
@@ -145,3 +232,12 @@ The main limitations:
 3. *Allow undefined behavior on Out of Bounds (OoB) accesses.*
 	The specification requires any access outside of the allocated bounds of linear memory to be caught, and the sandbox terminated.
 	We show in the publication that relaxing this requirement, and allowing undefined behavior on OoB accesses can significantly speed up execution, and shrink code sizes, while maintaining strong sandboxed isolation.
+
+# About Us & Acknowledgments
+
+The GWU Systems group focuses on low-level system design and implementation.
+One of our main research vehicles is the [Composite](composite.seas.gwu.edu) component-based operating system, which we aim to integrate with Wasm through aWsm.
+If you're interested in low-level hacking and system building, in secure and reliable systems, in embedded systems, or in models for parallelism, don't hesitate to contact [Gabe](www.seas.gwu.edu/~gparmer) about doing a PhD or becoming involved with the group.
+
+Our collaborations with Arm Research during a lot of the maturation of the aWsm infrastructure have been instrumental in its development.
+Support from SRC, ARM, and NSF have all contributed greatly to Wasm's research.
