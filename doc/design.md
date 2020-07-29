@@ -30,7 +30,7 @@ This picture depicts the aWsm pipeline.
 
 - Programming languages are compiled into Wasm, for example, using LLVM.
 - Wasm has a binary representation and (as depicted) a s-expr representation.
-- The aWsm compiler inputs this Wasm, generates LLVM IR corresponding to the Wasm.
+- The aWsm compiler inputs binary Wasm, generates LLVM IR corresponding to the Wasm.
 - This IR is compiled with the runtime to generate the final object that exports `wasm_main` to execute in the broader application.
 
 In the Figure, we target Arm Cortex-M, and the yellow boxes emphasize how linear memory bounds checks transition throughout the process.
