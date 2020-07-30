@@ -1,12 +1,9 @@
 use std::ptr;
 
-use llvm;
 use llvm::ffi::prelude::LLVMTypeRef;
 use llvm::Compile;
 use llvm::Context;
 use llvm::Sub;
-
-use wasmparser;
 
 pub fn llvm_type_to_wasm_type(ctx: &Context, ty: &llvm::Type) -> wasmparser::Type {
     let ty_ref: LLVMTypeRef = ty.into();

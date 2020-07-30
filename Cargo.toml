@@ -6,7 +6,6 @@ edition = "2018"
 
 [dependencies]
 flexi_logger = "0.14.4"
-llvm-sys = "90.0.0"
 llvm-alt = { git = "https://github.com/Others/llvm-rs.git"}
 log = "0.4.8"
 structopt = "0.3.2"

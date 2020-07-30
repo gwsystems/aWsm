@@ -8,14 +8,14 @@ use llvm::Value;
 
 use wasmparser::Type;
 
-use super::super::wasm::Global;
-use super::super::wasm::Instruction;
-use super::super::Opt;
+use crate::wasm::Global;
+use crate::wasm::Instruction;
+use crate::Opt;
 
-use super::runtime_stubs::*;
-use super::type_conversions::llvm_type_to_wasm_type;
-use super::type_conversions::wasm_type_to_llvm_type;
-use super::ModuleCtx;
+use crate::codegen::ModuleCtx;
+use crate::codegen::runtime_stubs::*;
+use crate::codegen::type_conversions::llvm_type_to_wasm_type;
+use crate::codegen::type_conversions::wasm_type_to_llvm_type;
 
 pub enum GlobalValue<'a> {
     InlinedConstant(&'a Value),

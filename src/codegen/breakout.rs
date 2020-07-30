@@ -8,8 +8,8 @@ use llvm::Value;
 
 use wasmparser::TypeOrFuncType;
 
-use super::type_conversions::llvm_type_to_zeroed_value;
-use super::type_conversions::wasm_type_to_zeroed_value;
+use crate::codegen::type_conversions::llvm_type_to_zeroed_value;
+use crate::codegen::type_conversions::wasm_type_to_zeroed_value;
 
 pub struct BreakoutTarget<'a> {
     pub bb: &'a BasicBlock,

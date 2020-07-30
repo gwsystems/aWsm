@@ -20,6 +20,8 @@ use crate::codegen::process_to_llvm;
 mod wasm;
 use crate::wasm::WasmModule;
 
+pub mod llvm_externs;
+
 #[derive(StructOpt, Debug)]
 #[structopt(name = "silverfish")]
 pub struct Opt {

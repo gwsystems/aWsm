@@ -1,17 +1,15 @@
-use llvm;
 use llvm::Builder;
 use llvm::Compile;
 use llvm::FunctionType;
 use llvm::PointerType;
 use llvm::Sub;
 
-use super::super::wasm::TableInitializer;
+use crate::wasm::TableInitializer;
 
-use super::ModuleCtx;
+use crate::codegen::ModuleCtx;
+use crate::codegen::memory::generate_offset_function;
 
-use super::memory::generate_offset_function;
-
-use super::runtime_stubs::*;
+use crate::codegen::runtime_stubs::*;
 
 pub fn generate_table_initialization_stub(m_ctx: &ModuleCtx, initializers: Vec<TableInitializer>) {
     let mut initialization_data: Vec<(&llvm::Function, Vec<u32>)> = Vec::new();
