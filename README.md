@@ -236,8 +236,8 @@ The main limitations:
 # About Us & Acknowledgments
 
 The GWU Systems group focuses on low-level system design and implementation.
-One of our main research vehicles is the [Composite](composite.seas.gwu.edu) component-based operating system, which we aim to integrate with Wasm through aWsm.
-If you're interested in low-level hacking and system building, in secure and reliable systems, in embedded systems, or in models for parallelism, don't hesitate to contact [Gabe](www.seas.gwu.edu/~gparmer) about doing a PhD or becoming involved with the group.
+One of our main research vehicles is the [Composite](http://composite.seas.gwu.edu) component-based operating system, which we aim to integrate with Wasm through aWsm.
+If you're interested in low-level hacking and system building, in secure and reliable systems, in embedded systems, or in models for parallelism, don't hesitate to contact [Gabe](http://www.seas.gwu.edu/~gparmer) about doing a PhD or becoming involved with the group.
 
 Our collaborations with Arm Research during a lot of the maturation of the aWsm infrastructure have been instrumental in its development.
 Support from SRC, ARM, and NSF have all contributed greatly to Wasm's research.
