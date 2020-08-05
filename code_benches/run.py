@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
+from itertools import chain
 import csv
+import glob
 import os
 import subprocess as sp
 import sys
 import timeit
-import glob
-import itertools as it
 
 # Note: This is a major configuration option, you probably want to set this if you're doing anything non-trivial
 SILVERFISH_TARGET = None
@@ -26,10 +26,23 @@ BENCH_ROOT = os.getcwd()
 ROOT_PATH = os.path.dirname(BENCH_ROOT)
 
 RUNTIME_PATH = ROOT_PATH + "/runtime"
+
+SILVERFISH_RELEASE_PATH = ROOT_PATH + "/target/release/silverfish"
+SILVERFISH_DEBUG_PATH = ROOT_PATH + "/target/debug/silverfish"
+assert all(arg in {"--release", "--debug"} for arg in sys.argv[1:])
 if "--release" in sys.argv:
-    SILVERFISH_PATH = ROOT_PATH + "/target/release/silverfish"
+    SILVERFISH_PATH = SILVERFISH_RELEASE_PATH
+elif "--debug" in sys.argv:
+    SILVERFISH_PATH = SILVERFISH_DEBUG_PATH
 else:
-    SILVERFISH_PATH = ROOT_PATH + "/target/debug/silverfish"
+    def getmtime_or_zero(path):
+        try:
+            return os.path.getmtime(path)
+        except FileNotFoundError:
+            return 0
+    SILVERFISH_PATH = max(
+        [SILVERFISH_RELEASE_PATH, SILVERFISH_DEBUG_PATH],
+        key=getmtime_or_zero)
 
 WASMCEPTION_PATH = ROOT_PATH + "/wasmception"
 
@@ -78,7 +91,8 @@ class Program(object):
         else:
             patterns = ["*.c"]
 
-        sources = it.chain.from_iterable(glob.glob(os.path.join(self.name, pattern)) for pattern in patterns)
+        paths = (os.path.join(self.name, pattern) for pattern in patterns)
+        sources = chain.from_iterable(glob.glob(path) for path in paths)
         return " ".join(source[len(self.name)+1:] for source in sources)
 
 
@@ -212,10 +226,12 @@ def compile_wasm_to_bc(program):
 
     command = "{silverfish} {target} bin/{pname}.wasm -o bin/{pname}.bc"\
         .format(silverfish=SILVERFISH_PATH, target=target_flag, pname=program.name)
+    print(command)
     sp.check_call(command, shell=True, cwd=program.name)
     # Also compile an unsafe version, so we can see the performance difference
     command = "{silverfish} {target} -u bin/{pname}.wasm -o bin/{pname}_us.bc"\
         .format(silverfish=SILVERFISH_PATH, target=target_flag, pname=program.name)
+    print(command)
     sp.check_call(command, shell=True, cwd=program.name)
 
 

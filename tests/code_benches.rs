@@ -21,7 +21,9 @@ fn cli_help_test() -> Result<(), Box<dyn error::Error>> {
 fn code_benches_test() -> Result<(), Box<dyn error::Error>> {
     // run oode_benches
     let mut command = process::Command::new("code_benches/run.py");
-    if cfg!(not(debug_assertions)) {
+    if cfg!(debug_assertions) {
+        command.args(&["--debug"]);
+    } else {
         command.args(&["--release"]);
     }
     println!("{:?}", command);
