@@ -1,4 +1,8 @@
+#!/usr/bin/env python3
+
+from itertools import chain
 import csv
+import glob
 import os
 import subprocess as sp
 import sys
@@ -13,13 +17,32 @@ SILVERFISH_TARGET = None
 # CSV file name
 CSV_NAME = "benchmarks.csv"
 
+# Make sure we're in the code_benches directory
+if os.path.dirname(sys.argv[0]):
+    os.chdir(os.path.dirname(sys.argv[0]))
 # Absolute path to the `code_benches` directory
 BENCH_ROOT = os.getcwd()
 # Absolute path to the `silverfish` directory
 ROOT_PATH = os.path.dirname(BENCH_ROOT)
 
 RUNTIME_PATH = ROOT_PATH + "/runtime"
-SILVERFISH_PATH = ROOT_PATH + "/target/release/silverfish"
+
+SILVERFISH_RELEASE_PATH = ROOT_PATH + "/target/release/silverfish"
+SILVERFISH_DEBUG_PATH = ROOT_PATH + "/target/debug/silverfish"
+assert all(arg in {"--release", "--debug"} for arg in sys.argv[1:])
+if "--release" in sys.argv:
+    SILVERFISH_PATH = SILVERFISH_RELEASE_PATH
+elif "--debug" in sys.argv:
+    SILVERFISH_PATH = SILVERFISH_DEBUG_PATH
+else:
+    def getmtime_or_zero(path):
+        try:
+            return os.path.getmtime(path)
+        except FileNotFoundError:
+            return 0
+    SILVERFISH_PATH = max(
+        [SILVERFISH_RELEASE_PATH, SILVERFISH_DEBUG_PATH],
+        key=getmtime_or_zero)
 
 WASMCEPTION_PATH = ROOT_PATH + "/wasmception"
 
@@ -61,6 +84,17 @@ class Program(object):
     def __str__(self):
         return "{}({})".format(self.name, " ".join(map(str, self.parameters)))
 
+    def sources(self):
+        # glob here, avoids issues with glob expansion in shell
+        if self.is_cpp:
+            patterns = ["*.c", "*.cpp"]
+        else:
+            patterns = ["*.c"]
+
+        paths = (os.path.join(self.name, pattern) for pattern in patterns)
+        sources = chain.from_iterable(glob.glob(path) for path in paths)
+        return " ".join(source[len(self.name)+1:] for source in sources)
+
 
 # These are the programs we're going to test with
 # TODO: Fix ispell, which doesn't compile on OS X
@@ -76,13 +110,13 @@ programs = [
                               "-Wno-shift-negative-value"]),
     Program("custom_matrix_multiply", [], 2 ** 14),
     Program("custom_memcmp", [], 2 ** 14),
-    Program("custom_sqlite", [], 2 ** 15),
+    Program("custom_sqlite", [], 2 ** 15, custom_arguments=["-DSQLITE_MUTEX_NOOP", "-ldl"]),
 
     # == Apps ==
-    Program("app_nn", [], 2 ** 14, custom_arguments=["-std=c99", "-Wno-unknown-attributes", "-DARM_MATH_CM3", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/DSP/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/Core/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/NN/Include"]),
+    #Program("app_nn", [], 2 ** 14, custom_arguments=["-std=c99", "-Wno-unknown-attributes", "-DARM_MATH_CM3", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/DSP/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/Core/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/NN/Include"]),
     Program("app_pid", ["-std=c++11", "-Wall"], 2 ** 8, custom_arguments=[], is_cpp=True),
     Program("app_tiny_ekf", ["-std=c++11", "-Wall"], 2 ** 14, custom_arguments=[], is_cpp=True),
-    Program("app_tinycrypt", [], 2 ** 15 + 2**14, custom_arguments=[ "-Wall", "-Wpedantic", "-Wno-gnu-zero-variadic-macro-arguments", "-std=c11", "-I/Users/peachg/Projects/silverfish/code_benches/app_tinycrypt/", "-DENABLE_TESTS"]),
+    Program("app_tinycrypt", [], 2 ** 15 + 2**14, custom_arguments=[ "-Wall", "-Wpedantic", "-Wno-gnu-zero-variadic-macro-arguments", "-std=c11", "-DENABLE_TESTS", "-I."]),
     # Program("app_v9", [], 2 ** 18, custom_arguments=[], do_lto=False),
 
     # == MiBench ==
@@ -165,17 +199,20 @@ def compile_to_executable(program):
     if ENABLE_DEBUG_SYMBOLS:
         opt += " -g"
     if program.is_cpp:
-        sp.check_call("shopt -s nullglob; clang++ {} -lm {} *.c *.cpp -o bin/{}".format(program.custom_arguments, opt, program.name), shell=True, cwd=program.name)
+        clang = "clang++"
     else:
-        sp.check_call("clang {} -lm {} *.c -o bin/{}".format(program.custom_arguments, opt, program.name), shell=True, cwd=program.name)
-        # sp.check_call("clang {} -lm {} *.c -o bin/{}".format(program.custom_arguments, opt, program.name), shell=True, cwd=program.name)
+        clang = "clang"
 
+    command = "{clang} {args} -lm {opt} {sources} -o bin/{pname}" \
+        .format(clang=clang, args=program.custom_arguments, opt=opt, sources=program.sources(), pname=program.name)
+    print(command)
+    sp.check_call(command, shell=True, cwd=program.name)
 
 # Compile the C code in `program`'s directory into WASM
 def compile_to_wasm(program):
     flags = WASM_FLAGS.format(stack_size=program.stack_size)
-    command = "shopt -s nullglob; {clang} {flags} {args} -O3 -flto ../dummy.c *.c *.cpp -o bin/{pname}.wasm" \
-        .format(clang=WASM_CLANG, flags=flags, args=program.custom_arguments, pname=program.name)
+    command = "{clang} {flags} {args} -O3 -flto ../dummy.c {sources} -o bin/{pname}.wasm" \
+        .format(clang=WASM_CLANG, flags=flags, sources=program.sources(), args=program.custom_arguments, pname=program.name)
     print(command)
     sp.check_call(command, shell=True, cwd=program.name)
 
@@ -189,10 +226,12 @@ def compile_wasm_to_bc(program):
 
     command = "{silverfish} {target} bin/{pname}.wasm -o bin/{pname}.bc"\
         .format(silverfish=SILVERFISH_PATH, target=target_flag, pname=program.name)
+    print(command)
     sp.check_call(command, shell=True, cwd=program.name)
     # Also compile an unsafe version, so we can see the performance difference
     command = "{silverfish} {target} -u bin/{pname}.wasm -o bin/{pname}_us.bc"\
         .format(silverfish=SILVERFISH_PATH, target=target_flag, pname=program.name)
+    print(command)
     sp.check_call(command, shell=True, cwd=program.name)
 
 
