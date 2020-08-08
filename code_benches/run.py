@@ -29,7 +29,7 @@ RUNTIME_PATH = ROOT_PATH + "/runtime"
 
 SILVERFISH_RELEASE_PATH = ROOT_PATH + "/target/release/silverfish"
 SILVERFISH_DEBUG_PATH = ROOT_PATH + "/target/debug/silverfish"
-assert all(arg in {"--release", "--debug"} for arg in sys.argv[1:])
+# assert all(arg in {"--release", "--debug"} for arg in sys.argv[1:]) TODO argparse?
 if "--release" in sys.argv:
     SILVERFISH_PATH = SILVERFISH_RELEASE_PATH
 elif "--debug" in sys.argv:
@@ -44,16 +44,37 @@ else:
         [SILVERFISH_RELEASE_PATH, SILVERFISH_DEBUG_PATH],
         key=getmtime_or_zero)
 
-WASI_SDK_VERSION = '8.0'
-WASI_SDK_PATH = ROOT_PATH + "/wasi-sdk-{}".format(WASI_SDK_VERSION)
+WASMCEPTION_PATH = ROOT_PATH + "/wasmception"
+WASMCEPTION_CLANG = WASMCEPTION_PATH + "/dist/bin/clang"
+WASMCEPTION_SYSROOT = WASMCEPTION_PATH + "/sysroot"
+WASMCEPTION_FLAGS = "--target=wasm32-unknown-unknown-wasm -nostartfiles -O3 -flto"
+WASMCEPTION_BACKING = "wasmception_backing.c"
 
-# Our special WASM clang is under this wasi-sdk path
-WASM_CLANG = WASI_SDK_PATH + "/bin/clang"
+WASI_SDK_PATH = ROOT_PATH + "/wasi-sdk"
+WASI_SDK_CLANG = WASI_SDK_PATH + "/bin/clang"
+WASI_SDK_SYSROOT = WASI_SDK_PATH + "/share/wasi-sysroot"
+WASI_SDK_FLAGS = "--target=wasm32-wasi -mcpu=mvp -nostartfiles -O3 -flto"
+WASI_SDK_BACKING = "wasi_sdk_backing.c"
+
+if "--wasi-sdk" in sys.argv:
+    WASM_CLANG = WASI_SDK_CLANG
+    WASM_SYSROOT = WASI_SDK_SYSROOT
+    WASM_FLAGS = WASI_SDK_FLAGS
+    WASM_BACKING = WASI_SDK_BACKING
+else:
+    WASM_CLANG = WASMCEPTION_CLANG
+    WASM_SYSROOT = WASMCEPTION_SYSROOT
+    WASM_FLAGS = WASMCEPTION_FLAGS
+    WASM_BACKING = WASMCEPTION_BACKING
+
 # These flags are all somewhat important -- see @Others for more information
 WASM_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--no-threads,--stack-first,--no-entry,--export-all,--export=main,--export=dummy"
-# Point WASM to our custom libc
-WASM_SYSROOT_FLAGS = "--sysroot={}/share/wasi-sysroot".format(WASI_SDK_PATH)
-WASM_FLAGS = WASM_LINKER_FLAGS + " --target=wasm32-wasi -mcpu=mvp -nostartfiles -O3 -flto " + WASM_SYSROOT_FLAGS
+
+WASM_FLAGS = ' '.join([
+    WASM_LINKER_FLAGS,
+    WASM_FLAGS,
+    "--sysroot={}".format(WASM_SYSROOT)
+])
 
 # What is the machine we're running on like?
 IS_64_BIT = sys.maxsize > 2**32
@@ -253,8 +274,8 @@ def compile_wasm_to_executable(program, exe_postfix, memory_impl, unsafe_impls=F
     else:
         target_flag = "-target " + SILVERFISH_TARGET
 
-    command = "clang -lm {target} {opt} {bc_file} {runtime}/runtime.c {runtime}/libc/libc_backing.c {runtime}/libc/env.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
-        .format(target=target_flag, opt=opt, bc_file=bc_file, pname=program.name, runtime=RUNTIME_PATH, mem_impl=memory_impl, postfix=exe_postfix)
+    command = "clang -lm {target} {opt} {bc_file} {runtime}/runtime.c {runtime}/libc/{backing} {runtime}/libc/env.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
+        .format(target=target_flag, opt=opt, bc_file=bc_file, pname=program.name, runtime=RUNTIME_PATH, backing=WASM_BACKING, mem_impl=memory_impl, postfix=exe_postfix)
     print(command)
     sp.check_call(command, shell=True, cwd=program.name)
 
