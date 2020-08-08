@@ -48,6 +48,17 @@ struct wasi_fdstat {
     u64 fs_rights_inheriting;
 };
 
+struct wasi_filestat {
+    u64 st_dev;
+    u64 st_ino;
+    u8 st_filetype;
+    u32 st_nlink;
+    u64 st_size;
+    u64 st_atim;
+    u64 st_mtim;
+    u64 st_ctim;
+};
+
 enum wasi_filetype {
     WASI_FILETYPE_UNKNOWN           = 0,
     WASI_FILETYPE_BLOCK_DEVICE      = 1,
@@ -219,6 +230,15 @@ i32 wasi_unstable_fd_seek(i32 fd, i64 file_offset, i32 whence, u32 newoffset_off
     return 0;
 }
 
+i32 wasi_unstable_fd_datasync(i32 fd) {
+    int res = fdatasync(fd);
+    if (res == -1) {
+        return -errno;
+    }
+
+    return 0;
+}
+
 i32 wasi_unstable_fd_read(i32 fd, i32 iov_offset, i32 iovcnt, i32 nread_off) {
     i32 sum = 0;
     struct wasi_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasi_iovec));
@@ -256,6 +276,60 @@ i32 wasi_unstable_fd_write(i32 fd, i32 iov_offset, i32 iovcnt, i32 nwritten_off)
 }
 
 // other filesystem operations
+i32 wasi_unstable_path_filestat_get(i32 fd, u32 flags, u32 path_off, u32 path_len, u32 buf_off) {
+    // get path/filestat
+    char* path = get_memory_string(path_off);
+    struct wasi_filestat* filestat = get_memory_ptr_void(buf_off, sizeof(struct wasi_filestat));
+
+    struct stat stat;
+    int res = fstatat(fd, path, &stat, 0);
+    if (res == -1) {
+        return -errno;
+    }
+
+    filestat->st_dev = stat.st_dev;
+    filestat->st_ino = stat.st_ino;
+    filestat->st_filetype =  stat.st_mode;
+    filestat->st_nlink = stat.st_nlink;
+    filestat->st_size = stat.st_size;
+    filestat->st_atim = stat.st_atime;
+    filestat->st_mtim = stat.st_mtime;
+    filestat->st_ctim = stat.st_ctime;
+
+    return 0;
+}
+
+i32 wasi_unstable_path_unlink_file(i32 fd, u32 path_off, u32 path_len) {
+    // get path
+    char* path = get_memory_string(path_off);
+
+    int res = unlinkat(fd, path, 0);
+    if (res == -1) {
+        return -errno;
+    }
+
+    return 0;
+}
+
+i32 wasi_unstable_path_create_directory(i32 fd, u32 path_off, u32 path_len) {
+    // get path
+    char* path = get_memory_string(path_off);
+
+    int res = mkdirat(fd, path, 0777);
+    if (res == -1) {
+        return -errno;
+    }
+
+    return 0;
+}
+
+// clock operations
+i32 wasi_unstable_clock_time_get(u32 clock_id, u64 precision, u32 time_off) {
+    struct timespec tp;
+    clock_gettime(clock_id, &tp);
+    set_i64(time_off, (uint64_t)tp.tv_sec*1000000000ULL + (uint64_t)tp.tv_nsec);
+    return 0;
+}
 
 // process operations
 __attribute__((noreturn))
