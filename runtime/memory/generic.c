@@ -45,7 +45,7 @@ INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
 }
 
 // All of these are pretty generic
-INLINE float get_f32(i32 offset) {
+INLINE float get_f32(u32 offset) {
     silverfish_assert(offset <= memory_size - sizeof(float));
 
     char* mem_as_chars = (char *) memory;
@@ -54,7 +54,7 @@ INLINE float get_f32(i32 offset) {
     return *(float *) address;
 }
 
-INLINE double get_f64(i32 offset) {
+INLINE double get_f64(u32 offset) {
     silverfish_assert(offset <= memory_size - sizeof(double));
 
     char* mem_as_chars = (char *) memory;
@@ -62,7 +62,7 @@ INLINE double get_f64(i32 offset) {
     return *(double *) address;
 }
 
-INLINE i8 get_i8(i32 offset) {
+INLINE i8 get_i8(u32 offset) {
     silverfish_assert(offset <= memory_size - sizeof(i8));
 
     char* mem_as_chars = (char *) memory;
@@ -70,7 +70,7 @@ INLINE i8 get_i8(i32 offset) {
     return *(i8 *) address;
 }
 
-INLINE i16 get_i16(i32 offset) {
+INLINE i16 get_i16(u32 offset) {
     silverfish_assert(offset <= memory_size - sizeof(i16));
 
     char* mem_as_chars = (char *) memory;
@@ -78,7 +78,7 @@ INLINE i16 get_i16(i32 offset) {
     return *(i16 *) address;
 }
 
-INLINE i32 get_i32(i32 offset) {
+INLINE i32 get_i32(u32 offset) {
     silverfish_assert(offset <= memory_size - sizeof(i32));
 
     char* mem_as_chars = (char *) memory;
@@ -86,7 +86,7 @@ INLINE i32 get_i32(i32 offset) {
     return *(i32 *) address;
 }
 
-INLINE i64 get_i64(i32 offset) {
+INLINE i64 get_i64(u32 offset) {
     silverfish_assert(offset <= memory_size - sizeof(i64));
 
     char* mem_as_chars = (char *) memory;
@@ -95,7 +95,7 @@ INLINE i64 get_i64(i32 offset) {
 }
 
 // Now setting routines
-INLINE void set_f32(i32 offset, float v) {
+INLINE void set_f32(u32 offset, float v) {
     silverfish_assert(offset <= memory_size - sizeof(float));
 
     char* mem_as_chars = (char *) memory;
@@ -103,7 +103,7 @@ INLINE void set_f32(i32 offset, float v) {
     *(float *) address = v;
 }
 
-INLINE void set_f64(i32 offset, double v) {
+INLINE void set_f64(u32 offset, double v) {
     silverfish_assert(offset <= memory_size - sizeof(double));
 
     char* mem_as_chars = (char *) memory;
@@ -111,7 +111,7 @@ INLINE void set_f64(i32 offset, double v) {
     *(double *) address = v;
 }
 
-INLINE void set_i8(i32 offset, i8 v) {
+INLINE void set_i8(u32 offset, i8 v) {
     silverfish_assert(offset <= memory_size - sizeof(i8));
 
     char* mem_as_chars = (char *) memory;
@@ -119,7 +119,7 @@ INLINE void set_i8(i32 offset, i8 v) {
     *(i8 *) address = v;
 }
 
-INLINE void set_i16(i32 offset, i16 v) {
+INLINE void set_i16(u32 offset, i16 v) {
     silverfish_assert(offset <= memory_size - sizeof(i16));
 
     char* mem_as_chars = (char *) memory;
@@ -127,7 +127,7 @@ INLINE void set_i16(i32 offset, i16 v) {
     *(i16 *) address = v;
 }
 
-INLINE void set_i32(i32 offset, i32 v) {
+INLINE void set_i32(u32 offset, i32 v) {
     silverfish_assert(offset <= memory_size - sizeof(i32));
 
     char* mem_as_chars = (char *) memory;
@@ -135,7 +135,7 @@ INLINE void set_i32(i32 offset, i32 v) {
     *(i32 *) address = v;
 }
 
-INLINE void set_i64(i32 offset, i64 v) {
+INLINE void set_i64(u32 offset, i64 v) {
     silverfish_assert(offset <= memory_size - sizeof(i64));
 
     char* mem_as_chars = (char *) memory;

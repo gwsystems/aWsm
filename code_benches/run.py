@@ -44,15 +44,16 @@ else:
         [SILVERFISH_RELEASE_PATH, SILVERFISH_DEBUG_PATH],
         key=getmtime_or_zero)
 
-WASMCEPTION_PATH = ROOT_PATH + "/wasmception"
+WASI_SDK_VERSION = '8.0'
+WASI_SDK_PATH = ROOT_PATH + "/wasi-sdk-{}".format(WASI_SDK_VERSION)
 
-# Our special WASM clang is under this wasmception path
-WASM_CLANG = WASMCEPTION_PATH + "/dist/bin/clang"
+# Our special WASM clang is under this wasi-sdk path
+WASM_CLANG = WASI_SDK_PATH + "/bin/clang"
 # These flags are all somewhat important -- see @Others for more information
 WASM_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--no-threads,--stack-first,--no-entry,--export-all,--export=main,--export=dummy"
 # Point WASM to our custom libc
-WASM_SYSROOT_FLAGS = "--sysroot={}/sysroot".format(WASMCEPTION_PATH)
-WASM_FLAGS = WASM_LINKER_FLAGS + " --target=wasm32-unknown-unknown-wasm -nostartfiles -O3 -flto " + WASM_SYSROOT_FLAGS
+WASM_SYSROOT_FLAGS = "--sysroot={}/share/wasi-sysroot".format(WASI_SDK_PATH)
+WASM_FLAGS = WASM_LINKER_FLAGS + " --target=wasm32-wasi -mcpu=mvp -nostartfiles -O3 -flto " + WASM_SYSROOT_FLAGS
 
 # What is the machine we're running on like?
 IS_64_BIT = sys.maxsize > 2**32
@@ -105,17 +106,18 @@ programs = [
     # == Custom Benchmarks ==
     Program("custom_binarytrees", [16], 2 ** 14),
     Program("custom_function_pointers", [], 2 ** 14),
-    Program("custom_libjpeg", [], 2 ** 15,
-            custom_arguments=["-Wno-incompatible-library-redeclaration", "-Wno-implicit-function-declaration",
-                              "-Wno-shift-negative-value"]),
+    #Program("custom_libjpeg", [], 2 ** 15,
+    #        custom_arguments=["-Wno-incompatible-library-redeclaration", "-Wno-implicit-function-declaration",
+    #                          "-Wno-shift-negative-value"]),
     Program("custom_matrix_multiply", [], 2 ** 14),
     Program("custom_memcmp", [], 2 ** 14),
-    Program("custom_sqlite", [], 2 ** 15, custom_arguments=["-DSQLITE_MUTEX_NOOP", "-ldl"]),
+    # TODO need to remove dependency on posix headers
+    #Program("custom_sqlite", [], 2 ** 15, custom_arguments=["-DSQLITE_MUTEX_NOOP", "-ldl"]),
 
     # == Apps ==
     #Program("app_nn", [], 2 ** 14, custom_arguments=["-std=c99", "-Wno-unknown-attributes", "-DARM_MATH_CM3", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/DSP/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/Core/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/NN/Include"]),
     Program("app_pid", ["-std=c++11", "-Wall"], 2 ** 8, custom_arguments=[], is_cpp=True),
-    Program("app_tiny_ekf", ["-std=c++11", "-Wall"], 2 ** 14, custom_arguments=[], is_cpp=True),
+    Program("app_tiny_ekf", ["-std=c++11", "-Wall"], 2 ** 14, custom_arguments=["-fno-rtti"], is_cpp=True),
     Program("app_tinycrypt", [], 2 ** 15 + 2**14, custom_arguments=[ "-Wall", "-Wpedantic", "-Wno-gnu-zero-variadic-macro-arguments", "-std=c11", "-DENABLE_TESTS", "-I."]),
     # Program("app_v9", [], 2 ** 18, custom_arguments=[], do_lto=False),
 
