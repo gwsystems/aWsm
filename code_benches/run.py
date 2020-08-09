@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 from itertools import chain
 import csv
 import glob
@@ -8,14 +9,30 @@ import subprocess as sp
 import sys
 import timeit
 
+parser = argparse.ArgumentParser(description="Run code_benches.")
+parser.add_argument("--target",
+    help="Target triple to use, defaults to host triple. You probably want to "
+        "set this if you're doing anything non-trivial.")
+parser.add_argument("--debug", action='store_true',
+    help="Use debug build of silverfish. Defaults to most recent that exists.")
+parser.add_argument("--release", action='store_true',
+    help="Use release build of silverfish. Defaults to most recent that exists.")
+parser.add_argument("--wasmception", action='store_true',
+    help="Use Wasmception for the WebAssembly libc. Defaults to most recent that exists.")
+parser.add_argument("--wasi-sdk", action='store_true',
+    help="Use WASI-SDK for the WebAssembly libc. Defaults to most recent that exists.")
+parser.add_argument("-o", "--output", default="benchmarks.csv",
+    help="Destination csv file to write benchmark results. Defaults to %(default)r.")
+args = parser.parse_args()
+
 # Note: This is a major configuration option, you probably want to set this if you're doing anything non-trivial
-SILVERFISH_TARGET = None
+SILVERFISH_TARGET = args.target
 # SILVERFISH_TARGET = "thumbv7em-none-unknown-eabi"
 # SILVERFISH_TARGET = "x86_64-apple-macosx10.15.0"
 # SILVERFISH_TARGET = "x86_64-pc-linux-gnu"
 
 # CSV file name
-CSV_NAME = "benchmarks.csv"
+CSV_NAME = args.output
 
 # Make sure we're in the code_benches directory
 if os.path.dirname(sys.argv[0]):
@@ -27,22 +44,33 @@ ROOT_PATH = os.path.dirname(BENCH_ROOT)
 
 RUNTIME_PATH = ROOT_PATH + "/runtime"
 
+def bestpath(paths):
+    """
+    Determine best path based on:
+    1. exists
+    2. most recently modified
+    """
+    def getmtime_or_zero(x):
+        path, *_, use_this_one = x
+
+        if use_this_one:
+            return (1, 0)
+
+        try:
+            return (0, os.path.getmtime(path))
+        except FileNotFoundError:
+            return (0, 0)
+
+    *best, _ = max(paths, key=getmtime_or_zero)
+    return best
+
 SILVERFISH_RELEASE_PATH = ROOT_PATH + "/target/release/silverfish"
 SILVERFISH_DEBUG_PATH = ROOT_PATH + "/target/debug/silverfish"
-# assert all(arg in {"--release", "--debug"} for arg in sys.argv[1:]) TODO argparse?
-if "--release" in sys.argv:
-    SILVERFISH_PATH = SILVERFISH_RELEASE_PATH
-elif "--debug" in sys.argv:
-    SILVERFISH_PATH = SILVERFISH_DEBUG_PATH
-else:
-    def getmtime_or_zero(path):
-        try:
-            return os.path.getmtime(path)
-        except FileNotFoundError:
-            return 0
-    SILVERFISH_PATH = max(
-        [SILVERFISH_RELEASE_PATH, SILVERFISH_DEBUG_PATH],
-        key=getmtime_or_zero)
+
+SILVERFISH_PATH, = bestpath([
+    (SILVERFISH_RELEASE_PATH, args.release),
+    (SILVERFISH_DEBUG_PATH,   args.debug),
+])
 
 WASMCEPTION_PATH = ROOT_PATH + "/wasmception"
 WASMCEPTION_CLANG = WASMCEPTION_PATH + "/dist/bin/clang"
@@ -56,16 +84,10 @@ WASI_SDK_SYSROOT = WASI_SDK_PATH + "/share/wasi-sysroot"
 WASI_SDK_FLAGS = "--target=wasm32-wasi -mcpu=mvp -nostartfiles -O3 -flto"
 WASI_SDK_BACKING = "wasi_sdk_backing.c"
 
-if "--wasi-sdk" in sys.argv:
-    WASM_CLANG = WASI_SDK_CLANG
-    WASM_SYSROOT = WASI_SDK_SYSROOT
-    WASM_FLAGS = WASI_SDK_FLAGS
-    WASM_BACKING = WASI_SDK_BACKING
-else:
-    WASM_CLANG = WASMCEPTION_CLANG
-    WASM_SYSROOT = WASMCEPTION_SYSROOT
-    WASM_FLAGS = WASMCEPTION_FLAGS
-    WASM_BACKING = WASMCEPTION_BACKING
+WASM_CLANG, WASM_SYSROOT, WASM_FLAGS, WASM_BACKING = bestpath([
+    (WASMCEPTION_CLANG, WASMCEPTION_SYSROOT, WASMCEPTION_FLAGS, WASMCEPTION_BACKING, args.wasmception),
+    (WASI_SDK_CLANG, WASI_SDK_SYSROOT, WASI_SDK_FLAGS, WASI_SDK_BACKING, args.wasi_sdk),
+])
 
 # These flags are all somewhat important -- see @Others for more information
 WASM_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--no-threads,--stack-first,--no-entry,--export-all,--export=main,--export=dummy"
