@@ -1,0 +1,71 @@
+# CI workflow
+name: test
+on: [push, pull_request]
+
+env:
+  # Rust equivalent of -Werror
+  RUSTFLAGS: --deny warnings
+  # used during LLVM installation
+  LLVM_VERSION: 9
+  # URLs for WebAssembly libcs
+  WASMCEPTION_URL: https://github.com/geky/aWsm/releases/download/wasmception-0.1/wasmception-0.1.tar.gz
+  WASI_SDK_URL: https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-8/wasi-sdk-8.0-linux.tar.gz
+
+# job control
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        libc: [wasmception, wasi-sdk]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install
+        run: |
+          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" bash $LLVM_VERSION
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
+          sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
+          sudo apt install libc++-dev libc++abi-dev --yes
+          # not really sure why we need to modify this
+          PATH=/usr/bin:$PATH
+          llvm-config --version
+
+      - name: Get wasmception
+        if: matrix.libc == 'wasmception'
+        run: |
+          wget $WASMCEPTION_URL -O wasmception.tar.gz
+          mkdir -p wasmception
+          tar xvfz wasmception.tar.gz --strip-components=1 -C wasmception
+
+      - name: Get wasi-sdk
+        if: matrix.libc == 'wasi-sdk'
+        run: |
+          wget $WASI_SDK_URL -O wasi-sdk.tar.gz
+          mkdir -p wasi-sdk
+          tar xvfz wasi-sdk.tar.gz --strip-components=1 -C wasi-sdk
+
+      - name: Compile
+        run: |
+          cargo build
+
+      - name: Preliminary tests
+        # note we skip code_benches; we run code_benches/run.py ourselves
+        # to pass explicit flags
+        run: |
+          cargo test -- --skip code_benches
+
+      - name: Code benches
+        run: |
+          ./code_benches/run.py --debug --${{matrix.libc}} -o benchmarks.csv
+
+      - name: Results
+        run: cat benchmarks.csv
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{matrix.libc}}-benchmarks
+          path: benchmarks.csv
+

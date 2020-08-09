@@ -40,7 +40,8 @@ SILVERFISH_TARGET = args.target
 # SILVERFISH_TARGET = "x86_64-pc-linux-gnu"
 
 # CSV file name
-CSV_NAME = args.output
+# get abspath before we change directories
+CSV_NAME = os.path.abspath(args.output)
 
 # Make sure we're in the code_benches directory
 if os.path.dirname(sys.argv[0]):
