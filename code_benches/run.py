@@ -30,6 +30,8 @@ parser.add_argument("--polybench", action='append_const', dest='suites', const='
 parser.add_argument("-o", "--output", default="benchmarks.csv",
     help="Destination csv file to write benchmark results. Defaults to %(default)r.")
 args = parser.parse_args()
+assert not (args.debug and args.release), "Both --debug and --release provided"
+assert not (args.wasi_sdk and args.wasmception), "Both --wask-sdk and --wasmception provided"
 
 # Note: This is a major configuration option, you probably want to set this if you're doing anything non-trivial
 SILVERFISH_TARGET = args.target
