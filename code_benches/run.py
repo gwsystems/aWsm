@@ -21,6 +21,12 @@ parser.add_argument("--wasmception", action='store_true',
     help="Use Wasmception for the WebAssembly libc. Defaults to most recent that exists.")
 parser.add_argument("--wasi-sdk", action='store_true',
     help="Use WASI-SDK for the WebAssembly libc. Defaults to most recent that exists.")
+parser.add_argument("--custom", action='append_const', dest='suites', const='custom',
+    help="Run custom benches.")
+parser.add_argument("--app", action='append_const', dest='suites', const='app',
+    help="Run app benches.")
+parser.add_argument("--polybench", action='append_const', dest='suites', const='pb',
+    help="Run polybench benches.")
 parser.add_argument("-o", "--output", default="benchmarks.csv",
     help="Destination csv file to write benchmark results. Defaults to %(default)r.")
 args = parser.parse_args()
@@ -336,6 +342,9 @@ if __name__ == "__main__":
     #     print(p.name)
     #     sp.call("wasm2wat {} | grep 'global (;1;) i32'".format(path), shell=True)
 
+    # Filter tests if explicit tests are requested
+    if args.suites:
+        programs = [p for p in programs if any(p.name.startswith(suite) for suite in args.suites)]
 
     # Compile all our programs
     for i, p in enumerate(programs):
