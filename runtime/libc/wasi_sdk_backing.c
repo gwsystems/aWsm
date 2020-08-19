@@ -117,6 +117,167 @@ enum wasi_rights {
     WASI_RIGHT_SOCK_SHUTDOWN            = 0x0000000010000000ULL,
 };
 
+enum wasi_errnos {
+    WASI_ESUCCESS           = 0,
+    WASI_E2BIG              = 1,
+    WASI_EACCES             = 2,
+    WASI_EADDRINUSE         = 3,
+    WASI_EADDRNOTAVAIL      = 4,
+    WASI_EAFNOSUPPORT       = 5,
+    WASI_EAGAIN             = 6,
+    WASI_EALREADY           = 7,
+    WASI_EBADF              = 8,
+    WASI_EBADMSG            = 9,
+    WASI_EBUSY              = 10,
+    WASI_ECANCELED          = 11,
+    WASI_ECHILD             = 12,
+    WASI_ECONNABORTED       = 13,
+    WASI_ECONNREFUSED       = 14,
+    WASI_ECONNRESET         = 15,
+    WASI_EDEADLK            = 16,
+    WASI_EDESTADDRREQ       = 17,
+    WASI_EDOM               = 18,
+    WASI_EDQUOT             = 19,
+    WASI_EEXIST             = 20,
+    WASI_EFAULT             = 21,
+    WASI_EFBIG              = 22,
+    WASI_EHOSTUNREACH       = 23,
+    WASI_EIDRM              = 24,
+    WASI_EILSEQ             = 25,
+    WASI_EINPROGRESS        = 26,
+    WASI_EINTR              = 27,
+    WASI_EINVAL             = 28,
+    WASI_EIO                = 29,
+    WASI_EISCONN            = 30,
+    WASI_EISDIR             = 31,
+    WASI_ELOOP              = 32,
+    WASI_EMFILE             = 33,
+    WASI_EMLINK             = 34,
+    WASI_EMSGSIZE           = 35,
+    WASI_EMULTIHOP          = 36,
+    WASI_ENAMETOOLONG       = 37,
+    WASI_ENETDOWN           = 38,
+    WASI_ENETRESET          = 39,
+    WASI_ENETUNREACH        = 40,
+    WASI_ENFILE             = 41,
+    WASI_ENOBUFS            = 42,
+    WASI_ENODEV             = 43,
+    WASI_ENOENT             = 44,
+    WASI_ENOEXEC            = 45,
+    WASI_ENOLCK             = 46,
+    WASI_ENOLINK            = 47,
+    WASI_ENOMEM             = 48,
+    WASI_ENOMSG             = 49,
+    WASI_ENOPROTOOPT        = 50,
+    WASI_ENOSPC             = 51,
+    WASI_ENOSYS             = 52,
+    WASI_ENOTCONN           = 53,
+    WASI_ENOTDIR            = 54,
+    WASI_ENOTEMPTY          = 55,
+    WASI_ENOTRECOVERABLE    = 56,
+    WASI_ENOTSOCK           = 57,
+    WASI_ENOTSUP            = 58,
+    WASI_ENOTTY             = 59,
+    WASI_ENXIO              = 60,
+    WASI_EOVERFLOW          = 61,
+    WASI_EOWNERDEAD         = 62,
+    WASI_EPERM              = 63,
+    WASI_EPIPE              = 64,
+    WASI_EPROTO             = 65,
+    WASI_EPROTONOSUPPORT    = 66,
+    WASI_EPROTOTYPE         = 67,
+    WASI_ERANGE             = 68,
+    WASI_EROFS              = 69,
+    WASI_ESPIPE             = 70,
+    WASI_ESRCH              = 71,
+    WASI_ESTALE             = 72,
+    WASI_ETIMEDOUT          = 73,
+    WASI_ETXTBSY            = 74,
+    WASI_EXDEV              = 75,
+    WASI_ENOTCAPABLE        = 76,
+};
+
+// errno code handling
+static i32 wasi_fromerrno(int errno_) {
+    switch (errno_) {
+        case 0:                 return WASI_ESUCCESS;
+        case E2BIG:             return WASI_E2BIG;
+        case EACCES:            return WASI_EACCES;
+        case EADDRINUSE:        return WASI_EADDRINUSE;
+        case EADDRNOTAVAIL:     return WASI_EADDRNOTAVAIL;
+        case EAFNOSUPPORT:      return WASI_EAFNOSUPPORT;
+        case EAGAIN:            return WASI_EAGAIN;
+        case EALREADY:          return WASI_EALREADY;
+        case EBADF:             return WASI_EBADF;
+        case EBADMSG:           return WASI_EBADMSG;
+        case EBUSY:             return WASI_EBUSY;
+        case ECANCELED:         return WASI_ECANCELED;
+        case ECHILD:            return WASI_ECHILD;
+        case ECONNABORTED:      return WASI_ECONNABORTED;
+        case ECONNREFUSED:      return WASI_ECONNREFUSED;
+        case ECONNRESET:        return WASI_ECONNRESET;
+        case EDEADLK:           return WASI_EDEADLK;
+        case EDESTADDRREQ:      return WASI_EDESTADDRREQ;
+        case EDOM:              return WASI_EDOM;
+        case EDQUOT:            return WASI_EDQUOT;
+        case EEXIST:            return WASI_EEXIST;
+        case EFAULT:            return WASI_EFAULT;
+        case EFBIG:             return WASI_EFBIG;
+        case EHOSTUNREACH:      return WASI_EHOSTUNREACH;
+        case EIDRM:             return WASI_EIDRM;
+        case EILSEQ:            return WASI_EILSEQ;
+        case EINPROGRESS:       return WASI_EINPROGRESS;
+        case EINTR:             return WASI_EINTR;
+        case EINVAL:            return WASI_EINVAL;
+        case EIO:               return WASI_EIO;
+        case EISCONN:           return WASI_EISCONN;
+        case EISDIR:            return WASI_EISDIR;
+        case ELOOP:             return WASI_ELOOP;
+        case EMFILE:            return WASI_EMFILE;
+        case EMLINK:            return WASI_EMLINK;
+        case EMSGSIZE:          return WASI_EMSGSIZE;
+        case EMULTIHOP:         return WASI_EMULTIHOP;
+        case ENAMETOOLONG:      return WASI_ENAMETOOLONG;
+        case ENETDOWN:          return WASI_ENETDOWN;
+        case ENETRESET:         return WASI_ENETRESET;
+        case ENETUNREACH:       return WASI_ENETUNREACH;
+        case ENFILE:            return WASI_ENFILE;
+        case ENOBUFS:           return WASI_ENOBUFS;
+        case ENODEV:            return WASI_ENODEV;
+        case ENOENT:            return WASI_ENOENT;
+        case ENOEXEC:           return WASI_ENOEXEC;
+        case ENOLCK:            return WASI_ENOLCK;
+        case ENOLINK:           return WASI_ENOLINK;
+        case ENOMEM:            return WASI_ENOMEM;
+        case ENOMSG:            return WASI_ENOMSG;
+        case ENOPROTOOPT:       return WASI_ENOPROTOOPT;
+        case ENOSPC:            return WASI_ENOSPC;
+        case ENOSYS:            return WASI_ENOSYS;
+        case ENOTCONN:          return WASI_ENOTCONN;
+        case ENOTDIR:           return WASI_ENOTDIR;
+        case ENOTEMPTY:         return WASI_ENOTEMPTY;
+        case ENOTRECOVERABLE:   return WASI_ENOTRECOVERABLE;
+        case ENOTSOCK:          return WASI_ENOTSOCK;
+        case ENOTSUP:           return WASI_ENOTSUP;
+        case ENOTTY:            return WASI_ENOTTY;
+        case ENXIO:             return WASI_ENXIO;
+        case EOVERFLOW:         return WASI_EOVERFLOW;
+        case EOWNERDEAD:        return WASI_EOWNERDEAD;
+        case EPERM:             return WASI_EPERM;
+        case EPIPE:             return WASI_EPIPE;
+        case EPROTO:            return WASI_EPROTO;
+        case EPROTONOSUPPORT:   return WASI_EPROTONOSUPPORT;
+        case EPROTOTYPE:        return WASI_EPROTOTYPE;
+        case ERANGE:            return WASI_ERANGE;
+        case EROFS:             return WASI_EROFS;
+        case ESPIPE:            return WASI_ESPIPE;
+        case ESRCH:             return WASI_ESRCH;
+        case ESTALE:            return WASI_ESTALE;
+        case ETIMEDOUT:         return WASI_ETIMEDOUT;
+        case ETXTBSY:           return WASI_ETXTBSY;
+        case EXDEV:             return WASI_EXDEV;
+    }
+}
 
 // file operations
 i32 wasi_unstable_path_open(
@@ -155,18 +316,18 @@ i32 wasi_unstable_path_open(
     int mode = 0644;
     int fd = openat(dirfd, path, flags, mode);
     if (fd < 0) {
-        return -errno;
+        return wasi_fromerrno(errno);
     }
 
     set_i32(fd_off, fd);
-    return 0;
+    return WASI_ESUCCESS;
 }
 
 i32 wasi_unstable_fd_close(i32 fd) {
     i32 res = (i32) close(fd);
 
     if (res == -1) {
-        return -errno;
+        return wasi_fromerrno(errno);
     }
     return res;
 }
@@ -177,13 +338,13 @@ i32 wasi_unstable_fd_fdstat_get(i32 fd, u32 buf_offset) {
     struct stat stat;
     i32 res = fstat(fd, &stat);
     if (res == -1) {
-        return -errno;
+        return wasi_fromerrno(errno);
     }
     int mode = stat.st_mode;
 
     i32 fl = fcntl(fd, F_GETFL);
     if (fl < 0) {
-        return -errno;
+        return wasi_fromerrno(errno);
     }
 
     fdstat->fs_filetype = (
@@ -202,7 +363,7 @@ i32 wasi_unstable_fd_fdstat_get(i32 fd, u32 buf_offset) {
     fdstat->fs_rights_base = 0; // all rights
     fdstat->fs_rights_inheriting = 0; // all rights
 
-    return 0;
+    return WASI_ESUCCESS;
 }
 
 i32 wasi_unstable_fd_fdstat_set_flags(i32 fd, u32 fdflags) {
@@ -214,29 +375,29 @@ i32 wasi_unstable_fd_fdstat_set_flags(i32 fd, u32 fdflags) {
         ((flags & WASI_FDFLAG_SYNC    ) ? O_SYNC     : 0));
     int err = fcntl(fd, F_SETFL, fdflags);
     if (err < 0) {
-        return -errno;
+        return wasi_fromerrno(errno);
     }
-    return 0;
+    return WASI_ESUCCESS;
 }
 
 i32 wasi_unstable_fd_seek(i32 fd, i64 file_offset, i32 whence, u32 newoffset_off) {
     off_t res = lseek(fd, (off_t)file_offset, whence);
 
     if (res == -1) {
-        return -errno;
+        return wasi_fromerrno(errno);
     }
 
     set_i64(newoffset_off, res);
-    return 0;
+    return WASI_ESUCCESS;
 }
 
 i32 wasi_unstable_fd_datasync(i32 fd) {
     int res = fdatasync(fd);
     if (res == -1) {
-        return -errno;
+        return wasi_fromerrno(errno);
     }
 
-    return 0;
+    return WASI_ESUCCESS;
 }
 
 i32 wasi_unstable_fd_read(i32 fd, i32 iov_offset, i32 iovcnt, i32 nread_off) {
@@ -247,14 +408,14 @@ i32 wasi_unstable_fd_read(i32 fd, i32 iov_offset, i32 iovcnt, i32 nread_off) {
         void* ptr = get_memory_ptr_void(iov[i].base_offset, iov[i].len);
         ssize_t res = read(fd, ptr, iov[i].len);
         if (res == -1) {
-            return -errno;
+            return wasi_fromerrno(errno);
         }
 
         sum += res;
     }
 
     set_i32(nread_off, sum);
-    return 0;
+    return WASI_ESUCCESS;
 }
 
 i32 wasi_unstable_fd_write(i32 fd, i32 iov_offset, i32 iovcnt, i32 nwritten_off) {
@@ -265,14 +426,14 @@ i32 wasi_unstable_fd_write(i32 fd, i32 iov_offset, i32 iovcnt, i32 nwritten_off)
         void* ptr = get_memory_ptr_void(iov[i].base_offset, iov[i].len);
         ssize_t res = write(fd, ptr, iov[i].len);
         if (res == -1) {
-            return -errno;
+            return wasi_fromerrno(errno);
         }
 
         sum += res;
     }
 
     set_i32(nwritten_off, sum);
-    return 0;
+    return WASI_ESUCCESS;
 }
 
 // other filesystem operations
@@ -284,7 +445,7 @@ i32 wasi_unstable_path_filestat_get(i32 fd, u32 flags, u32 path_off, u32 path_le
     struct stat stat;
     int res = fstatat(fd, path, &stat, 0);
     if (res == -1) {
-        return -errno;
+        return wasi_fromerrno(errno);
     }
 
     filestat->st_dev = stat.st_dev;
@@ -296,7 +457,7 @@ i32 wasi_unstable_path_filestat_get(i32 fd, u32 flags, u32 path_off, u32 path_le
     filestat->st_mtim = stat.st_mtime;
     filestat->st_ctim = stat.st_ctime;
 
-    return 0;
+    return WASI_ESUCCESS;
 }
 
 i32 wasi_unstable_path_unlink_file(i32 fd, u32 path_off, u32 path_len) {
@@ -305,10 +466,10 @@ i32 wasi_unstable_path_unlink_file(i32 fd, u32 path_off, u32 path_len) {
 
     int res = unlinkat(fd, path, 0);
     if (res == -1) {
-        return -errno;
+        return wasi_fromerrno(errno);
     }
 
-    return 0;
+    return WASI_ESUCCESS;
 }
 
 i32 wasi_unstable_path_create_directory(i32 fd, u32 path_off, u32 path_len) {
@@ -317,10 +478,10 @@ i32 wasi_unstable_path_create_directory(i32 fd, u32 path_off, u32 path_len) {
 
     int res = mkdirat(fd, path, 0777);
     if (res == -1) {
-        return -errno;
+        return wasi_fromerrno(errno);
     }
 
-    return 0;
+    return WASI_ESUCCESS;
 }
 
 // clock operations
@@ -328,7 +489,7 @@ i32 wasi_unstable_clock_time_get(u32 clock_id, u64 precision, u32 time_off) {
     struct timespec tp;
     clock_gettime(clock_id, &tp);
     set_i64(time_off, (uint64_t)tp.tv_sec*1000000000ULL + (uint64_t)tp.tv_nsec);
-    return 0;
+    return WASI_ESUCCESS;
 }
 
 // process operations
