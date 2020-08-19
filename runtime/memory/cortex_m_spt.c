@@ -23,7 +23,7 @@ u32 cortex_mem_size = MEM_SIZE;
 
 void alloc_linear_memory() {
 //    printf_("8 = (%d %d) 16 = (%d %d) 32 = (%d %d) 64 = (%d %d)\n", sizeof(u8), sizeof(i8), sizeof(u16), sizeof(i16), sizeof(u32), sizeof(i32), sizeof(u64), sizeof(i64));
-    silverfish_assert(TOTAL_PAGES >= starting_pages);
+    awsm_assert(TOTAL_PAGES >= starting_pages);
 
     memory = &CORTEX_M_MEM[0];
     memory_size = starting_pages * WASM_PAGE_SIZE;
@@ -35,8 +35,8 @@ void alloc_linear_memory() {
 
 void expand_memory() {
     // max_pages = 0 => no limit
-    silverfish_assert(max_pages == 0 || (memory_size + WASM_PAGE_SIZE <= max_pages * WASM_PAGE_SIZE));
-    silverfish_assert(memory_size + WASM_PAGE_SIZE <= sizeof(CORTEX_M_MEM));
+    awsm_assert(max_pages == 0 || (memory_size + WASM_PAGE_SIZE <= max_pages * WASM_PAGE_SIZE));
+    awsm_assert(memory_size + WASM_PAGE_SIZE <= sizeof(CORTEX_M_MEM));
 
     char* mem_as_chars = memory;
     memset(&mem_as_chars[memory_size], 0, WASM_PAGE_SIZE);
@@ -52,9 +52,9 @@ INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
 
 INLINE void* get_page(u32 offset) {
     u32 page_number = (offset >> SPT_PAGE_SIZE_ORDER) & ((1 << SPT_PAGE_COUNT_ORDER) - 1);
-    silverfish_assert(page_number < SPT_PAGE_COUNT);
+    awsm_assert(page_number < SPT_PAGE_COUNT);
     void* page = PAGE_TABLE[page_number];
-    silverfish_assert(page);
+    awsm_assert(page);
     return page;
 }
 
@@ -90,7 +90,7 @@ INLINE i16 get_i16(u32 offset) {
 //    printf("Split from (%p, %p)\n", (void*) (u64) a, (void*) (u64) b);
 //    printf("Split loaded: %p\n", (void*) (u64) split);
 //
-//    silverfish_assert(*page_adj == split);
+//    awsm_assert(*page_adj == split);
 //    return *page_adj;
 }
 
@@ -211,11 +211,11 @@ INLINE void set_f64(u32 offset, double v) {
 
 
 INLINE char* get_function_from_table(u32 idx, u32 type_id) {
-    silverfish_assert(idx < INDIRECT_TABLE_SIZE);
+    awsm_assert(idx < INDIRECT_TABLE_SIZE);
 
     struct indirect_table_entry f = indirect_table[idx];
 
-    silverfish_assert(f.type_id == type_id && f.func_pointer);
+    awsm_assert(f.type_id == type_id && f.func_pointer);
 
     return f.func_pointer;
 }

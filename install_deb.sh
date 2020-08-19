@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installs dependencies, builds Silverfish, and places it into your path
+# Installs dependencies, builds aWsm, and places it into your path
 # Be sure to validate the Rust and LLVM install scripts we invoke below!
 
 # TODO: Error Checking. Bail if not executing script from project root because we use relative paths
@@ -20,7 +20,7 @@ cd wasmception
 make
 cd ..
 
-## Silverfish
+## aWsm
 sudo apt install build-essential --yes
 
 if [[ -x "$(command -v rustup)" ]]; then
@@ -37,4 +37,4 @@ sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VER
 sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
 sudo apt install libc++-dev libc++abi-dev --yes
 cargo build --release
-sudo cp -t /usr/bin ./target/release/silverfish
+sudo cp -t /usr/bin ./target/release/awsm

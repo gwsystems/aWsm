@@ -14,9 +14,9 @@ parser.add_argument("--target",
     help="Target triple to use, defaults to host triple. You probably want to "
         "set this if you're doing anything non-trivial.")
 parser.add_argument("--debug", action='store_true',
-    help="Use debug build of silverfish. Defaults to most recent that exists.")
+    help="Use debug build of awsm. Defaults to most recent that exists.")
 parser.add_argument("--release", action='store_true',
-    help="Use release build of silverfish. Defaults to most recent that exists.")
+    help="Use release build of awsm. Defaults to most recent that exists.")
 parser.add_argument("--wasmception", action='store_true',
     help="Use Wasmception for the WebAssembly libc. Defaults to most recent that exists.")
 parser.add_argument("--wasi-sdk", action='store_true',
@@ -34,10 +34,10 @@ assert not (args.debug and args.release), "Both --debug and --release provided"
 assert not (args.wasi_sdk and args.wasmception), "Both --wask-sdk and --wasmception provided"
 
 # Note: This is a major configuration option, you probably want to set this if you're doing anything non-trivial
-SILVERFISH_TARGET = args.target
-# SILVERFISH_TARGET = "thumbv7em-none-unknown-eabi"
-# SILVERFISH_TARGET = "x86_64-apple-macosx10.15.0"
-# SILVERFISH_TARGET = "x86_64-pc-linux-gnu"
+AWSM_TARGET = args.target
+# AWSM_TARGET = "thumbv7em-none-unknown-eabi"
+# AWSM_TARGET = "x86_64-apple-macosx10.15.0"
+# AWSM_TARGET = "x86_64-pc-linux-gnu"
 
 # CSV file name
 # get abspath before we change directories
@@ -48,7 +48,7 @@ if os.path.dirname(sys.argv[0]):
     os.chdir(os.path.dirname(sys.argv[0]))
 # Absolute path to the `code_benches` directory
 BENCH_ROOT = os.getcwd()
-# Absolute path to the `silverfish` directory
+# Absolute path to the `awsm` directory
 ROOT_PATH = os.path.dirname(BENCH_ROOT)
 
 RUNTIME_PATH = ROOT_PATH + "/runtime"
@@ -73,12 +73,12 @@ def bestpath(paths):
     *best, _ = max(paths, key=getmtime_or_zero)
     return best
 
-SILVERFISH_RELEASE_PATH = ROOT_PATH + "/target/release/silverfish"
-SILVERFISH_DEBUG_PATH = ROOT_PATH + "/target/debug/silverfish"
+AWSM_RELEASE_PATH = ROOT_PATH + "/target/release/awsm"
+AWSM_DEBUG_PATH = ROOT_PATH + "/target/debug/awsm"
 
-SILVERFISH_PATH, = bestpath([
-    (SILVERFISH_RELEASE_PATH, args.release),
-    (SILVERFISH_DEBUG_PATH,   args.debug),
+AWSM_PATH, = bestpath([
+    (AWSM_RELEASE_PATH, args.release),
+    (AWSM_DEBUG_PATH,   args.debug),
 ])
 
 WASMCEPTION_PATH = ROOT_PATH + "/wasmception"
@@ -117,7 +117,7 @@ RUN_COUNT = 10
 ENABLE_DEBUG_SYMBOLS = True
 
 COMPILE_WASM_ONLY = False
-if SILVERFISH_TARGET == "thumbv7em-none-unknown-eabi" and not COMPILE_WASM_ONLY:
+if AWSM_TARGET == "thumbv7em-none-unknown-eabi" and not COMPILE_WASM_ONLY:
     print("run.py: thumbv7em-none-unknown-eabi wasm->bc is target specific, refusing to compile native code!")
     COMPILE_WASM_ONLY = True
 
@@ -273,18 +273,18 @@ def compile_to_wasm(program):
 
 # Compile the WASM in `program`'s directory into llvm bytecode
 def compile_wasm_to_bc(program):
-    if SILVERFISH_TARGET is None:
+    if AWSM_TARGET is None:
         target_flag = ""
     else:
-        target_flag = "--target " + SILVERFISH_TARGET
+        target_flag = "--target " + AWSM_TARGET
 
-    command = "{silverfish} {target} bin/{pname}.wasm -o bin/{pname}.bc"\
-        .format(silverfish=SILVERFISH_PATH, target=target_flag, pname=program.name)
+    command = "{awsm} {target} bin/{pname}.wasm -o bin/{pname}.bc"\
+        .format(awsm=AWSM_PATH, target=target_flag, pname=program.name)
     print(command)
     sp.check_call(command, shell=True, cwd=program.name)
     # Also compile an unsafe version, so we can see the performance difference
-    command = "{silverfish} {target} -u bin/{pname}.wasm -o bin/{pname}_us.bc"\
-        .format(silverfish=SILVERFISH_PATH, target=target_flag, pname=program.name)
+    command = "{awsm} {target} -u bin/{pname}.wasm -o bin/{pname}_us.bc"\
+        .format(awsm=AWSM_PATH, target=target_flag, pname=program.name)
     print(command)
     sp.check_call(command, shell=True, cwd=program.name)
 
@@ -300,10 +300,10 @@ def compile_wasm_to_executable(program, exe_postfix, memory_impl, unsafe_impls=F
     if ENABLE_DEBUG_SYMBOLS:
         opt += " -g"
 
-    if SILVERFISH_TARGET is None:
+    if AWSM_TARGET is None:
         target_flag = ""
     else:
-        target_flag = "-target " + SILVERFISH_TARGET
+        target_flag = "-target " + AWSM_TARGET
 
     command = "clang -lm {target} {opt} {bc_file} {runtime}/runtime.c {runtime}/libc/{backing} {runtime}/libc/env.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
         .format(target=target_flag, opt=opt, bc_file=bc_file, pname=program.name, runtime=RUNTIME_PATH, backing=WASM_BACKING, mem_impl=memory_impl, postfix=exe_postfix)

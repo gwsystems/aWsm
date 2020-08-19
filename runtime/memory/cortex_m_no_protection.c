@@ -15,7 +15,7 @@ int printf_(const char* format, ...);
 void alloc_linear_memory() {
 //    printf_("8 = (%d %d) 16 = (%d %d) 32 = (%d %d) 64 = (%d %d)\n", sizeof(u8), sizeof(i8), sizeof(u16), sizeof(i16), sizeof(u32), sizeof(i32), sizeof(u64), sizeof(i64));
 //    printf_("pages %d\n", (int) starting_pages);
-    silverfish_assert(TOTAL_PAGES >= starting_pages);
+    awsm_assert(TOTAL_PAGES >= starting_pages);
 
     memory = &CORTEX_M_MEM[0];
     memory_size = starting_pages * WASM_PAGE_SIZE;
@@ -23,10 +23,10 @@ void alloc_linear_memory() {
 
 void expand_memory() {
     // max_pages = 0 => no limit
-    silverfish_assert(max_pages == 0 || (memory_size + WASM_PAGE_SIZE <= max_pages * WASM_PAGE_SIZE));
+    awsm_assert(max_pages == 0 || (memory_size + WASM_PAGE_SIZE <= max_pages * WASM_PAGE_SIZE));
 
 //    printf_("Expanding to %d\n", memory_size + WASM_PAGE_SIZE);
-    silverfish_assert(memory_size + WASM_PAGE_SIZE <= sizeof(CORTEX_M_MEM));
+    awsm_assert(memory_size + WASM_PAGE_SIZE <= sizeof(CORTEX_M_MEM));
 
     char* mem_as_chars = memory;
     memset(&mem_as_chars[memory_size], 0, WASM_PAGE_SIZE);
