@@ -48,6 +48,10 @@ pub struct Opt {
     /// Set compilation target
     #[structopt(long = "target")]
     target: Option<String>,
+
+    /// Set compilation data layout
+    #[structopt(long = "layout")]
+    layout: Option<String>,
 }
 
 fn main() -> io::Result<()> {

@@ -58,7 +58,14 @@ pub fn process_to_llvm(
     if let Some(ref target) = opt.target {
         llvm_module.set_target(target);
     }
-
+    // Accept --layout to compile for specific target, otherwise omit target
+    // data layout string, this defaults to the host target in LLVM
+    if let Some(ref layout) = opt.layout {
+        unsafe {
+            let c_target = std::ffi::CString::new(layout.to_string()).unwrap();
+            llvm::ffi::core::LLVMSetDataLayout(llvm_module.into(), c_target.as_ptr());
+        }
+    }
     // Remap WASM generated names to exported names
     for e in wasm_module.exports {
         match e {
