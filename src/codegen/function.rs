@@ -85,11 +85,7 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
     // "target-features"="+armv7e-m,+dsp,+fp-armv8d16,+fp-armv8d16sp,+fp16,+fp64,+fpregs,+hwdiv,+thumb-mode,+vfp2,+vfp2d16,+vfp2d16sp,+vfp2sp,+vfp3d16,+vfp3d16sp,+vfp4d16,+vfp4d16sp,-aes,-crc,-crypto,-dotprod,-fp16fml,-fullfp16,-hwdiv-arm,-lob,-mve,-mve.fp,-ras,-sb,-sha2"
     // "unsafe-fp-math"="false"
     // "use-soft-float"="false" }
-    let cm_override = if let Some(target) = &ctx.opt.target {
-        target.contains("thumbv7em-none-unknown-eabi")
-    } else {
-        false
-    };
+    let cm_override = false;
 
     unsafe {
         let v_ref: *mut llvm::ffi::LLVMValue = mem::transmute(llvm_f.to_super() as &Value);
@@ -104,6 +100,7 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
             crate::llvm_externs::LLVMAttributeFunctionIndex,
             attr_ref
         );
+
         if cm_override {
             if !CORTEX_OVERRIDE_MESSAGE_SENT.load(Ordering::Relaxed) {
                 info!("engaging cortex-m override");

@@ -52,6 +52,11 @@ pub struct Opt {
     /// Set compilation data layout
     #[structopt(long = "layout")]
     layout: Option<String>,
+
+
+    /// Generate rotl operations as pure math
+    #[structopt(long = "expand-rot")]
+    expand_rot: Option<bool>,
 }
 
 fn main() -> io::Result<()> {

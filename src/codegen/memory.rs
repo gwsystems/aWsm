@@ -70,14 +70,14 @@ pub fn generate_memory_initialization_stub(ctx: &ModuleCtx, initializers: Vec<Da
         let data_raw_ptr =
             b.build_bit_cast(data_ptr, PointerType::new(<i8>::get_type(ctx.llvm_ctx)));
 
-        b.build_call(
+        /*b.build_call(
             ctx.llvm_module.get_function("initialize_region").unwrap(),
             &[
                 offset,
                 (data.len() as i32).compile(ctx.llvm_ctx),
                 data_raw_ptr,
             ],
-        );
+        );*/
     }
     b.build_ret_void();
 }

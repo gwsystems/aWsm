@@ -64,11 +64,7 @@ pub fn insert_globals<'a>(
     llvm_module: &'a LLVMModule,
     globals: Vec<Global>,
 ) -> Vec<GlobalValue<'a>> {
-    if opt.use_runtime_global_handling {
-        insert_runtime_globals(opt, llvm_ctx, llvm_module, globals)
-    } else {
-        insert_native_globals(opt, llvm_ctx, llvm_module, globals)
-    }
+    insert_native_globals(opt, llvm_ctx, llvm_module, globals)
 }
 
 fn insert_native_globals<'a>(
@@ -111,57 +107,6 @@ fn insert_native_globals<'a>(
     global_values
 }
 
-fn insert_runtime_globals<'a>(
-    opt: &Opt,
-    llvm_ctx: &'a LLVMCtx,
-    llvm_module: &'a LLVMModule,
-    globals: Vec<Global>,
-) -> Vec<GlobalValue<'a>> {
-    let setup_globals_type = FunctionType::new(<()>::get_type(llvm_ctx), &[]).to_super();
-    let setup_globals = llvm_module.add_function("populate_globals", setup_globals_type);
-    let bb = setup_globals.append("root");
-    let b = Builder::new(llvm_ctx);
-    b.position_at_end(bb);
-
-    let mut global_values = Vec::new();
-    for (i, g) in globals.into_iter().enumerate() {
-        let v = match g {
-            Global::Imported { .. } => {
-                panic!("Cannot import globals into a module with runtime globals enabled")
-            }
-            Global::InModule {
-                content_type,
-                mutable,
-                initializer,
-                ..
-            } => {
-                let v = initializer_to_value(llvm_ctx, content_type, &initializer);
-                if opt.inline_constant_globals && !mutable {
-                    GlobalValue::InlinedConstant(v)
-                } else {
-                    let idx = i as u32;
-                    match content_type {
-                        Type::I32 => {
-                            let func = llvm_module.get_function(SET_GLOBAL_I32).unwrap();
-                            b.build_call(func, &[idx.compile(llvm_ctx), v]);
-                            GlobalValue::RuntimeI32(idx)
-                        }
-                        Type::I64 => {
-                            let func = llvm_module.get_function(SET_GLOBAL_I64).unwrap();
-                            b.build_call(func, &[idx.compile(llvm_ctx), v]);
-                            GlobalValue::RuntimeI64(idx)
-                        }
-                        e => panic!("Unimplemented runtime global type {:?}", e),
-                    }
-                }
-            }
-        };
-        global_values.push(v);
-    }
-    b.build_ret_void();
-
-    global_values
-}
 
 fn initializer_to_value<'a>(
     llvm_ctx: &'a LLVMCtx,

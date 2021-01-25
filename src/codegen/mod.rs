@@ -24,7 +24,7 @@ use self::globals::insert_globals;
 use self::globals::GlobalValue;
 
 mod memory;
-use self::memory::add_memory_size_globals;
+//use self::memory::add_memory_size_globals;
 use self::memory::generate_memory_initialization_stub;
 
 mod runtime_stubs;
@@ -70,12 +70,10 @@ pub fn process_to_llvm(
     for e in wasm_module.exports {
         match e {
             Export::Function { index, name } => {
-                // We namespace these, so they can't conflict with our actual native code
-                wasm_module.functions[index].set_name("wasmf_".to_string() + &name);
+                wasm_module.functions[index].set_name(name);
             }
             Export::Global { index, name } => {
-                // We namespace these, so they can't conflict with our actual native code
-                wasm_module.globals[index].set_name("wasmg_".to_string() + &name);
+                wasm_module.globals[index].set_name(name);
             }
             // Exporting memory is meaningless in our native embedding
             Export::Memory { .. } => {}
@@ -109,22 +107,27 @@ pub fn process_to_llvm(
     };
 
     // We assume there is only one relevent memory
-    assert_eq!(wasm_module.memories.len(), 1);
+    // CROW not necesarily
+    //assert_eq!(wasm_module.memories.len(), 1);
 
     // The runtime needs to know how big the memory is/can be
-    add_memory_size_globals(&module_ctx, &wasm_module.memories[0].limits);
+    // CROW we dont need this
+    // add_memory_size_globals(&module_ctx, &wasm_module.memories[0].limits);
 
     // Which we then need to initialize the data
-    generate_memory_initialization_stub(&module_ctx, wasm_module.data_initializers);
-
-    // Assume there is only one relevent table
-    assert_eq!(wasm_module.tables.len(), 1);
+    if wasm_module.memories.len() > 1 {
+        generate_memory_initialization_stub(&module_ctx, wasm_module.data_initializers);
+       }
+    // Assu me there is only one relevent table
+    // CROW not necesary
+    //assert_eq!(wasm_module.tables.len(), 1);
     // TODO: Do some sort of dynamic handling of table size
-    assert!(wasm_module.tables[0].limits.initial <= 1024);
-    assert!(wasm_module.tables[0].limits.maximum.unwrap_or(0) <= 1024);
-
-    generate_table_initialization_stub(&module_ctx, wasm_module.table_initializers);
-
+   
+    if wasm_module.tables.len() > 1 {
+        generate_table_initialization_stub(&module_ctx, wasm_module.table_initializers);
+        assert!(wasm_module.tables[0].limits.initial <= 1024);
+        assert!(wasm_module.tables[0].limits.maximum.unwrap_or(0) <= 1024);    
+    }
     // Next we implement the implemented functions
     for f in wasm_module.functions {
         if let Function::Implemented { f } = f {

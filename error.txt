@@ -1,0 +1,50 @@
+   Compiling silverfish v0.1.0 (/Users/javierca/Documents/Develop/slumps/aWsm)
+warning: unused variable: `ty`
+    --> src/codegen/block.rs:1116:9
+     |
+1116 |     let ty = L::get_type(m_ctx.llvm_ctx);
+     |         ^^ help: if this is intentional, prefix it with an underscore: `_ty`
+     |
+     = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `offset`
+  --> src/codegen/memory.rs:59:13
+   |
+59 |         let offset = b.build_call(offset_func, &[]);
+   |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_offset`
+
+warning: unused variable: `data_raw_ptr`
+  --> src/codegen/memory.rs:70:13
+   |
+70 |         let data_raw_ptr =
+   |             ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_data_raw_ptr`
+
+warning: unused variable: `opt`
+   --> src/codegen/runtime_stubs.rs:102:29
+    |
+102 | pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
+    |                             ^^^ help: if this is intentional, prefix it with an underscore: `_opt`
+
+warning: variant is never constructed: `RuntimeI32`
+  --> src/codegen/globals.rs:23:5
+   |
+23 |     RuntimeI32(u32),
+   |     ^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: variant is never constructed: `RuntimeI64`
+  --> src/codegen/globals.rs:24:5
+   |
+24 |     RuntimeI64(u32),
+   |     ^^^^^^^^^^^^^^^
+
+warning: function is never used: `insert_runtime_globals`
+   --> src/codegen/globals.rs:110:4
+    |
+110 | fn insert_runtime_globals<'a>(
+    |    ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: 7 warnings emitted
+
+    Finished release [optimized + debuginfo] target(s) in 1m 36s
