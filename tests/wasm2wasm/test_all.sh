@@ -1,5 +1,8 @@
 
 
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
 clean() {
 	rm *.mirror.*
 	rm *.wat.wasm
@@ -10,31 +13,49 @@ clean() {
 }
 
 error(){
-	RED='\033[0;31m'
-	NC='\033[0m' # No Color
 	printf "${RED}Fail in $1${NC}\n"
 	cat $1
 	clean
 	exit 1
 }
 
-bash test1.sh binops.wat
 
-if ! grep -q i32.add "binops.wat.mirror.wat"; then
-	error binops.wat.mirror.wat
-fi
+check_ops(){
 
-bash test1.sh binops2.wat
+	for t in $1
+	do
+		for op in $2
+		do
+			export INSTR="$t.$op"
+			export T=$t
+			export R=$t
+			cp binops.TEMPLATE.wat binops.wat
+			perl  -pe  's/OP/$ENV{INSTR}/g' -i binops.wat
+			perl  -pe  's/T/$ENV{T}/g' -i binops.wat
+			perl  -pe  's/R/$ENV{R}/g' -i binops.wat
+			echo "Checking $INSTR"
 
-if ! grep -q i32.sub "binops2.wat.mirror.wat"; then
-	error binops2.wat.mirror.wat
-fi
+			bash test1.sh binops.wat
 
-bash test1.sh binops3.wat
+			if ! grep -q $INSTR "binops.wat.mirror.wat"; then
 
-if ! grep -q i32.shl "binops3.wat.mirror.wat"; then
-	error binops3.wat.mirror.wat
-fi
+				printf "${RED}$INSTR${NC}\n"
+				error binops.wat.mirror.wat
+			fi
+		done
+	done
+}
+
+
+TYPES_I="i32 i64"
+BINOPS_I="add sub mul xor and or shl shr_s shr_u div_s div_u rem_s rem_u"
+
+
+#TYPES_F="i32 i64"
+#BINOPS_F="add sub mul"
+
+
+check_ops "$TYPES_I" "$BINOPS_I"
 
 bash test1.sh f32_min.wat
 
@@ -87,14 +108,18 @@ if ! grep -q "i64.rotr" rot4.wat.mirror.wat ; then
 	error rot4.wat.mirror.wat
 fi
 
-
-bash test1.sh rot2.wat --expand-rot false
-cat  rot2.wat.mirror.wat
-
 bash test1.sh f32_floor.wat
 
 if ! grep -q f32.floor "f32_floor.wat.mirror.wat"; then
 	error f32_floor.wat.mirror.wat
 fi
+
+
+bash test1.sh f64_floor.wat
+
+if ! grep -q f64.floor "f64_floor.wat.mirror.wat"; then
+	error f64_floor.wat.mirror.wat
+fi
+
 
 clean
