@@ -379,9 +379,12 @@ pub enum Instruction {
     F32Ge,
     F32Gt,
 
+    F32CopySign,
     F32Min,
     F32Max,
     F32Floor,
+    F32Ceil,
+    F32Nearest,
 
     F64Const(f64),
 
@@ -393,7 +396,7 @@ pub enum Instruction {
     F64ConvertUI32,
     F64ConvertSI64,
     F64ConvertUI64,
-
+    F64CopySign,
     F64Abs,
     F64Add,
     F64Div,
@@ -402,6 +405,9 @@ pub enum Instruction {
     F64Sub,
     F64Sqrt,
     F64Trunc,
+    F64Floor,
+    F64Ceil,
+    F64Nearest,
 
     F64Eq,
     F64Ne,
@@ -412,7 +418,7 @@ pub enum Instruction {
 
     F64Min,
     F64Max,
-    F64Floor,
+    
 
     I32Load { flags: u32, offset: u32 },
     I32Store { flags: u32, offset: u32 },
@@ -611,6 +617,8 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
             Operator::F32Sub => Instruction::F32Sub,
             Operator::F32Sqrt => Instruction::F32Sqrt,
             Operator::F32Trunc => Instruction::F32Trunc,
+            Operator::F32Ceil => Instruction::F32Ceil,
+            Operator::F32Nearest => Instruction::F32Nearest,
 
             Operator::F32Eq => Instruction::F32Eq,
             Operator::F32Ne => Instruction::F32Ne,
@@ -619,6 +627,8 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
             Operator::F32Ge => Instruction::F32Ge,
             Operator::F32Gt => Instruction::F32Gt,
 
+            Operator::F32Copysign => Instruction::F32CopySign,
+            Operator::F64Copysign => Instruction::F64CopySign,
             Operator::F32Min => Instruction::F32Min,
             Operator::F32Max => Instruction::F32Max,
             Operator::F32Floor => Instruction::F32Floor,
@@ -645,6 +655,8 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
             Operator::F64Sub => Instruction::F64Sub,
             Operator::F64Sqrt => Instruction::F64Sqrt,
             Operator::F64Trunc => Instruction::F64Trunc,
+            Operator::F64Ceil => Instruction::F64Ceil,
+            Operator::F64Nearest => Instruction::F64Nearest,
 
             Operator::F64Eq => Instruction::F64Eq,
             Operator::F64Ne => Instruction::F64Ne,

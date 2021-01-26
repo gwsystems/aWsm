@@ -1,0 +1,5 @@
+INFO [silverfish] running silverfish("f64_floor.wat.wasm", Some("f64_floor.wat.bc"))
+INFO [silverfish::wasm] Globals taking up 0 bytes
+INFO [silverfish::wasm] Data initializers taking up 0 bytes
+INFO [silverfish::wasm] Function table entries 0 (ignoring fragmentation)
+INFO [silverfish] silverfish finished successfully

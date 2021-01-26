@@ -44,9 +44,6 @@ pub const U64_TRUNC_F32: &str = "u64_trunc_f32";
 pub const I64_TRUNC_F64: &str = "i64_trunc_f64";
 pub const U64_TRUNC_F64: &str = "u64_trunc_f64";
 
-pub const F32_TRUNC_F32: &str = "f32_trunc_f32";
-pub const F64_TRUNC_F64: &str = "f64_trunc_f64";
-
 pub const U32_DIV: &str = "u32_div";
 pub const U32_REM: &str = "u32_rem";
 
@@ -69,11 +66,12 @@ pub const F64_MIN: &str = "f64_min";
 pub const I32_CTPOP: &str = "llvm.ctpop.i32";
 pub const I64_CTPOP: &str = "llvm.ctpop.i64";
 
+// ERROR
 pub const I32_CLZ: &str = "llvm.ctlz.i32";
 pub const I64_CLZ: &str = "llvm.ctlz.i64";
 
-pub const I32_CTZ: &str = "llvm.ctlz.i32";
-pub const I64_CTZ: &str = "llvm.ctlz.i64";
+pub const I32_CTZ: &str = "llvm.cttz.i32";
+pub const I64_CTZ: &str = "llvm.cttz.i64";
 
 pub const F32_FABS: &str = "llvm.fabs.f32";
 pub const F64_FABS: &str = "llvm.fabs.f64";
@@ -103,6 +101,18 @@ pub const I32_ROTR: &str = "llvm.fshr.i32";
 
 pub const I64_ROTL: &str = "llvm.fshl.i64";
 pub const I64_ROTR: &str = "llvm.fshr.i64";
+
+pub const F32_CSIGN: &str = "llvm.copysign.f32";
+pub const F64_CSIGN: &str = "llvm.copysign.f64";
+
+pub const F32_CEIL: &str = "llvm.ceil.f32";
+pub const F32_NEAREST: &str = "llvm.nearbyint.f32";
+pub const F64_CEIL: &str = "llvm.ceil.f64";
+pub const F64_NEAREST: &str = "llvm.nearbyint.f64";
+
+
+pub const F32_TRUNC_F32: &str = "llvm.trunc.f32";
+pub const F64_TRUNC_F64: &str = "llvm.trunc.f64";
 
 // TODO: Rewrite this using macros, because this is just gross
 pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
@@ -187,6 +197,21 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
         &[<u64>::get_type(ctx), <u64>::get_type(ctx), <u64>::get_type(ctx)],
     );
     m.add_function(I64_ROTR, i64_rot_type.to_super());
+
+    let f32_csign_type = FunctionType::new(
+        <f32>::get_type(ctx),
+        &[<f32>::get_type(ctx), 
+        <f32>::get_type(ctx)],
+    );
+    m.add_function(F32_CSIGN, f32_csign_type.to_super());
+
+
+    let f64_csign_type = FunctionType::new(
+        <f64>::get_type(ctx),
+        &[<f64>::get_type(ctx), 
+        <f64>::get_type(ctx)],
+    );
+    m.add_function(F64_CSIGN, f64_csign_type.to_super());
     /*
     // Rotate left/right types
     let u32_rot_type = FunctionType::new(
@@ -336,6 +361,15 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
         F64_SQRT,
         FunctionType::new(<f64>::get_type(ctx), &[<f64>::get_type(ctx)]).to_super(),
     );
+
+    m.add_function(
+        F32_TRUNC_F32,
+        FunctionType::new(<f32>::get_type(ctx), &[<f32>::get_type(ctx)]).to_super(),
+    );
+    m.add_function(
+        F64_TRUNC_F64,
+        FunctionType::new(<f64>::get_type(ctx), &[<f64>::get_type(ctx)]).to_super(),
+    );
     /*m.add_function(
         F32_MIN,
         FunctionType::new(
@@ -355,6 +389,27 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
     m.add_function(
         F32_FLOOR,
         FunctionType::new(<f32>::get_type(ctx), &[<f32>::get_type(ctx)]).to_super(),
+    );
+
+    m.add_function(
+        F32_CEIL,
+        FunctionType::new(<f32>::get_type(ctx), &[<f32>::get_type(ctx)]).to_super(),
+    );
+
+
+    m.add_function(
+        F32_NEAREST,
+        FunctionType::new(<f32>::get_type(ctx), &[<f32>::get_type(ctx)]).to_super(),
+    );
+
+    m.add_function(
+        F64_NEAREST,
+        FunctionType::new(<f64>::get_type(ctx), &[<f64>::get_type(ctx)]).to_super(),
+    );
+
+    m.add_function(
+        F64_CEIL,
+        FunctionType::new(<f64>::get_type(ctx), &[<f64>::get_type(ctx)]).to_super(),
     );
 
     /*m.add_function(

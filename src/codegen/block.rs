@@ -740,7 +740,7 @@ pub fn compile_block<'a, 'b>(
 
                     b.build_or(tmp6, tmp5)
                 };
-                
+
                 stack.push(result);
             }
             Instruction::I64Shl => {
@@ -776,7 +776,7 @@ pub fn compile_block<'a, 'b>(
             Instruction::I64Eq => i64_cmp_signed(m_ctx, b, &mut stack, Predicate::Equal),
             Instruction::I64Ne => i64_cmp_signed(m_ctx, b, &mut stack, Predicate::NotEqual),
             Instruction::I64LeS => i64_cmp_signed(m_ctx, b, &mut stack, Predicate::LessThanOrEqual),
-            Instruction::I64LeU => i64_cmp_unsigned(m_ctx, b, &mut stack, Predicate::LessThan),
+            Instruction::I64LeU => i64_cmp_unsigned(m_ctx, b, &mut stack, Predicate::LessThanOrEqual),
             Instruction::I64LtS => i64_cmp_signed(m_ctx, b, &mut stack, Predicate::LessThan),
             Instruction::I64LtU => i64_cmp_unsigned(m_ctx, b, &mut stack, Predicate::LessThan),
             Instruction::I64GeS => {
@@ -864,9 +864,9 @@ pub fn compile_block<'a, 'b>(
             Instruction::F32Trunc => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::F32);
-                let result = b.build_bit_cast(v, <f32>::get_type(m_ctx.llvm_ctx));
+                //let result = b.build_bit_cast(v, <f32>::get_type(m_ctx.llvm_ctx));
 
-                //let result = b.build_call(get_stub_function(m_ctx, F32_TRUNC_F32), &[v]);
+                let result = b.build_call(get_stub_function(m_ctx, F32_TRUNC_F32), &[v]);
                 stack.push(result);
             }
 
@@ -881,6 +881,10 @@ pub fn compile_block<'a, 'b>(
                 let tmp1 = b.build_signed_cmp(v1, v2, Predicate::LessThan);
                 b.build_select(tmp1, v1, v2)
             }),
+            Instruction::F32CopySign => perform_bin_op(m_ctx, &mut stack, Type::F32, |v1, v2| {
+                b.build_call(
+                    get_stub_function(m_ctx, F32_CSIGN), &[v1, v2])
+            }),
             Instruction::F32Max => perform_bin_op(m_ctx, &mut stack, Type::F32, |v1, v2| {
                 let tmp1 = b.build_signed_cmp(v1, v2, Predicate::GreaterThan);
                 b.build_select(tmp1, v1, v2)
@@ -891,7 +895,22 @@ pub fn compile_block<'a, 'b>(
 
                 let result = b.build_call(get_stub_function(m_ctx, F32_FLOOR), &[v]);
                 stack.push(result);
+            },
+            Instruction::F32Ceil => {
+                let v = stack.pop().unwrap();
+                assert_type(m_ctx, v, Type::F32);
+
+                let result = b.build_call(get_stub_function(m_ctx, F32_CEIL), &[v]);
+                stack.push(result);
+            },
+            Instruction::F32Nearest => {
+                let v = stack.pop().unwrap();
+                assert_type(m_ctx, v, Type::F32);
+
+                let result = b.build_call(get_stub_function(m_ctx, F32_NEAREST), &[v]);
+                stack.push(result);
             }
+
 
             Instruction::F64Const(i) => {
                 let v = i.compile(m_ctx.llvm_ctx);
@@ -970,8 +989,8 @@ pub fn compile_block<'a, 'b>(
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::F64);
 
-                let result = b.build_bit_cast(v, <f64>::get_type(m_ctx.llvm_ctx));
-                //let result = b.build_call(get_stub_function(m_ctx, F64_TRUNC_F64), &[v]);
+                //let result = b.build_bit_cast(v, <f64>::get_type(m_ctx.llvm_ctx));
+                let result = b.build_call(get_stub_function(m_ctx, F64_TRUNC_F64), &[v]);
                 stack.push(result);
             }
 
@@ -982,6 +1001,10 @@ pub fn compile_block<'a, 'b>(
             Instruction::F64Ge => float_cmp(m_ctx, b, &mut stack, Predicate::GreaterThanOrEqual),
             Instruction::F64Gt => float_cmp(m_ctx, b, &mut stack, Predicate::GreaterThan),
 
+            Instruction::F64CopySign => perform_bin_op(m_ctx, &mut stack, Type::F64, |v1, v2| {
+                b.build_call(
+                    get_stub_function(m_ctx, F64_CSIGN), &[v1, v2])
+            }),
             Instruction::F64Min => perform_bin_op(m_ctx, &mut stack, Type::F64, |v1, v2| {
                 let tmp1 = b.build_signed_cmp(v1, v2, Predicate::LessThan);
                 b.build_select(tmp1, v1, v2)
@@ -995,6 +1018,20 @@ pub fn compile_block<'a, 'b>(
                 assert_type(m_ctx, v, Type::F64);
 
                 let result = b.build_call(get_stub_function(m_ctx, F64_FLOOR), &[v]);
+                stack.push(result);
+            },
+            Instruction::F64Ceil => {
+                let v = stack.pop().unwrap();
+                assert_type(m_ctx, v, Type::F64);
+
+                let result = b.build_call(get_stub_function(m_ctx, F64_CEIL), &[v]);
+                stack.push(result);
+            },
+            Instruction::F64Nearest => {
+                let v = stack.pop().unwrap();
+                assert_type(m_ctx, v, Type::F64);
+
+                let result = b.build_call(get_stub_function(m_ctx, F64_NEAREST), &[v]);
                 stack.push(result);
             }
 

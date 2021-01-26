@@ -1,0 +1,4 @@
+Missing operations:
+- CopySign
+- CLZ and CTZ are the same function
+- Instruction::I64LeU => i64_cmp_unsigned(m_ctx, b, &mut stack, Predicate::LessThanOrEqual),
