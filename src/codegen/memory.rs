@@ -1,9 +1,10 @@
-use llvm::Builder;
+use llvm::{Builder, Context, GlobalValue, GlobalVariable};
 use llvm::Compile;
 use llvm::FunctionType;
 use llvm::PointerType;
 use llvm::Sub;
 use llvm::Value;
+use llvm::Module as LLVMModule;
 
 use wasmparser::ResizableLimits;
 
@@ -29,6 +30,12 @@ pub fn add_memory_size_globals(ctx: &ModuleCtx, limits: &ResizableLimits) {
         .llvm_module
         .add_global_variable("max_pages", maximum.compile(ctx.llvm_ctx));
     max_pages_global.set_constant(true);
+}
+
+pub fn generate_linear_memory_simulation<'a>(ctx: &'a Context, module: &'a LLVMModule) -> &'a GlobalVariable {
+    //let mut linear_mem: Vec<(&llvm::Function, Vec<u8>)> = Vec::new();
+    let data_vec: Vec<&Value> = (1..100).map(|byte| (byte as i8).compile(ctx)).collect();
+    (*module).add_global_variable(&"linear_memory", Value::new_vector(&data_vec))
 }
 
 pub fn generate_memory_initialization_stub(ctx: &ModuleCtx, initializers: Vec<DataInitializer>) {

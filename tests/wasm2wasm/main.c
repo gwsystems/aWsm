@@ -13,3 +13,11 @@ float h(float a){
 
 	return floor(a);
 }
+
+
+int linear_mem[100];
+
+int i(int a, int b){
+	linear_mem[a] = b;
+	return 0;
+}

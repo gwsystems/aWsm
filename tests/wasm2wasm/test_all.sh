@@ -17,7 +17,7 @@ clean() {
 }
 
 error(){
-	printf "${RED} ${NO_CHANGES_ICON} Fail in $1${NC}\n"
+	printf "${RED} ${CHANGES_ICON} Fail in $1${NC}\n"
 	cat $1
 	cat error.txt
 	clean
@@ -51,6 +51,7 @@ check_ops(){
 
 			printf " ${COLOR_GREEN} ${CHANGES_ICON} ${NC}\n"
 		done
+		echo
 	done
 }
 
@@ -81,6 +82,7 @@ check_unops(){
 
 			printf " ${COLOR_GREEN} ${CHANGES_ICON} ${NC}\n"
 		done
+		echo
 	done
 }
 
@@ -110,15 +112,151 @@ check_relops(){
 
 			printf " ${COLOR_GREEN} ${CHANGES_ICON} ${NC}\n"
 		done
+		echo
+	done
+}
+
+check_testops(){
+	for t in $1
+	do
+		for op in $2
+		do
+			export INSTR="$t.$op"
+			export T=$t
+			export R=$t
+
+			cp tops.TEMPLATE.wat tops.wat
+			perl  -pe  's/OP/$ENV{INSTR}/g' -i tops.wat
+			perl  -pe  's/T/$ENV{T}/g' -i tops.wat
+			perl  -pe  's/R/$ENV{R}/g' -i tops.wat
+
+			echo -n "Checking $INSTR "
+
+			bash test1.sh tops.wat
+
+			if ! grep -q $INSTR "tops.wat.mirror.wat"; then
+
+				printf "${RED}$INSTR${NC}\n"
+				error tops.wat.mirror.wat
+			fi
+
+			printf " ${COLOR_GREEN} ${CHANGES_ICON} ${NC}\n"
+		done
 	done
 }
 
 
-TYPES_I="i32 i64"
+check_extend(){
+	for t in $1
+	do
+		for op in $2
+		do
+			export INSTR="$t.$op"
+			export T=$t
+			export R=$t
+
+			cp extend.TEMPLATE.wat extend.wat
+			perl  -pe  's/OP/$ENV{INSTR}/g' -i extend.wat
+			perl  -pe  's/T/$ENV{T}/g' -i extend.wat
+			perl  -pe  's/R/$ENV{R}/g' -i extend.wat
+
+			echo -n "Checking $INSTR "
+
+			bash test1.sh extend.wat
+
+			if ! grep -q $INSTR "extend.wat.mirror.wat"; then
+
+				printf "${RED}$INSTR${NC}\n"
+				error extend.wat.mirror.wat
+			fi
+
+			printf " ${COLOR_GREEN} ${CHANGES_ICON} ${NC}\n"
+		done
+		echo
+	done
+}
+
+check_mem_store(){
+	for t in $1
+	do
+		for op in $2
+		do
+			export INSTR="$t.$op"
+			export T=$t
+
+			cp mem_store.TEMPLATE.wat mem_store.wat
+			perl  -pe  's/T/$ENV{T}/g' -i mem_store.wat
+			perl  -pe  's/OP/$ENV{INSTR}/g' -i mem_store.wat
+
+			echo -n "Checking $INSTR "
+
+			bash test1.sh mem_store.wat
+
+			if ! grep -q $INSTR "mem_store.wat.mirror.wat"; then
+
+				printf "${RED}$INSTR${NC}\n"
+				error mem_store.wat.mirror.wat
+			fi
+
+			printf " ${COLOR_GREEN} ${CHANGES_ICON} ${NC}\n"
+		done
+		echo
+	done
+}
+
+
+
+MEM_STORE_I32="store8 store16 store"
+
+check_mem_store "i32" "$MEM_STORE_I32"
+check_mem_store "i64" "store32 store"
+check_mem_store "f32 f64" "store"
+
+
+check_mem_load(){
+	for t in $1
+	do
+		for op in $2
+		do
+			export INSTR="$t.$op"
+			export T=$t
+			export R=$t
+
+			cp mem_load.TEMPLATE.wat mem_load.wat
+			perl  -pe  's/OP/$ENV{INSTR}/g' -i mem_load.wat
+			perl  -pe  's/T/$ENV{T}/g' -i mem_load.wat
+			perl  -pe  's/R/$ENV{R}/g' -i mem_load.wat
+
+			echo -n "Checking $INSTR "
+
+			bash test1.sh mem_load.wat
+
+			if ! grep -q $INSTR "mem_load.wat.mirror.wat"; then
+
+				printf "${RED}$INSTR${NC}\n"
+				error mem_load.wat.mirror.wat
+			fi
+
+			printf " ${COLOR_GREEN} ${CHANGES_ICON} ${NC}\n"
+		done
+		echo
+	done
+}
+
+
+check_mem_load "i32" "load8_u load8_s load16_s load16_u load"
+check_mem_load "i64" "load32_s load32_u load"
+check_mem_load "f32 f64" "load"
+
+exit 1
+
 BINOPS_I="add sub mul xor and or shl shr_s shr_u div_s div_u rem_s rem_u"
 
-RELOPS_I="eq ne lt_s lt_u gt_s gt_u ge_s ge_u le_u le_s"
+RELOPS_I=" eq ne lt_s lt_u gt_s gt_u ge_s ge_u le_u le_s"
 RELOPS_F="eq ne lt gt le ge"
+
+EXTEND_OPS_I64="extend32_s extend32_u"
+EXTEND_OPS_I32="extend8_s extend16_s"
 
 TYPES_F="f32 f64"
 BINOPS_F="add sub mul div copysign"
@@ -126,14 +264,27 @@ BINOPS_F="add sub mul div copysign"
 UNOPS_I="clz ctz popcnt"
 UNOPS_F="abs neg sqrt ceil floor nearest trunc"
 
+T_OPS_I="eqz"
+
 check_unops "$TYPES_I" "$UNOPS_I"
+echo
 check_unops "$TYPES_F" "$UNOPS_F"
-
+echo
 check_ops "$TYPES_I" "$BINOPS_I"
+echo
 check_ops "$TYPES_F" "$BINOPS_F"
-
+echo
 check_relops "$TYPES_I" "$RELOPS_I"
+echo
 check_relops "$TYPES_F" "$RELOPS_F"
+echo
+check_testops "$TYPES_I" "$T_OPS_I"
+
+# TODO
+#echo
+#check_extend "i64" "$EXTEND_OPS_I64"
+#echo
+#check_extend "i32" "$EXTEND_OPS_I32"
 
 bash test1.sh f32_min.wat
 
@@ -216,5 +367,9 @@ fi
 
 printf "Checking f64.floor ${COLOR_GREEN} ${CHANGES_ICON} ${NC}\n"
 
+
+
+bash test1.sh babbage.wat
+cat babbage.wat.mirror.wat
 
 clean

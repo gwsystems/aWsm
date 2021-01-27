@@ -11,7 +11,6 @@ use crate::codegen::Opt;
 
 /*
 // Backing functions for wasm operations
-pub const INITIALIZE_REGION_STUB: &str = "initialize_region";
 
 pub const GET_F32: &str = "get_f32";
 pub const SET_F32: &str = "set_f32";
@@ -114,10 +113,12 @@ pub const F64_NEAREST: &str = "llvm.nearbyint.f64";
 pub const F32_TRUNC_F32: &str = "llvm.trunc.f32";
 pub const F64_TRUNC_F64: &str = "llvm.trunc.f64";
 
+pub const INITIALIZE_REGION_STUB: &str = "initialize_region";
+
 // TODO: Rewrite this using macros, because this is just gross
 pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
     // Initialize region stub, which is a helper function to setup memory
-    /*let initialize_region_type = FunctionType::new(
+   let initialize_region_type = FunctionType::new(
         <()>::get_type(ctx),
         &[
             <u32>::get_type(ctx),
@@ -126,7 +127,7 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
         ],
     );
     m.add_function(INITIALIZE_REGION_STUB, initialize_region_type.to_super());
-    */
+    
     
     // Table interaction function stubs
     let table_add_type = FunctionType::new(

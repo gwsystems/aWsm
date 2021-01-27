@@ -68,10 +68,18 @@ pub fn wasm_func_type_to_llvm_type<'a>(
     } else {
         wasm_type_to_llvm_type(ctx, f_type.returns[0])
     };
+
+    info!("Return count {} TPE: {:?}...", return_count, return_type);
+
     let mut params: Vec<&llvm::Type> = Vec::new();
+
     for t in &*f_type.params {
         params.push(wasm_type_to_llvm_type(ctx, *t))
     }
+
+    info!("Params {:?}...", params);
+
+    info!("Finishing...");
 
     llvm::FunctionType::new(return_type, &params).to_super()
 }

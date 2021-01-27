@@ -245,6 +245,7 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
     // Thus the termination block needs to do that
     let mut breakout_stack = vec![root_breakout_target.clone()];
 
+    info!("Compiling block");
     // We compile the root level as if it's a block
     compile_block(
         ctx,

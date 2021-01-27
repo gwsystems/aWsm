@@ -1,4 +1,5 @@
 Missing operations:
-- CopySign
+- CopySign, I32ExtendSI16, I32ExtendSI8
 - CLZ and CTZ are the same function
 - Instruction::I64LeU => i64_cmp_unsigned(m_ctx, b, &mut stack, Predicate::LessThanOrEqual),
+-                 let i32_result = b.build_zext(result, <i64>::get_type(m_ctx.llvm_ctx));

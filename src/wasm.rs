@@ -273,6 +273,9 @@ pub enum Instruction {
 
     I32ReinterpretF32,
 
+    I32ExtendSI8,
+    I32ExtendSI16,
+
     I32TruncSF32,
     I32TruncUF32,
     I32TruncSF64,
@@ -514,6 +517,9 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
 
             Operator::I32WrapI64 => Instruction::I32WrapI64,
 
+            Operator::I32Extend8S => Instruction::I32ExtendSI8,
+            Operator::I32Extend16S => Instruction::I32ExtendSI16,
+
             Operator::I32ReinterpretF32 => Instruction::I32ReinterpretF32,
 
             Operator::I32TruncSF32 => Instruction::I32TruncSF32,
@@ -556,6 +562,7 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
 
             Operator::I64ExtendSI32 => Instruction::I64ExtendSI32,
             Operator::I64ExtendUI32 => Instruction::I64ExtendUI32,
+            Operator::I64Extend32S => Instruction::I64ExtendSI32,
 
             Operator::I64ReinterpretF64 => Instruction::I64ReinterpretF64,
 
