@@ -4,8 +4,8 @@ Here we briefly discuss the design of aWsm.
 The intent isn't to be exhaustive, rather to give you a high-level understanding of the system.
 Some gory details can be found in:
 
-- [*Sledge: a Serverless-first, Light-weight Wasm Runtime for the Edge*](https://www2.seas.gwu.edu/~gparmer/publications/middleware20sledge.pdf) at ACM Middleware, 2020
-- [*eWASM: Practical Software Fault Isolation for Reliable Embedded Devices*](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf) at EMSOFT, 2020
+- [*Sledge: a Serverless-first, Light-weight Wasm Runtime for the Edge*](https://www2.seas.gwu.edu/~gparmer/publications/middleware20sledge.pdf) at ACM Middleware, 2020 ([video](https://www.youtube.com/watch?v=dxsYAzVMxH8))
+- [*eWASM: Practical Software Fault Isolation for Reliable Embedded Devices*](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf) at EMSOFT, 2020 ([video](https://www.youtube.com/watch?v=x5j4AuwZbYE))
 
 # Background: Wasm Sandbox
 
