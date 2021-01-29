@@ -2,7 +2,10 @@
 
 Here we briefly discuss the design of aWsm.
 The intent isn't to be exhaustive, rather to give you a high-level understanding of the system.
-For the gory details, see the [publication](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf).
+Some gory details can be found in:
+
+- [*Sledge: a Serverless-first, Light-weight Wasm Runtime for the Edge*](https://www2.seas.gwu.edu/~gparmer/publications/middleware20sledge.pdf) at ACM Middleware, 2020
+- [*eWASM: Practical Software Fault Isolation for Reliable Embedded Devices*](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf) at EMSOFT, 2020
 
 # Background: Wasm Sandbox
 

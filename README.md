@@ -32,7 +32,13 @@ Please have patience as we update those to `awsm`.
 
 ## Why aWsm?
 
-Why would we implement a Wasm compiler and runtime?
+We've investigated how aWsm changes serverless on the edge (see our [Sledge runtime](https://github.com/gwsystems/sledge-serverless-framework) for that), and reliability in embedded systems.
+See the publications and videos:
+
+- [*Sledge: a Serverless-first, Light-weight Wasm Runtime for the Edge*](https://www2.seas.gwu.edu/~gparmer/publications/middleware20sledge.pdf) at ACM Middleware, 2020 ([video](https://www.youtube.com/watch?v=dxsYAzVMxH8))
+- [*eWASM: Practical Software Fault Isolation for Reliable Embedded Devices*](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf) at EMSOFT, 2020 ([video](https://www.youtube.com/watch?v=x5j4AuwZbYE))
+
+Why does aWsm enable these cool domains?
 The Web Assembly eco-system is still developing, and we see the need for a system focusing on:
 
 - *Performance.*
@@ -51,8 +57,37 @@ The Web Assembly eco-system is still developing, and we see the need for a syste
 	This enables the trivial composition of sandboxes together, and sandboxes into larger programs.
 
 We believe that aWsm is one of the best options for ahead-of-time compilation for Wasm execution outside of the browser.
+If you want to learn more about aWsm, see the [design](doc/design.md), or the publications listed above.
 
-If you want to learn more about aWsm, see the [design](doc/design.md), or the [publication](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf).
+## Where does aWsm Help Out?
+
+- **Edge** and **Serverless**:
+	aWsm enables small-footprint, efficient edge, serverless runtime that we call [sledge](https://github.com/gwsystems/sledge-serverless-framework/blob/master/README.md) (or ServerLess on the EDGE).
+	aWsm sandboxes don't take up many more resources than a native binary, and sledge can create sandboxes, thus edge functions, in around 50 microseconds.
+	This enables massive benefits on the latency-sensitive edge!
+- **Embedded devices**:
+	aWsm is used in [eWasm](https://www2.seas.gwu.edu/~gparmer/publications/emsoft20wasm.pdf) to provide sandboxed isolation in small microcontrollers (~64-128KiB of SRAM!).
+	aWsm enables memory savings compared to other embedded techniques, and near-native C performance.
+	aWsm is used in [bento boxes](https://github.com/arm-software/bento-linker) that provide an abstraction for embedded processes.
+	They also have shown the huge [performance benefit of aWsm](https://github.com/arm-software/bento-linker#results).
+- **Cloud**:
+	Similar to the serverless argument above, aWsm can provide additional security by sandboxing tenant computation.
+	aWsm makes it trivial to filter system calls and system requires in accordance with your security policies.
+- **Desktop**:
+	Similarly, aWsm can provide increased security where necessary.
+- **Embedding policy into frameworks**:
+	Lua is often used to embed policy into C++ game engines, and eBPF is used to embed logic into the Linux kernel.
+	Wasm can be targeted by many languages, making it an appealing target, and aWsm enables it to be efficiently embedded into the surrounding framework.
+
+Where aWsm isn't *yet* a great fit:
+
+- Browsers:
+	Browsers have their own Wasm engines that can't easily be replaced.
+	Until the browser makers are breaking down our door to get aWsm in their browser, you'll have to use their built-in engines.
+- Wherever interpreters or Jit are required:
+	Some domains focus almost entirely on the delay from download to execution.
+	An AoT compiler is not a great fit for that domain due to the latency of compilation.
+	However, aWsm has been demonstrated to generate code that has exceptional performance, so we focus on domains that benefit from efficiency.
 
 # Performance
 
