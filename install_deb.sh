@@ -2,7 +2,11 @@
 # Installs dependencies, builds Silverfish, and places it into your path
 # Be sure to validate the Rust and LLVM install scripts we invoke below!
 
-# TODO: Error Checking. Bail if not executing script from project root because we use relative paths
+# Exit if not executing script from project root because we use relative paths
+if [[ $(git remote get-url origin) != *"/aWsm.git" || $(git rev-parse --show-toplevel) != $(pwd) ]]; then
+  echo "Install script must be run from project root."
+  exit 1
+fi
 
 # Check to see if ./wasmception directory exists and is not empty.
 # If not assume user didn't initialize submodules
@@ -16,20 +20,20 @@ sudo apt install subversion --yes
 
 # Build
 # This is super slow. Does something need to get modified in the Makefile?
-cd wasmception
+cd wasmception || exit
 make
-cd ..
+cd .. || exit
 
 ## Silverfish
 sudo apt install build-essential --yes
 
 if [[ -x "$(command -v rustup)" ]]; then
   rustup update
-else 
+else
   curl https://sh.rustup.rs -sSf | bash -s -- -y
 fi
 
-source $HOME/.cargo/env
+source "$HOME/.cargo/env"
 export PATH="$HOME/.cargo/bin:$PATH"
 sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 LLVM_VERSION=9
