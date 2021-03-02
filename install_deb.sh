@@ -3,10 +3,14 @@
 # Be sure to validate the Rust and LLVM install scripts we invoke below!
 
 # Exit if not executing script from project root because we use relative paths
+# We want to match without case because the URL of the git repo is case insensitive, but the resulting
+# directory is case sensitive. Thus, we can end up with either "aWsm" or "awsm."
+shopt -s nocasematch
 if [[ $(git remote get-url origin) != *"/aWsm.git" || $(git rev-parse --show-toplevel) != $(pwd) ]]; then
   echo "Install script must be run from project root."
   exit 1
 fi
+shopt -u nocasematch
 
 # Check to see if ./wasmception directory exists and is not empty.
 # If not assume user didn't initialize submodules
