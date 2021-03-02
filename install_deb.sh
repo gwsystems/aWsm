@@ -19,16 +19,16 @@ if [[ ! -d "./wasmception" ]] || [[ -z "$(ls -A wasmception)" ]]; then
 fi
 
 # Wasmception
-# Install Subversion
+# Install Subversion. Is this actually still needed?
 sudo apt install subversion --yes
 
-# Build
+# Build Wasmception
 # This is super slow. Does something need to get modified in the Makefile?
 cd wasmception || exit
 make
 cd .. || exit
 
-## Silverfish
+# Install Rust
 sudo apt install build-essential --yes
 
 if [[ -x "$(command -v rustup)" ]]; then
@@ -39,10 +39,15 @@ fi
 
 source "$HOME/.cargo/env"
 export PATH="$HOME/.cargo/bin:$PATH"
-sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
-LLVM_VERSION=9
+
+# Install LLVM build dependencies
+wget https://apt.llvm.org/llvm.sh
+chmod +x llvm.sh
+sudo ./llvm.sh 9
 sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
 sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
 sudo apt install libc++-dev libc++abi-dev --yes
+
+# Build and install Silverfish
 cargo build --release
 sudo cp -t /usr/bin ./target/release/silverfish
