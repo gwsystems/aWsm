@@ -3,10 +3,10 @@ aWsm - An Awesome Wasm Compiler and Runtime
 
 # What is aWsm?
 
-aWsm is a compiler and runtime for compiling Web Assembly (Wasm) code into llvm bytecode, then into sandboxed binaries you can run on various platforms.
-It focuses on generating very fast code (best of breed for Web Assembly), having a simple and extensible code-base, and on portability.
+aWsm is a compiler and runtime for compiling WebAssembly (Wasm) code into llvm bytecode, then into sandboxed binaries you can run on various platforms.
+It focuses on generating very fast code (best of breed for WebAssembly), having a simple and extensible code-base, and on portability.
 
-**What is Web Assembly?**
+**What is WebAssembly?**
 Wasm is a standard binary format that is *platform agnostic*, *debuggable*, *fast*, and *safe*.
 Please see the [official webpage](https://webassembly.org/), and its [specification](https://webassembly.org/specs/).
 Many languages (including C/C++, Rust, C#, Go, Kotlin, Swift, and more, see a more [complete list](https://webassembly.org/getting-started/developers-guide/)) compile to Wasm.
@@ -28,7 +28,7 @@ Wasm provides a number of benefits outside of the web including:
 **A note on naming.**
 aWsm started out as the `silverfish` compiler, the brainchild of Gregor Peach when he was a researcher in the group.
 There are still quite a few lingering `silverfish` references.
-Please have patience as we update those to `awsm`.
+Please have patience as we update those to `aWsm`.
 
 ## Why aWsm?
 
@@ -173,8 +173,8 @@ ARGS:
 ### Debian-based Systems
 
 ```sh
-git clone https://github.com/gwsystems/awsm.git
-cd awsm
+git clone https://github.com/gwsystems/aWsm.git
+cd aWsm
 ./install_deb.sh
 ```
 
@@ -184,27 +184,27 @@ The compiler can now be run via `silverfish`
 
 1. [Install Rust](https://www.rust-lang.org/tools/install)
 2. [Install LLVM](http://releases.llvm.org/download.html)
-3. Link Your Clang Installation so `clang-9` and `llvm-config-9` are in your path and invokable as `clang` and `llvm-config`. For example, the following commands accomplish this using `update-alternatives` after replacing LLVM_VERSION with the version returned you installed above (In *NIX systems, this can be confirmed with `ls /usr/bin/clang*`)
+3. Link Your Clang Installation so `clang-9` and `llvm-config-9` are in your path aliased to `clang` and `llvm-config`. For example, the following commands accomplish this using `update-alternatives` after replacing LLVM_VERSION with the version returned you installed above (In *NIX systems, this can be confirmed with `ls /usr/bin/clang*`)
 ```sh
 LLVM_VERSION=9
 sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
 sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
 ```
 4. [Install the C++ Standard Library for LLVM](https://libcxx.llvm.org/)
-5. Clone and build awsm
+5. Clone and build aWsm
 ```sh
-git clone https://github.com/gwsystems/awsm.git
-cd awsm
+git clone https://github.com/gwsystems/aWsm.git
+cd aWsm
 cargo build --release
 ```
-6. The awsm binary is built at `target/release/silverfish`. Copy this to the appropriaate place for your platform and add to your PATH if neccessary.
+6. The aWsm binary is built at `target/release/silverfish`. Copy this to the appropriate place for your platform and add to your PATH if necessary.
 
 ## Executing and Testing aWsm
 
 The tests can run with
 
 ```sh
-cd code_benches; python run.py
+cd code_benches; ./run.py
 ```
 
 Please see the [design](doc/design.md) to understand the pipeline, and see `run.py` for an example of how to connect existing compilers (to generate Wasm, and generate machine code from LLVM IR) with aWsm.
