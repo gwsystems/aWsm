@@ -91,7 +91,18 @@ WASI_SDK_CLANG = WASI_SDK_PATH + "/bin/clang"
 WASI_SDK_SYSROOT = WASI_SDK_PATH + "/share/wasi-sysroot"
 WASI_SDK_FLAGS = "--target=wasm32-wasi -mcpu=mvp -nostartfiles -O3 -flto"
 WASI_SDK_BACKING = "wasi_sdk_backing.c"
+WASI_SDK_URL = "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-8/wasi-sdk-8.0-linux.tar.gz"
 
+# download WASI-SDK if it is not in the expected path
+if args.wasi_sdk:
+    if not os.path.exists(WASI_SDK_PATH):
+        cwd = os.path.dirname(WASI_SDK_PATH)
+        sp.check_call(['wget', WASI_SDK_URL, '-O', 'wasi-sdk.tar.gz'], cwd=cwd)
+        sp.check_call(['mkdir', '-p', WASI_SDK_PATH], cwd=cwd)
+        sp.check_call(['tar', 'xvfz', 'wasi-sdk.tar.gz', '--strip-components=1', '-C', WASI_SDK_PATH], cwd=cwd)
+        sp.check_call(['rm', 'wasi-sdk.tar.gz'], cwd=cwd)
+
+# determine best toolchain to use
 WASM_CLANG, WASM_SYSROOT, WASM_FLAGS, WASM_BACKING = bestpath([
     (WASMCEPTION_CLANG, WASMCEPTION_SYSROOT, WASMCEPTION_FLAGS, WASMCEPTION_BACKING, args.wasmception),
     (WASI_SDK_CLANG, WASI_SDK_SYSROOT, WASI_SDK_FLAGS, WASI_SDK_BACKING, args.wasi_sdk),
