@@ -146,7 +146,7 @@ checksum = "a2f02823cf78b754822df5f7f268fb59822e7296276d3e069d8e8cb26a14bd10"
 [[package]]
 name = "llvm-alt"
 version = "0.5.0"
-source = "git+https://github.com/Others/llvm-rs.git#4f825ff10f7bdc20a3beb2bca648f72f0a0b1af7"
+source = "git+https://github.com/gwsystems/llvm-rs?branch=sfbase#63365ae7743f5c907f5bb9a9e735f83e5b0f465d"
 dependencies = [
  "cbox",
  "libc",
@@ -156,7 +156,7 @@ dependencies = [
 [[package]]
 name = "llvm-sys"
 version = "0.3.0"
-source = "git+https://github.com/Others/llvm-sys.rs#f4d6b7523e9c3e71a45aa8155f0ef0911689033a"
+source = "git+https://github.com/gwsystems/llvm-sys.rs#88a4f2da362f5162d28d8fd60503733476040db6"
 dependencies = [
  "bitflags 0.5.0",
  "gcc",
