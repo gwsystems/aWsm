@@ -22,3 +22,6 @@ silverfish.iml
 .vagrant
 Vagrantfile
 *-cloudimg-console.log
+
+wasi-sdk
+.vscode

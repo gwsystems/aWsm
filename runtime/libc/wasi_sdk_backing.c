@@ -17,6 +17,16 @@
 
 #include "../runtime.h"
 
+/* POSIX compatibility shims */
+#ifndef O_RSYNC
+#define O_RSYNC O_SYNC
+#endif
+
+/* POSIX Systems with fdatasync available define _POSIX_SYNCHRONIZED_IO in unistd.h */
+#ifndef _POSIX_SYNCHRONIZED_IO 
+#define fdatasync fsync
+#endif
+
 int main(int argc, char* argv[]) {
     runtime_main(argc, argv);
     printf("mem use = %d\n", (int) memory_size);
@@ -276,7 +286,13 @@ static i32 wasi_fromerrno(int errno_) {
         case ETIMEDOUT:         return WASI_ETIMEDOUT;
         case ETXTBSY:           return WASI_ETXTBSY;
         case EXDEV:             return WASI_EXDEV;
+        default:
+            fprintf(stderr, "wasi_fromerrno unexpectedly received: %s\n", strerror(errno_));
+            fflush(stderr);
     }
+
+    silverfish_assert(0);
+    return 0;
 }
 
 // file operations
@@ -371,7 +387,7 @@ i32 wasi_unstable_fd_fdstat_set_flags(i32 fd, u32 fdflags) {
         ((flags & WASI_FDFLAG_APPEND  ) ? O_APPEND   : 0) |
         ((flags & WASI_FDFLAG_DSYNC   ) ? O_DSYNC    : 0) |
         ((flags & WASI_FDFLAG_NONBLOCK) ? O_NONBLOCK : 0) |
-        ((flags & WASI_FDFLAG_RSYNC   ) ? O_RSYNC    : 0) |
+        ((flags & WASI_FDFLAG_RSYNC   ) ? O_RSYNC : 0) |
         ((flags & WASI_FDFLAG_SYNC    ) ? O_SYNC     : 0));
     int err = fcntl(fd, F_SETFL, fdflags);
     if (err < 0) {

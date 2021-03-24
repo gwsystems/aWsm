@@ -91,9 +91,16 @@ WASI_SDK_CLANG = WASI_SDK_PATH + "/bin/clang"
 WASI_SDK_SYSROOT = WASI_SDK_PATH + "/share/wasi-sysroot"
 WASI_SDK_FLAGS = "--target=wasm32-wasi -mcpu=mvp -nostartfiles -O3 -flto"
 WASI_SDK_BACKING = "wasi_sdk_backing.c"
-WASI_SDK_URL = "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-8/wasi-sdk-8.0-linux.tar.gz"
 
 # download WASI-SDK if it is not in the expected path
+if sys.platform == "linux" or sys.platform == "linux2":
+    WASI_SDK_URL = "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-8/wasi-sdk-8.0-linux.tar.gz"
+elif sys.platform == "darwin":
+    WASI_SDK_URL = "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-8/wasi-sdk-8.0-macos.tar.gz"
+else:
+    print("awsm supports Linux and Mac OS, saw {}".format(sys.platform))
+    exit(1)
+
 if args.wasi_sdk:
     if not os.path.exists(WASI_SDK_PATH):
         cwd = os.path.dirname(WASI_SDK_PATH)
