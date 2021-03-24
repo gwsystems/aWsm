@@ -171,6 +171,18 @@ INLINE float f32_floor(float a) {
     return floorf(a);
 }
 
+INLINE float f32_ceil(float a) {
+    return ceil(a);
+}
+
+INLINE float f32_nearest(float a) {
+    return round(a);
+}
+
+INLINE float f32_copysign(float a, float b) {
+    return copysignf(a, b);
+}
+
 INLINE double f64_min(double a, double b) {
     return a < b ? a : b;
 }
@@ -182,6 +194,33 @@ INLINE double f64_max(double a, double b) {
 INLINE double f64_floor(double a) {
     return floor(a);
 }
+
+INLINE double f64_ceil(double a) {
+    return ceil(a);
+}
+
+INLINE double f64_nearest(double a) {
+    return round(a);
+}
+
+INLINE double f64_copysign(double a, double b) {
+    return copysign(a, b);
+}
+
+// Memory related instructions
+i32 instruction_memory_size() {
+    return memory_size / WASM_PAGE_SIZE;
+}
+
+i32 instruction_memory_grow(i32 count) {
+    i32 prev_size = instruction_memory_size();
+    for (int i = 0; i < count; i++) {
+        expand_memory();
+    }
+
+    return prev_size;
+}
+
 
 // We want to have some allocation logic
 WEAK u32 wasmg___heap_base = 0;

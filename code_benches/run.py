@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 from itertools import chain
 import csv
 import glob
@@ -8,14 +9,38 @@ import subprocess as sp
 import sys
 import timeit
 
+parser = argparse.ArgumentParser(description="Run code_benches.")
+parser.add_argument("--target",
+    help="Target triple to use, defaults to host triple. You probably want to "
+        "set this if you're doing anything non-trivial.")
+parser.add_argument("--debug", action='store_true',
+    help="Use debug build of silverfish. Defaults to most recent that exists.")
+parser.add_argument("--release", action='store_true',
+    help="Use release build of silverfish. Defaults to most recent that exists.")
+parser.add_argument("--wasmception", action='store_true',
+    help="Use Wasmception for the WebAssembly libc. Defaults to most recent that exists.")
+parser.add_argument("--wasi-sdk", action='store_true',
+    help="Use WASI-SDK for the WebAssembly libc. Defaults to most recent that exists.")
+parser.add_argument("--custom", action='append_const', dest='suites', const='custom',
+    help="Run custom benches.")
+parser.add_argument("--app", action='append_const', dest='suites', const='app',
+    help="Run app benches.")
+parser.add_argument("--polybench", action='append_const', dest='suites', const='pb',
+    help="Run polybench benches.")
+parser.add_argument("-o", "--output", default="benchmarks.csv",
+    help="Destination csv file to write benchmark results. Defaults to %(default)r.")
+args = parser.parse_args()
+assert not (args.debug and args.release), "Both --debug and --release provided"
+assert not (args.wasi_sdk and args.wasmception), "Both --wask-sdk and --wasmception provided"
+
 # Note: This is a major configuration option, you probably want to set this if you're doing anything non-trivial
-SILVERFISH_TARGET = None
+SILVERFISH_TARGET = args.target
 # SILVERFISH_TARGET = "thumbv7em-none-unknown-eabi"
 # SILVERFISH_TARGET = "x86_64-apple-macosx10.15.0"
 # SILVERFISH_TARGET = "x86_64-pc-linux-gnu"
 
 # CSV file name
-CSV_NAME = "benchmarks.csv"
+CSV_NAME = args.output
 
 # Make sure we're in the code_benches directory
 if os.path.dirname(sys.argv[0]):
@@ -27,32 +52,70 @@ ROOT_PATH = os.path.dirname(BENCH_ROOT)
 
 RUNTIME_PATH = ROOT_PATH + "/runtime"
 
+def bestpath(paths):
+    """
+    Determine best path based on:
+    1. exists
+    2. most recently modified
+    """
+    def getmtime_or_zero(x):
+        path, *_, use_this_one = x
+
+        if use_this_one:
+            return (1, 0)
+
+        try:
+            return (0, os.path.getmtime(path))
+        except FileNotFoundError:
+            return (0, 0)
+
+    *best, _ = max(paths, key=getmtime_or_zero)
+    return best
+
 SILVERFISH_RELEASE_PATH = ROOT_PATH + "/target/release/silverfish"
 SILVERFISH_DEBUG_PATH = ROOT_PATH + "/target/debug/silverfish"
-assert all(arg in {"--release", "--debug"} for arg in sys.argv[1:])
-if "--release" in sys.argv:
-    SILVERFISH_PATH = SILVERFISH_RELEASE_PATH
-elif "--debug" in sys.argv:
-    SILVERFISH_PATH = SILVERFISH_DEBUG_PATH
-else:
-    def getmtime_or_zero(path):
-        try:
-            return os.path.getmtime(path)
-        except FileNotFoundError:
-            return 0
-    SILVERFISH_PATH = max(
-        [SILVERFISH_RELEASE_PATH, SILVERFISH_DEBUG_PATH],
-        key=getmtime_or_zero)
+
+SILVERFISH_PATH, = bestpath([
+    (SILVERFISH_RELEASE_PATH, args.release),
+    (SILVERFISH_DEBUG_PATH,   args.debug),
+])
 
 WASMCEPTION_PATH = ROOT_PATH + "/wasmception"
+WASMCEPTION_CLANG = WASMCEPTION_PATH + "/dist/bin/clang"
+WASMCEPTION_SYSROOT = WASMCEPTION_PATH + "/sysroot"
+WASMCEPTION_FLAGS = "--target=wasm32-unknown-unknown-wasm -nostartfiles -O3 -flto"
+WASMCEPTION_BACKING = "wasmception_backing.c"
 
-# Our special WASM clang is under this wasmception path
-WASM_CLANG = WASMCEPTION_PATH + "/dist/bin/clang"
+WASI_SDK_PATH = ROOT_PATH + "/wasi-sdk"
+WASI_SDK_CLANG = WASI_SDK_PATH + "/bin/clang"
+WASI_SDK_SYSROOT = WASI_SDK_PATH + "/share/wasi-sysroot"
+WASI_SDK_FLAGS = "--target=wasm32-wasi -mcpu=mvp -nostartfiles -O3 -flto"
+WASI_SDK_BACKING = "wasi_sdk_backing.c"
+WASI_SDK_URL = "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-8/wasi-sdk-8.0-linux.tar.gz"
+
+# download WASI-SDK if it is not in the expected path
+if args.wasi_sdk:
+    if not os.path.exists(WASI_SDK_PATH):
+        cwd = os.path.dirname(WASI_SDK_PATH)
+        sp.check_call(['wget', WASI_SDK_URL, '-O', 'wasi-sdk.tar.gz'], cwd=cwd)
+        sp.check_call(['mkdir', '-p', WASI_SDK_PATH], cwd=cwd)
+        sp.check_call(['tar', 'xvfz', 'wasi-sdk.tar.gz', '--strip-components=1', '-C', WASI_SDK_PATH], cwd=cwd)
+        sp.check_call(['rm', 'wasi-sdk.tar.gz'], cwd=cwd)
+
+# determine best toolchain to use
+WASM_CLANG, WASM_SYSROOT, WASM_FLAGS, WASM_BACKING = bestpath([
+    (WASMCEPTION_CLANG, WASMCEPTION_SYSROOT, WASMCEPTION_FLAGS, WASMCEPTION_BACKING, args.wasmception),
+    (WASI_SDK_CLANG, WASI_SDK_SYSROOT, WASI_SDK_FLAGS, WASI_SDK_BACKING, args.wasi_sdk),
+])
+
 # These flags are all somewhat important -- see @Others for more information
 WASM_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--no-threads,--stack-first,--no-entry,--export-all,--export=main,--export=dummy"
-# Point WASM to our custom libc
-WASM_SYSROOT_FLAGS = "--sysroot={}/sysroot".format(WASMCEPTION_PATH)
-WASM_FLAGS = WASM_LINKER_FLAGS + " --target=wasm32-unknown-unknown-wasm -nostartfiles -O3 -flto " + WASM_SYSROOT_FLAGS
+
+WASM_FLAGS = ' '.join([
+    WASM_LINKER_FLAGS,
+    WASM_FLAGS,
+    "--sysroot={}".format(WASM_SYSROOT)
+])
 
 # What is the machine we're running on like?
 IS_64_BIT = sys.maxsize > 2**32
@@ -105,17 +168,18 @@ programs = [
     # == Custom Benchmarks ==
     Program("custom_binarytrees", [16], 2 ** 14),
     Program("custom_function_pointers", [], 2 ** 14),
-    Program("custom_libjpeg", [], 2 ** 15,
-            custom_arguments=["-Wno-incompatible-library-redeclaration", "-Wno-implicit-function-declaration",
-                              "-Wno-shift-negative-value"]),
+    #Program("custom_libjpeg", [], 2 ** 15,
+    #        custom_arguments=["-Wno-incompatible-library-redeclaration", "-Wno-implicit-function-declaration",
+    #                          "-Wno-shift-negative-value"]),
     Program("custom_matrix_multiply", [], 2 ** 14),
     Program("custom_memcmp", [], 2 ** 14),
-    Program("custom_sqlite", [], 2 ** 15, custom_arguments=["-DSQLITE_MUTEX_NOOP", "-ldl"]),
+    # TODO need to remove dependency on posix headers
+    #Program("custom_sqlite", [], 2 ** 15, custom_arguments=["-DSQLITE_MUTEX_NOOP", "-ldl"]),
 
     # == Apps ==
     #Program("app_nn", [], 2 ** 14, custom_arguments=["-std=c99", "-Wno-unknown-attributes", "-DARM_MATH_CM3", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/DSP/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/Core/Include", "-I/Users/peachg/Projects/CMSIS_5_NN/CMSIS_5/CMSIS/NN/Include"]),
     Program("app_pid", ["-std=c++11", "-Wall"], 2 ** 8, custom_arguments=[], is_cpp=True),
-    Program("app_tiny_ekf", ["-std=c++11", "-Wall"], 2 ** 14, custom_arguments=[], is_cpp=True),
+    Program("app_tiny_ekf", ["-std=c++11", "-Wall"], 2 ** 14, custom_arguments=["-fno-rtti"], is_cpp=True),
     Program("app_tinycrypt", [], 2 ** 15 + 2**14, custom_arguments=[ "-Wall", "-Wpedantic", "-Wno-gnu-zero-variadic-macro-arguments", "-std=c11", "-DENABLE_TESTS", "-I."]),
     # Program("app_v9", [], 2 ** 18, custom_arguments=[], do_lto=False),
 
@@ -251,8 +315,8 @@ def compile_wasm_to_executable(program, exe_postfix, memory_impl, unsafe_impls=F
     else:
         target_flag = "-target " + SILVERFISH_TARGET
 
-    command = "clang -lm {target} {opt} {bc_file} {runtime}/runtime.c {runtime}/libc/libc_backing.c {runtime}/libc/env.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
-        .format(target=target_flag, opt=opt, bc_file=bc_file, pname=program.name, runtime=RUNTIME_PATH, mem_impl=memory_impl, postfix=exe_postfix)
+    command = "clang -lm {target} {opt} {bc_file} {runtime}/runtime.c {runtime}/libc/{backing} {runtime}/libc/env.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
+        .format(target=target_flag, opt=opt, bc_file=bc_file, pname=program.name, runtime=RUNTIME_PATH, backing=WASM_BACKING, mem_impl=memory_impl, postfix=exe_postfix)
     print(command)
     sp.check_call(command, shell=True, cwd=program.name)
 
@@ -291,6 +355,9 @@ if __name__ == "__main__":
     #     print(p.name)
     #     sp.call("wasm2wat {} | grep 'global (;1;) i32'".format(path), shell=True)
 
+    # Filter tests if explicit tests are requested
+    if args.suites:
+        programs = [p for p in programs if any(p.name.startswith(suite) for suite in args.suites)]
 
     # Compile all our programs
     for i, p in enumerate(programs):

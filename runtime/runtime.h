@@ -99,6 +99,20 @@ void alloc_linear_memory();
 void expand_memory();
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check);
 
+INLINE i8 get_i8(u32 offset);
+INLINE i16 get_i16(u32 offset);
+INLINE i32 get_i32(u32 offset);
+INLINE i64 get_i64(u32 offset);
+INLINE void set_i8(u32 offset, i8 v);
+INLINE void set_i16(u32 offset, i16 v);
+INLINE void set_i32(u32 offset, i32 v);
+INLINE void set_i64(u32 offset, i64 v);
+
+INLINE float get_f32(u32 offset);
+INLINE double get_f64(u32 offset);
+INLINE void set_f32(u32 offset, float);
+INLINE void set_f64(u32 offset, double);
+
 static inline void* get_memory_ptr_void(u32 offset, u32 bounds_check) {
     return (void*) get_memory_ptr_for_runtime(offset, bounds_check);
 }
