@@ -1,7 +1,7 @@
 #!/bin/zsh
 git submodule update --init --recursive
 
-# Uncomment to install brew
+# Install brew
 if ! command -v brew &> /dev/null
 then 
   curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash -s -- -y
