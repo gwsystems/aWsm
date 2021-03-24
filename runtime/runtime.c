@@ -208,11 +208,16 @@ INLINE double f64_copysign(double a, double b) {
 }
 
 // Memory related instructions
-i32 instruction_memory_size() {
+/* instruction_memory_size and instruction_memory_grow are identical in this 
+ * translation unit and all of the runtime/memory translation units. This is
+ * causing linking errors because multiple translation units are trying to
+ * define the same global symbol. I've set these functions to static for a
+ * temporary fix pending a discussion of possible refactors. */
+static i32 instruction_memory_size() {
     return memory_size / WASM_PAGE_SIZE;
 }
 
-i32 instruction_memory_grow(i32 count) {
+static i32 instruction_memory_grow(i32 count) {
     i32 prev_size = instruction_memory_size();
     for (int i = 0; i < count; i++) {
         expand_memory();
