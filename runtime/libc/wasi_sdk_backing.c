@@ -22,8 +22,8 @@
 #define O_RSYNC O_SYNC
 #endif
 
-/* POSIX Systems with fdatasync available define _POSIX_SYNCHRONIZED_IO in unistd.h */
-#ifndef _POSIX_SYNCHRONIZED_IO 
+#ifdef __APPLE__
+#undef fdatasync
 #define fdatasync fsync
 #endif
 
