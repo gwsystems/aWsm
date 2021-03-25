@@ -145,15 +145,3 @@ env_getcycles(void)
 
     #endif
 }
-
-// Floating point routines
-// TODO: Do a fair comparison between musl and wasm-musl
-INLINE double
-env_sin(double d) {
-    return sin(d);
-}
-
-INLINE double
-env_cos(double d) {
-    return cos(d);
-}
