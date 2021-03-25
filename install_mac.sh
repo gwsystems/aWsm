@@ -2,11 +2,10 @@
 git submodule update --init --recursive
 
 # Install brew
-if ! command -v brew &> /dev/null
-then 
-  curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash -s -- -y
-else
+if [[ -x "$(command -v brew)" ]]; then
   echo "Brew install detected"
+else
+  curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash -s -- -y
 fi
 
 # Install required tools
@@ -15,12 +14,11 @@ brew install wget
 
 # Install LLVM and clang stuff
 xcode-select install
-if ! command -v llvm-config &> /dev/null
-then 
-    brew install llvm
-    echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.zshrc
+if [[ -x "$(command -v rustup)" ]]; then
+  echo "LLVM detected"
 else
-    echo "LLVM detected"
+  brew install llvm
+  echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >>~/.zshrc
 fi
 
 # Install Rust
