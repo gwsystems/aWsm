@@ -387,7 +387,7 @@ i32 wasi_unstable_fd_fdstat_set_flags(i32 fd, u32 fdflags) {
         ((flags & WASI_FDFLAG_APPEND  ) ? O_APPEND   : 0) |
         ((flags & WASI_FDFLAG_DSYNC   ) ? O_DSYNC    : 0) |
         ((flags & WASI_FDFLAG_NONBLOCK) ? O_NONBLOCK : 0) |
-        ((flags & WASI_FDFLAG_RSYNC   ) ? O_RSYNC : 0) |
+        ((flags & WASI_FDFLAG_RSYNC   ) ? O_RSYNC    : 0) |
         ((flags & WASI_FDFLAG_SYNC    ) ? O_SYNC     : 0));
     int err = fcntl(fd, F_SETFL, fdflags);
     if (err < 0) {
