@@ -113,6 +113,9 @@ INLINE double get_f64(u32 offset);
 INLINE void set_f32(u32 offset, float);
 INLINE void set_f64(u32 offset, double);
 
+i32 instruction_memory_size();
+i32 instruction_memory_grow();
+
 static inline void* get_memory_ptr_void(u32 offset, u32 bounds_check) {
     return (void*) get_memory_ptr_for_runtime(offset, bounds_check);
 }

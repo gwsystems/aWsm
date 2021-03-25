@@ -17,6 +17,16 @@
 
 #include "../runtime.h"
 
+/* POSIX compatibility shims */
+#ifndef O_RSYNC
+#define O_RSYNC O_SYNC
+#endif
+
+#ifdef __APPLE__
+#undef fdatasync
+#define fdatasync fsync
+#endif
+
 int main(int argc, char* argv[]) {
     runtime_main(argc, argv);
     printf("mem use = %d\n", (int) memory_size);
@@ -276,7 +286,13 @@ static i32 wasi_fromerrno(int errno_) {
         case ETIMEDOUT:         return WASI_ETIMEDOUT;
         case ETXTBSY:           return WASI_ETXTBSY;
         case EXDEV:             return WASI_EXDEV;
+        default:
+            fprintf(stderr, "wasi_fromerrno unexpectedly received: %s\n", strerror(errno_));
+            fflush(stderr);
     }
+
+    silverfish_assert(0);
+    return 0;
 }
 
 // file operations

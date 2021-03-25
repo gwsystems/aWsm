@@ -207,22 +207,7 @@ INLINE double f64_copysign(double a, double b) {
     return copysign(a, b);
 }
 
-// Memory related instructions
-i32 instruction_memory_size() {
-    return memory_size / WASM_PAGE_SIZE;
-}
-
-i32 instruction_memory_grow(i32 count) {
-    i32 prev_size = instruction_memory_size();
-    for (int i = 0; i < count; i++) {
-        expand_memory();
-    }
-
-    return prev_size;
-}
-
-
-// We want to have some allocation logic
+// We want to have some allocation logic here, so we can use it to implement libc
 WEAK u32 wasmg___heap_base = 0;
 u32 runtime_heap_base;
 
