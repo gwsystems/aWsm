@@ -18,7 +18,8 @@ jobs:
 
     strategy:
       matrix:
-        libc: [wasmception, wasi-sdk]
+        # libc: [wasmception, wasi-sdk]
+        libc: [wasmception]
 
     steps:
       - uses: actions/checkout@v2
@@ -61,6 +62,9 @@ jobs:
         run: |
           pwd
           ls
+          ls wasmception
+          ls wasmception/dist
+          ls wasmception/dist/bin
           ./code_benches/run.py --debug --${{matrix.libc}} -o benchmarks.csv
 
       - name: Results
