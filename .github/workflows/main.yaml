@@ -49,7 +49,7 @@ jobs:
 
       - name: Compile
         run: |
-          cargo build
+          cargo build --jobs 1 -- -Ztime-passes
 
       - name: Preliminary tests
         # note we skip code_benches; we run code_benches/run.py ourselves
