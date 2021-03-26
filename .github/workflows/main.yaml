@@ -39,7 +39,7 @@ jobs:
         run: |
           wget $WASMCEPTION_URL -O wasmception.tar.gz
           mkdir -p wasmception
-          tar xvfz wasmception.tar.gz --strip-components=1 -C wasmception
+          tar xvfz wasmception.tar.gz -C wasmception
 
       - name: Get wasi-sdk
         if: matrix.libc == 'wasi-sdk'
