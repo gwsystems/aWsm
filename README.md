@@ -1,5 +1,6 @@
 aWsm - An Awesome Wasm Compiler and Runtime
 ==========
+_Note: Previously known as Silverfish_
 
 # What is aWsm?
 
