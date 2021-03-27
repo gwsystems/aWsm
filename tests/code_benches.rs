@@ -2,9 +2,9 @@ use std::error;
 use std::process;
 
 #[cfg(debug_assertions)]
-const CLI: &str = "./target/debug/silverfish";
+const CLI: &str = "./target/debug/awsm";
 #[cfg(not(debug_assertions))]
-const CLI: &str = "./target/release/silverfish";
+const CLI: &str = "./target/release/awsm";
 
 #[test]
 fn cli_help_test() -> Result<(), Box<dyn error::Error>> {

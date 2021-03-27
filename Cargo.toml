@@ -1,5 +1,5 @@
 [package]
-name = "silverfish"
+name = "awsm"
 version = "0.1.0"
 authors = ["Gregor Peach <gregorpeach@gmail.com>"]
 edition = "2018"

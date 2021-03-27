@@ -16,7 +16,7 @@ code_benches/benchmarks.csv
 
 runtime/cortex_m_glue/*.log
 
-silverfish.iml
+awsm.iml
 .idea
 
 .vagrant

@@ -4,13 +4,13 @@
 // Instead we should use `unlikely` branches to a single trapping function (which should optimize better)
 
 // Needed to support C++
-void env___cxa_pure_virtual() { silverfish_assert("env___cxa_pure_virtual" == 0); }
+void env___cxa_pure_virtual() { awsm_assert("env___cxa_pure_virtual" == 0); }
 
 // Region initialization helper function
 EXPORT void initialize_region(u32 offset, u32 data_count, char* data) {
-    silverfish_assert(memory_size >= data_count);
-    silverfish_assert(offset < memory_size - data_count);
-//    silverfish_assert(offset <= memory_size - data_count);
+    awsm_assert(memory_size >= data_count);
+    awsm_assert(offset < memory_size - data_count);
+//    awsm_assert(offset <= memory_size - data_count);
 
     // FIXME: Hack around segmented and unsegmented access
     memcpy(get_memory_ptr_for_runtime(offset, data_count), data, data_count);
@@ -19,7 +19,7 @@ EXPORT void initialize_region(u32 offset, u32 data_count, char* data) {
 struct indirect_table_entry indirect_table[INDIRECT_TABLE_SIZE];
 
 void add_function_to_table(u32 idx, u32 type_id, char* pointer) {
-    silverfish_assert(idx < INDIRECT_TABLE_SIZE);
+    awsm_assert(idx < INDIRECT_TABLE_SIZE);
     indirect_table[idx] = (struct indirect_table_entry) { .type_id = type_id, .func_pointer = pointer };
 }
 
@@ -70,42 +70,42 @@ INLINE u64 rotr_u64(u64 n, u64 c_u64) {
 
 // Now safe division and remainder
 INLINE u32 u32_div(u32 a, u32 b) {
-    silverfish_assert(b);
+    awsm_assert(b);
     return a / b;
 }
 
 INLINE u32 u32_rem(u32 a, u32 b) {
-    silverfish_assert(b);
+    awsm_assert(b);
     return a % b;
 }
 
 INLINE i32 i32_div(i32 a, i32 b) {
-    silverfish_assert(b && (a != INT32_MIN || b != -1));
+    awsm_assert(b && (a != INT32_MIN || b != -1));
     return a / b;
 }
 
 INLINE i32 i32_rem(i32 a, i32 b) {
-    silverfish_assert(b && (a != INT32_MIN || b != -1));
+    awsm_assert(b && (a != INT32_MIN || b != -1));
     return a % b;
 }
 
 INLINE u64 u64_div(u64 a, u64 b) {
-    silverfish_assert(b);
+    awsm_assert(b);
     return a / b;
 }
 
 INLINE u64 u64_rem(u64 a, u64 b) {
-    silverfish_assert(b);
+    awsm_assert(b);
     return a % b;
 }
 
 INLINE i64 i64_div(i64 a, i64 b) {
-    silverfish_assert(b && (a != INT64_MIN || b != -1));
+    awsm_assert(b && (a != INT64_MIN || b != -1));
     return a / b;
 }
 
 INLINE i64 i64_rem(i64 a, i64 b) {
-    silverfish_assert(b && (a != INT64_MIN || b != -1));
+    awsm_assert(b && (a != INT64_MIN || b != -1));
     return a % b;
 }
 
@@ -115,42 +115,42 @@ INLINE i64 i64_rem(i64 a, i64 b) {
 // In C, float => int conversions always truncate
 // If a int2float(int::min_value) <= float <= int2float(int::max_value), it must always be safe to truncate it
 u32 u32_trunc_f32(float f) {
-    silverfish_assert(0 <= f && f <= (float) UINT32_MAX);
+    awsm_assert(0 <= f && f <= (float) UINT32_MAX);
     return (u32) f;
 }
 
 i32 i32_trunc_f32(float f) {
-    silverfish_assert(INT32_MIN <= f && f <= (float) INT32_MAX);
+    awsm_assert(INT32_MIN <= f && f <= (float) INT32_MAX);
     return (i32) f;
 }
 
 u32 u32_trunc_f64(double f) {
-    silverfish_assert(0 <= f && f <= (float) UINT32_MAX);
+    awsm_assert(0 <= f && f <= (float) UINT32_MAX);
     return (u32) f;
 }
 
 i32 i32_trunc_f64(double f) {
-    silverfish_assert(INT32_MIN <= f && f <= (float) INT32_MAX );
+    awsm_assert(INT32_MIN <= f && f <= (float) INT32_MAX );
     return (i32) f;
 }
 
 u64 u64_trunc_f32(float f) {
-    silverfish_assert(0 <= f && f <= (float) UINT64_MAX);
+    awsm_assert(0 <= f && f <= (float) UINT64_MAX);
     return (u64) f;
 }
 
 i64 i64_trunc_f32(float f) {
-    silverfish_assert(INT64_MIN <= f && f <= (float) INT64_MAX);
+    awsm_assert(INT64_MIN <= f && f <= (float) INT64_MAX);
     return (i64) f;
 }
 
 u64 u64_trunc_f64(double f) {
-    silverfish_assert(0 <= f && f <= (double) UINT64_MAX);
+    awsm_assert(0 <= f && f <= (double) UINT64_MAX);
     return (u64) f;
 }
 
 i64 i64_trunc_f64(double f) {
-    silverfish_assert(INT64_MIN <= f && f <= (double) INT64_MAX);
+    awsm_assert(INT64_MIN <= f && f <= (double) INT64_MAX);
     return (i64) f;
 }
 
@@ -228,7 +228,7 @@ void* allocate_n_bytes_ptr(u32 n) {
 
 // FIXME: Currently the timer support stuff is disabled, pending cortex_m results
 // this provides a way to add a timeout for wasm execution, and support for that
-// TODO: Add a way for silverfish to give us this value
+// TODO: Add a way for awsm to give us this value
 //WEAK unsigned int wasm_execution_timeout_ms = 0;
 //sigjmp_buf timeout_jump;
 //#define JUMPING_BACK 0xBACC

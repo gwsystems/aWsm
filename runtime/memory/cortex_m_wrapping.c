@@ -12,16 +12,16 @@ int printf_(const char* format, ...);
 void alloc_linear_memory() {
 //    printf_("8 = (%d %d) 16 = (%d %d) 32 = (%d %d) 64 = (%d %d)\n", sizeof(u8), sizeof(i8), sizeof(u16), sizeof(i16), sizeof(u32), sizeof(i32), sizeof(u64), sizeof(i64));
 //    printf_("starting pages = %d, starting mem size = %d\n", starting_pages, starting_pages * WASM_PAGE_SIZE);
-    silverfish_assert(MEM_SIZE >= starting_pages * WASM_PAGE_SIZE);
+    awsm_assert(MEM_SIZE >= starting_pages * WASM_PAGE_SIZE);
     memory_size = starting_pages * WASM_PAGE_SIZE;
 }
 
 void expand_memory() {
     // max_pages = 0 => no limit
-    silverfish_assert(max_pages == 0 || (memory_size + WASM_PAGE_SIZE <= max_pages * WASM_PAGE_SIZE));
+    awsm_assert(max_pages == 0 || (memory_size + WASM_PAGE_SIZE <= max_pages * WASM_PAGE_SIZE));
 
 //    printf_("Expanding to %d\n", memory_size + WASM_PAGE_SIZE);
-    silverfish_assert(memory_size + WASM_PAGE_SIZE <= sizeof(CORTEX_M_MEM));
+    awsm_assert(memory_size + WASM_PAGE_SIZE <= sizeof(CORTEX_M_MEM));
 
     memset(&CORTEX_M_MEM[memory_size], 0, WASM_PAGE_SIZE);
     memory_size += WASM_PAGE_SIZE;
@@ -41,7 +41,7 @@ i32 instruction_memory_grow(i32 count) {
 }
 
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
-    silverfish_assert(offset <= memory_size - bounds_check);
+    awsm_assert(offset <= memory_size - bounds_check);
 
     char* address = &CORTEX_M_MEM[offset];
     return address;
@@ -128,11 +128,11 @@ INLINE void set_i64(u32 offset, i64 v) {
 }
 
 INLINE char* get_function_from_table(u32 idx, u32 type_id) {
-    silverfish_assert(idx < INDIRECT_TABLE_SIZE);
+    awsm_assert(idx < INDIRECT_TABLE_SIZE);
 
     struct indirect_table_entry f = indirect_table[idx];
 
-    silverfish_assert(f.type_id == type_id && f.func_pointer);
+    awsm_assert(f.type_id == type_id && f.func_pointer);
 
     return f.func_pointer;
 }

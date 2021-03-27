@@ -1,10 +1,10 @@
 import subprocess as sp
 
 # NOTE: Known good values from experimentation with Joey
-# vagrant@ubuntu-xenial:~/silverfish/runtime/cortex_m_glue$ clang-9 -std=c11 -ffreestanding -falign-functions=16 -target thumbv7m-none-unknown-eabi -mcpu=cortex-m7 -mfloat-abi=softfp -mthumb -munaligned-access -flto -g -O3 -nostdlib -fno-builtin -c ../runtime.c ../memory/cortex_m_wrapping.c ../libc/cortex_m_backing.c printf.c ../../code_benches/pb_la_kernels_atax/bin/pb_la_kernels_atax.bc
+# vagrant@ubuntu-xenial:~/awsm/runtime/cortex_m_glue$ clang-9 -std=c11 -ffreestanding -falign-functions=16 -target thumbv7m-none-unknown-eabi -mcpu=cortex-m7 -mfloat-abi=softfp -mthumb -munaligned-access -flto -g -O3 -nostdlib -fno-builtin -c ../runtime.c ../memory/cortex_m_wrapping.c ../libc/cortex_m_backing.c printf.c ../../code_benches/pb_la_kernels_atax/bin/pb_la_kernels_atax.bc
 # warning: overriding the module target triple with thumbv7em-none-unknown-eabi [-Woverride-module]
 #     1 warning generated.
-# vagrant@ubuntu-xenial:~/silverfish/runtime/cortex_m_glue$ clang-9 -std=c11 -ffreestanding -falign-functions=16 -target thumbv7m-none-unknown-eabi -mcpu=cortex-m7 -mfloat-abi=softfp -mthumb -munaligned-access -flto -g -O3 -nostdlib -fno-builtin -r *.o -o out/pb_la_kernels_atax_main.o
+# vagrant@ubuntu-xenial:~/awsm/runtime/cortex_m_glue$ clang-9 -std=c11 -ffreestanding -falign-functions=16 -target thumbv7m-none-unknown-eabi -mcpu=cortex-m7 -mfloat-abi=softfp -mthumb -munaligned-access -flto -g -O3 -nostdlib -fno-builtin -r *.o -o out/pb_la_kernels_atax_main.o
 
 M3_DEBUG = False
 
@@ -174,7 +174,7 @@ for pname in programs:
     else:
         c_files = "../../code_benches/{pname}/*.c".format(pname=pname)
 
-        compile_c = "{cc} {sys_flags} {cc_target} {target_flags} {opt} -I/home/vagrant/silverfish/code_benches/app_ekf/ -I/home/vagrant/silverfish/code_benches/app_tinycrypt/ -DENABLE_TESTS -DARM_MATH_CM3 -I/home/vagrant/CMSIS_5_NN/CMSIS_5/CMSIS/DSP/Include -I/home/vagrant/CMSIS_5_NN/CMSIS_5/CMSIS/Core/Include -I/home/vagrant/CMSIS_5_NN/CMSIS_5/CMSIS/NN/Include {sys_inc} -c {c} math*.c"\
+        compile_c = "{cc} {sys_flags} {cc_target} {target_flags} {opt} -I/home/vagrant/awsm/code_benches/app_ekf/ -I/home/vagrant/awsm/code_benches/app_tinycrypt/ -DENABLE_TESTS -DARM_MATH_CM3 -I/home/vagrant/CMSIS_5_NN/CMSIS_5/CMSIS/DSP/Include -I/home/vagrant/CMSIS_5_NN/CMSIS_5/CMSIS/Core/Include -I/home/vagrant/CMSIS_5_NN/CMSIS_5/CMSIS/NN/Include {sys_inc} -c {c} math*.c"\
             .format(cc=CLANG, sys_flags=SYS_FLAGS, cc_target=CC_TARGET, target_flags=TARGET_FLAGS,
                     opt=OPT, sys_inc=SYS_INC, c=c_files)
     link_o = "{ld} {sys_flags} {target_flags} {opt} -r -o {obj} *.o" \

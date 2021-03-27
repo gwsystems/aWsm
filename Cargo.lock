@@ -36,6 +36,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
+name = "awsm"
+version = "0.1.0"
+dependencies = [
+ "flexi_logger",
+ "llvm-alt",
+ "log",
+ "structopt",
+ "wasmparser",
+]
+
+[[package]]
 name = "bitflags"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -264,17 +275,6 @@ name = "semver"
 version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4f410fedcf71af0345d7607d246e7ad15faaadd49d240ee3b24e5dc21a820ac"
-
-[[package]]
-name = "silverfish"
-version = "0.1.0"
-dependencies = [
- "flexi_logger",
- "llvm-alt",
- "log",
- "structopt",
- "wasmparser",
-]
 
 [[package]]
 name = "strsim"

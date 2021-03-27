@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installs dependencies, builds Silverfish, and places it into your path
+# Installs dependencies, builds aWsm, and places it into your path
 # Be sure to validate the Rust and LLVM install scripts we invoke below!
 
 sudo="sudo"
@@ -51,6 +51,6 @@ $sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-$L
 $sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
 $sudo apt install libc++-dev libc++abi-dev --yes
 
-# Build and install Silverfish
+# Build and install aWsm
 cargo build --release
-$sudo cp -t /usr/bin ./target/release/silverfish
+$sudo cp -t /usr/bin ./target/release/awsm

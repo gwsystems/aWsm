@@ -25,11 +25,6 @@ Wasm provides a number of benefits outside of the web including:
 	Wasm is a high-level assembly, independent from any specific hardware.
 	This has the potential to provide a universal specification of computation that can execute in the cloud, on the edge, or in an embedded device.
 
-**A note on naming.**
-aWsm started out as the `silverfish` compiler, the brainchild of Gregor Peach when he was a researcher in the group.
-There are still quite a few lingering `silverfish` references.
-Please have patience as we update those to `aWsm`.
-
 ## Why aWsm?
 
 We've investigated how aWsm changes serverless on the edge (see our [Sledge runtime](https://github.com/gwsystems/sledge-serverless-framework) for that), and reliability in embedded systems.
@@ -151,7 +146,7 @@ aWsm 0.1.0
 Gregor Peach <gregorpeach@gmail.com>
 
 USAGE:
-    silverfish [FLAGS] [OPTIONS] <input>
+    awsm [FLAGS] [OPTIONS] <input>
 
 FLAGS:
     -h, --help                           Prints help information
@@ -178,7 +173,7 @@ cd aWsm
 ./install_deb.sh
 ```
 
-The compiler can now be run via `silverfish`
+The compiler can now be run via `awsm`
 
 ### Other Systems
 
@@ -197,7 +192,7 @@ git clone https://github.com/gwsystems/aWsm.git
 cd aWsm
 cargo build --release
 ```
-6. The aWsm binary is built at `target/release/silverfish`. Copy this to the appropriate place for your platform and add to your PATH if necessary.
+6. The aWsm binary is built at `target/release/awsm`. Copy this to the appropriate place for your platform and add to your PATH if necessary.
 
 ## Executing and Testing aWsm
 
@@ -220,7 +215,7 @@ We're in the processes of standing up a CI infrastructure.
 
 The source is organized as such:
 
-- `src/` - the Rust source of the compiler, and the `silverfish` binary.
+- `src/` - the Rust source of the compiler, and the `awsm` binary.
 	Look here for the logic for taking in Wasm, and generating LLVM bytecode.
 	`cargo` guides the compilation of this code.
 - `code_benches/` - This is a relatively large set of benchmarks, many of which are derived from Polybench (`pb_*`), MiBench (`mb_*`), or various applications (`custom_*` including NN inference, sqlite, a PID controller, and an extended Kalman filter).
