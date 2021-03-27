@@ -1,4 +1,3 @@
-/* https://github.com/gwsystems/awsm/blob/master/runtime/libc/libc_backing.c */
 #include "../runtime.h"
 
 i32
