@@ -6,10 +6,10 @@
 
 #if __has_include("assert.h") && (defined(__APPLE__) || defined(__linux__))
 #include <assert.h>
-#define silverfish_assert assert
+#define awsm_assert assert
 #else
 int printf_(const char* format, ...);
-#define silverfish_assert(x) do { if(!(x)) { char msg[] = "" #x ""; printf_("%s\n", msg); while(1); } } while(0);
+#define awsm_assert(x) do { if(!(x)) { char msg[] = "" #x ""; printf_("%s\n", msg); while(1); } } while(0);
 #endif
 
 // Type alias's so I don't have to write uint32_t a million times

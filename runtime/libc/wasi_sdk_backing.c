@@ -291,7 +291,7 @@ static i32 wasi_fromerrno(int errno_) {
             fflush(stderr);
     }
 
-    silverfish_assert(0);
+    awsm_assert(0);
     return 0;
 }
 

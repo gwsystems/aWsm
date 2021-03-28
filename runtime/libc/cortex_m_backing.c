@@ -63,12 +63,12 @@ extern u32 cortex_mem_size;
 u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
 	if (addr != 0) {
 		printf_("parameter void *addr is not supported!\n");
-		silverfish_assert(0);
+		awsm_assert(0);
 	}
 
 	if (fd != -1) {
 		printf_("file mapping is not supported!\n");
-		silverfish_assert(0);
+		awsm_assert(0);
 	}
 
 //    printf_("MMAP: expanding %d to %d\n", len, memory_size + len);
@@ -92,7 +92,7 @@ i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
         }
         return sum;
     }
-    silverfish_assert(0);
+    awsm_assert(0);
 }
 
 #define SYS_MUNMAP 11
@@ -143,7 +143,7 @@ i32 inner_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
     }
 
     printf_("unknown syscall %d\n", n);
-    silverfish_assert(0);
+    awsm_assert(0);
 }
 
 i32 env_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
@@ -271,7 +271,7 @@ INLINE i32 env_a_ctz_32(u32 x) {
 
 
 i32 env_a_cas(i32 p_off, i32 old_val, i32 new_val) {
-    silverfish_assert(sizeof(i32) == sizeof(volatile int));
+    awsm_assert(sizeof(i32) == sizeof(volatile int));
     i32* p = get_memory_ptr_void(p_off, sizeof(i32));
 
     i32 val = *p;
@@ -281,7 +281,7 @@ i32 env_a_cas(i32 p_off, i32 old_val, i32 new_val) {
 }
 
 i32 env_a_swap(i32 x_off, i32 v) {
-    silverfish_assert(sizeof(i32) == sizeof(volatile int));
+    awsm_assert(sizeof(i32) == sizeof(volatile int));
     volatile int* p = get_memory_ptr_void(x_off, sizeof(i32));
 
     int old;
@@ -291,7 +291,7 @@ i32 env_a_swap(i32 x_off, i32 v) {
 }
 
 i32 env_a_fetch_add(i32 x_off, i32 v) {
-    silverfish_assert(sizeof(i32) == sizeof(volatile int));
+    awsm_assert(sizeof(i32) == sizeof(volatile int));
     volatile int* p = get_memory_ptr_void(x_off, sizeof(i32));
 
     i32 old = *p;

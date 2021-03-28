@@ -1,4 +1,3 @@
-/* https://github.com/gwsystems/silverfish/blob/master/runtime/libc/libc_backing.c */
 #include "../runtime.h"
 
 i32
@@ -140,7 +139,7 @@ env_getcycles(void)
     return cpu_time_in_cycles;
 
     #else
-    silverfish_assert(0);
+    awsm_assert(0);
     return 0;
 
     #endif

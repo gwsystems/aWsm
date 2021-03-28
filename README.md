@@ -1,5 +1,6 @@
 aWsm - An Awesome Wasm Compiler and Runtime
 ==========
+_Note: Previously known as Silverfish_
 
 # What is aWsm?
 
@@ -24,11 +25,6 @@ Wasm provides a number of benefits outside of the web including:
 - *Ubiquity.*
 	Wasm is a high-level assembly, independent from any specific hardware.
 	This has the potential to provide a universal specification of computation that can execute in the cloud, on the edge, or in an embedded device.
-
-**A note on naming.**
-aWsm started out as the `silverfish` compiler, the brainchild of Gregor Peach when he was a researcher in the group.
-There are still quite a few lingering `silverfish` references.
-Please have patience as we update those to `aWsm`.
 
 ## Why aWsm?
 
@@ -151,7 +147,7 @@ aWsm 0.1.0
 Gregor Peach <gregorpeach@gmail.com>
 
 USAGE:
-    silverfish [FLAGS] [OPTIONS] <input>
+    awsm [FLAGS] [OPTIONS] <input>
 
 FLAGS:
     -h, --help                           Prints help information
@@ -178,7 +174,7 @@ cd aWsm
 ./install_deb.sh
 ```
 
-The compiler can now be run via `silverfish`
+The compiler can now be run via `awsm`
 
 ### Other Systems
 
@@ -197,7 +193,7 @@ git clone https://github.com/gwsystems/aWsm.git
 cd aWsm
 cargo build --release
 ```
-6. The aWsm binary is built at `target/release/silverfish`. Copy this to the appropriate place for your platform and add to your PATH if necessary.
+6. The aWsm binary is built at `target/release/awsm`. Copy this to the appropriate place for your platform and add to your PATH if necessary.
 
 ## Executing and Testing aWsm
 
@@ -220,7 +216,7 @@ We're in the processes of standing up a CI infrastructure.
 
 The source is organized as such:
 
-- `src/` - the Rust source of the compiler, and the `silverfish` binary.
+- `src/` - the Rust source of the compiler, and the `awsm` binary.
 	Look here for the logic for taking in Wasm, and generating LLVM bytecode.
 	`cargo` guides the compilation of this code.
 - `code_benches/` - This is a relatively large set of benchmarks, many of which are derived from Polybench (`pb_*`), MiBench (`mb_*`), or various applications (`custom_*` including NN inference, sqlite, a PID controller, and an extended Kalman filter).
@@ -268,11 +264,14 @@ The main limitations:
 	The specification requires any access outside of the allocated bounds of linear memory to be caught, and the sandbox terminated.
 	We show in the publication that relaxing this requirement, and allowing undefined behavior on OoB accesses can significantly speed up execution, and shrink code sizes, while maintaining strong sandboxed isolation.
 
-# About Us & Acknowledgments
+# Acknowledgements
+
+aWsm was designed and implemented by Gregor Peach (@Others) while an undergraduate researcher in the GW Systems Lab. Demonstrating the value of the WebAssembly specification in a systems context, aWsm inspired the GW Systems Lab to fund and pursue follow-up WebAssembly-based research systems outside of its traditional focus on component-based operating systems.
+
+Collaboration with members of the Arm Research team have been particularly instrumental in growing aWsm from its initial prototype. Additionally, financial support from SRC, Arm, and NSF have supported researchers working on aWsm and follow-up projects.
+
+# About Us
 
 The GWU Systems group focuses on low-level system design and implementation.
 One of our main research vehicles is the [Composite](http://composite.seas.gwu.edu) component-based operating system, which we aim to integrate with Wasm through aWsm.
 If you're interested in low-level hacking and system building, in secure and reliable systems, in embedded systems, or in models for parallelism, don't hesitate to contact [Gabe](http://www.seas.gwu.edu/~gparmer) about doing a PhD or becoming involved with the group.
-
-Our collaborations with Arm Research during a lot of the maturation of the aWsm infrastructure have been instrumental in its development.
-Support from SRC, ARM, and NSF have all contributed greatly to Wasm's research.
