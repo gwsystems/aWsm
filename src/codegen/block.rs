@@ -282,7 +282,8 @@ pub fn compile_block<'a, 'b>(
                     &[table_index, type_index.compile(m_ctx.llvm_ctx)],
                 );
                 // Then cast it from a void pointer to a function pointer
-                let f_type = PointerType::new(wasm_func_type_to_llvm_type(m_ctx.llvm_ctx, f_type));
+                let f_type =
+                    PointerType::new(wasm_func_type_to_llvm_type(m_ctx.llvm_ctx, f_type).itype());
                 let f_ptr = b.build_bit_cast(f_ptr_as_void, f_type);
 
                 let result = b.build_value_call(f_ptr, &args);

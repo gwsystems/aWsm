@@ -440,7 +440,7 @@ i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
             i32 len = iov[i].len;
             void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
 
-            printf("%.*s", len, ptr);
+            printf("%.*s", len, (char*) ptr);
             sum += len;
         }
         return sum;
