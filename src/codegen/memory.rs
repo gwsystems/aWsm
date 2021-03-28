@@ -11,9 +11,9 @@ use crate::wasm::DataInitializer;
 use crate::wasm::ImplementedFunction;
 use crate::wasm::Instruction;
 
-use crate::codegen::ModuleCtx;
 use crate::codegen::function::compile_function;
 use crate::codegen::type_conversions::wasm_func_type_to_llvm_type;
+use crate::codegen::ModuleCtx;
 
 // We add in globals to tell the runtime how much memory to allocate and startup
 // (And what the max amount of allocated memory should be)
@@ -100,7 +100,7 @@ pub fn generate_offset_function<'a>(
     // Compile function assumes the function is already prototyped
     let offset_func = ctx.llvm_module.add_function(
         &offset_func_name,
-        wasm_func_type_to_llvm_type(ctx.llvm_ctx, &offset_func_type),
+        wasm_func_type_to_llvm_type(ctx.llvm_ctx, &offset_func_type).itype(),
     );
 
     compile_function(

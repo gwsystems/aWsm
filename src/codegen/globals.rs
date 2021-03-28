@@ -12,10 +12,10 @@ use crate::wasm::Global;
 use crate::wasm::Instruction;
 use crate::Opt;
 
-use crate::codegen::ModuleCtx;
 use crate::codegen::runtime_stubs::*;
 use crate::codegen::type_conversions::llvm_type_to_wasm_type;
 use crate::codegen::type_conversions::wasm_type_to_llvm_type;
+use crate::codegen::ModuleCtx;
 
 pub enum GlobalValue<'a> {
     InlinedConstant(&'a Value),
@@ -85,8 +85,10 @@ fn insert_native_globals<'a>(
                 content_type,
                 mutable,
             } => {
-                let llvm_global =
-                    llvm_module.add_global(&name, wasm_type_to_llvm_type(&*llvm_ctx, content_type));
+                let llvm_global = llvm_module.add_global(
+                    &name,
+                    wasm_type_to_llvm_type(&*llvm_ctx, content_type).itype(),
+                );
                 llvm_global.set_constant(!mutable);
                 GlobalValue::Native(llvm_global.to_super())
             }

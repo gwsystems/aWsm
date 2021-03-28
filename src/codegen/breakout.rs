@@ -34,7 +34,10 @@ impl<'a> BreakoutTarget<'a> {
         }
     }
 
-    pub fn new_wrapped(bb: &'a BasicBlock, result_type: Option<TypeOrFuncType>) -> WBreakoutTarget<'a> {
+    pub fn new_wrapped(
+        bb: &'a BasicBlock,
+        result_type: Option<TypeOrFuncType>,
+    ) -> WBreakoutTarget<'a> {
         let bt = Self::new(bb, result_type);
         Rc::new(RefCell::new(bt))
     }
@@ -68,7 +71,7 @@ impl<'a> BreakoutTarget<'a> {
                 // We probably should emit an unreachable instruction in this case, but that might mess up future compilation
                 // Instead we just produce zeroes, and hope llvm notices this is unreachable code
                 // TODO: Figure out if we can instead produce an unreachable result
-                new_locals.push(llvm_type_to_zeroed_value(ctx, local_type));
+                new_locals.push(llvm_type_to_zeroed_value(ctx, local_type).ivalue());
             } else if jump_back_count == 1 {
                 new_locals.push(jump_back_values[i][0].1);
             } else if !jump_back_values[i].is_empty() {
@@ -79,6 +82,7 @@ impl<'a> BreakoutTarget<'a> {
         new_locals
     }
 
+    #[allow(clippy::needless_range_loop)]
     pub fn modify_phis<'b>(&self, phi_instructions: &[&'b Value])
     where
         'a: 'b,
@@ -113,7 +117,7 @@ impl<'a> BreakoutTarget<'a> {
                 // See above comment about unreachablity
                 // TODO: Figure out if we can instead produce an unreachable result
                 if let TypeOrFuncType::Type(t) = ty {
-                    wasm_type_to_zeroed_value(ctx, t)
+                    wasm_type_to_zeroed_value(ctx, t).ivalue()
                 } else {
                     panic!()
                 }

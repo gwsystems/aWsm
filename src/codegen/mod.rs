@@ -23,6 +23,8 @@ mod globals;
 use self::globals::insert_globals;
 use self::globals::GlobalValue;
 
+mod llvm_wrapper;
+
 mod memory;
 use self::memory::add_memory_size_globals;
 use self::memory::generate_memory_initialization_stub;
@@ -86,7 +88,7 @@ pub fn process_to_llvm(
     for f in &wasm_module.functions {
         let llvm_f = llvm_module.add_function(
             f.get_name(),
-            wasm_func_type_to_llvm_type(&llvm_ctx, f.get_type()),
+            wasm_func_type_to_llvm_type(&llvm_ctx, f.get_type()).itype(),
         );
         functions.push((&*llvm_f, f.clone()));
     }
