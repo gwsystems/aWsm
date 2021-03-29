@@ -26,7 +26,7 @@ use crate::wasm::Instruction;
 pub struct IfCtx<'a, 'b> {
     else_block: &'a BasicBlock,
     else_locals: Vec<&'a Value>,
-    else_built: &'b Cell<bool>
+    else_built: &'b Cell<bool>,
 }
 
 // TODO: Double check each instruction to make sure it does the right thing in both the safe and unsafe case
@@ -206,7 +206,7 @@ pub fn compile_block<'a, 'b, 'c>(
                     Some(IfCtx {
                         else_block: else_branch_block,
                         else_locals: else_branch_locals.clone(),
-                        else_built: &else_built
+                        else_built: &else_built,
                     }),
                     if_branch_locals,
                     if_branch_block,
