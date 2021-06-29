@@ -1,3 +1,9 @@
+# Sample awsm Makefile
+#
+# This project currently uses a hand-spun build system and test running written (run.py)
+# The intent behind this sample makefile is to illustrate how one might use awsm using
+# a standard build tool.
+
 CC=clang
 OPTFLAGS=-O3 -flto
 UNAME:=$(shell uname -m)
