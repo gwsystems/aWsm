@@ -7,11 +7,12 @@
 CC=clang
 OPTFLAGS=-O3 -flto
 UNAME:=$(shell uname -m)
-SUPPORTS_MPX:=$(shell grep -q mpx /proc/cpuinfo && echo "true")
 
 # Assuming to be called from code_benches directory
 ROOT_PATH:=$(shell cd .. && realpath .)
 RUNTIME_PATH:=${ROOT_PATH}/runtime
+
+AWSM_CC:=${ROOT_PATH}/target/release/awsm
 
 # Use WASI_SDK if set to true. Wasmception otherwise
 USE_WASI_SDK:=true
@@ -41,7 +42,7 @@ endif
 # Excludes stack-size, as this may vary between apps
 WASM_LINKER_FLAGS:=-Wl,--allow-undefined,--no-threads,--stack-first,--no-entry,--export-all,--export=main,--export=dummy
 
-app_pid: app_pid_native app_pid_np_us app_pid_np app_pid_bc app_pid_vm app_pid_mpx app_pid_sm
+app_pid: app_pid_native app_pid_np_us app_pid_np app_pid_bc app_pid_vm
 
 .PHONY: app_pid_clean
 app_pid_clean:
@@ -66,17 +67,16 @@ endif
 	@mkdir -p ./app_pid/bin
 	@${WASM_CC} ${WASM_FLAGS} ${WASM_LINKER_FLAGS} -Wl,-z,stack-size=256  -Wall -std=c++11 ./dummy.cpp ./app_pid/*.cpp -o ./app_pid/bin/app_pid.wasm
 
-# Assumes that awsm is in PATH
 .PHONY: app_pid.bc
 app_pid.bc: app_pid.wasm
 	@mkdir -p ./app_pid/bin
-	@awsm ./app_pid/bin/app_pid.wasm -o ./app_pid/bin/app_pid.bc
+	@${AWSM_CC} ./app_pid/bin/app_pid.wasm -o ./app_pid/bin/app_pid.bc
 	
 # Generate bitcode using the "fast unsafe implementations" option
 .PHONY: app_pid_us.bc
 app_pid_us.bc: app_pid.wasm
 	@mkdir -p ./app_pid/bin
-	@awsm -u ./app_pid/bin/app_pid.wasm -o ./app_pid/bin/app_pid_us.bc
+	@${AWSM_CC} -u ./app_pid/bin/app_pid.wasm -o ./app_pid/bin/app_pid_us.bc
 
 # Run unsafe code using the "No Protection" memory model
 .PHONY: app_pid_np_us
