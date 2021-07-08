@@ -1,20 +1,31 @@
-
 (module
-    ;; We need to declare a linear memory or we assert out in Awsm
+    (import "wasi_unstable" "fd_write" (func $fd_write (param i32 i32 i32 i32) (result i32)))
+    (import "wasi_unstable" "proc_exit" (func $proc_exit (param i32)))
+    
     (memory 1)
-
-    ;; This doesn't seem to be needed, but adding just in case
     (export "memory" (memory 0))
 
-    ;; We need a function table or we assert out in Awsm
     (table $tbl 0 anyfunc)
+
+    (data (i32.const 8) "panic\n")
 
     ;; We also need to manually stub out this function
     (func (export "__wasm_call_ctors"))
 
+    (func $panic
+        (i32.store (i32.const 0) (i32.const 8))  ;; iov.iov_base 
+        (i32.store (i32.const 4) (i32.const 6))  ;; iov.iov_len 
+        (call $fd_write
+            (i32.const 1) ;; file_descriptor - 1 for stdout
+            (i32.const 0) ;; *iovs - The pointer to the iov array, which is stored at memory location 0
+            (i32.const 1) ;; iovs_len - We're printing 1 string stored in an iov - so one.
+            (i32.const 20) ;; nwritten - A place in memory to store the number of bytes written
+        )
+        drop ;; Discard the number of bytes written from the top of the stack
+        (call $proc_exit (i32.const 1))
+    )
     ;; Returns the number of passed tests
-    (func (export "main")
-        (result i32)
+    (func $_start (export "_start")
         (local $tests_passed i32)
         (local $n i32)
 
@@ -25,22 +36,29 @@
         (if (i32.eq (local.get $n) (i32.const 1)) (then 
             (local.set $tests_passed (i32.add (local.get $tests_passed) (i32.const 1)))
         ) (else 
-            unreachable
+            (call $panic)
         ))
 
         ;; Test 2: if executes else block when condition evaluates to false
         (local.set $n (i32.const 0))
         (if (i32.eq (local.get $n) (i32.const 1)) (then 
-            unreachable
+            (call $panic)
         ) (else 
             (local.set $tests_passed (i32.add (local.get $tests_passed) (i32.const 1)))
         ))
 
         ;; validate that tests_passed was incremented the expected number
         (if (i32.ne (local.get $tests_passed) (i32.const 2)) (then 
-            unreachable
-        ))
-        
-        (return (local.get $tests_passed))
+            (call $panic)
+        ) 
+            ;; awsm crashes if an else is not present here!
+            (else nop)
+        )
+        (call $proc_exit (i32.const 0))
+    )
+
+    ;; awsm uses main as the entrypoint, not the normal WASI _start
+    (func (export "main")
+        (call $_start)
     )
 )
