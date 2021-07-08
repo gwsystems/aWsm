@@ -38,7 +38,7 @@ endif
 WASM_LINKER_FLAGS:=-Wl,--allow-undefined,--no-threads,--stack-first,--no-entry,--export-all,--export=main,--export=dummy
 
 clean:
-	rm -f if.wasm if.bc
+	rm -f if.wasm if.bc if_vm
 
 if.wasm:
 	wat2wasm if.wat -o if.wasm
@@ -66,4 +66,4 @@ if_vm: if.bc
 	${RUNTIME_PATH}/libc/${WASM_BACKING} \
 	${RUNTIME_PATH}/libc/env.c \
 	${RUNTIME_PATH}/memory/64bit_nix.c \
-	-o ./app_pid/bin/app_pid_vm
+	-o ./if_vm

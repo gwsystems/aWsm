@@ -1,5 +1,17 @@
 
 (module
+    ;; We need to declare a linear memory or we assert out in Awsm
+    (memory 1)
+
+    ;; This doesn't seem to be needed, but adding just in case
+    (export "memory" (memory 0))
+
+    ;; We need a function table or we assert out in Awsm
+    (table $tbl 0 anyfunc)
+
+    ;; We also need to manually stub out this function
+    (func (export "__wasm_call_ctors"))
+
     ;; Returns the number of passed tests
     (func (export "main")
         (result i32)
