@@ -58,7 +58,7 @@ app_pid_native:
 	@${CC} -lm ${OPTFLAGS} -Wall -std=c++11 ./app_pid/*.cpp -o ./app_pid/bin/app_pid_native
 
 .PHONY: app_pid.wasm
-app_pid.wasm:
+app_pid.wasm: ./dummy.cpp ./app_pid/*.cpp
 ifeq ($(USE_WASI_SDK), true)
 	@echo "Building with WASK-SDK"
 else
@@ -72,7 +72,7 @@ app_pid.bc: app_pid.wasm
 	@mkdir -p ./app_pid/bin
 	@${AWSM_CC} ./app_pid/bin/app_pid.wasm -o ./app_pid/bin/app_pid.bc
 	
-# Generate bitcode using the "fast unsafe implementations" option
+# Generate LLVM bitcode using the "fast unsafe implementations" option
 .PHONY: app_pid_us.bc
 app_pid_us.bc: app_pid.wasm
 	@mkdir -p ./app_pid/bin
