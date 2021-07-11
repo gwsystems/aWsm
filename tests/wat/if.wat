@@ -47,12 +47,14 @@
             (local.set $tests_passed (i32.add (local.get $tests_passed) (i32.const 1)))
         ))
 
+        ;; Test 3: if with no else doesn't run
+        (local.set $n (i32.const 0))
+        (if (i32.eq (local.get $n) (i32.const 3)) (then (call $panic)))
+
         ;; validate that tests_passed was incremented the expected number
         (if (i32.ne (local.get $tests_passed) (i32.const 2)) (then 
             (call $panic)
-        ) 
-            ;; awsm crashes if an else is not present here!
-            (else nop)
+        )
         )
         (call $proc_exit (i32.const 0))
     )

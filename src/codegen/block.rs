@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use llvm::BasicBlock;
 use llvm::Builder;
 use llvm::Compile;
@@ -21,18 +23,19 @@ use crate::codegen::type_conversions::wasm_func_type_to_llvm_type;
 
 use crate::wasm::Instruction;
 
-pub struct IfCtx<'a> {
+pub struct IfCtx<'a, 'b> {
     else_block: &'a BasicBlock,
     else_locals: Vec<&'a Value>,
+    else_built: &'b Cell<bool>
 }
 
 // TODO: Double check each instruction to make sure it does the right thing in both the safe and unsafe case
-pub fn compile_block<'a, 'b>(
+pub fn compile_block<'a, 'b, 'c>(
     m_ctx: &'a ModuleCtx,
     f_ctx: &'a FunctionCtx,
     breakout_stack: &mut Vec<WBreakoutTarget<'a>>,
     termination_target: &WBreakoutTarget<'a>,
-    if_ctx: Option<IfCtx<'a>>,
+    if_ctx: Option<IfCtx<'a, 'c>>,
     mut locals: Vec<&'a Value>,
     initial_bb: &'a BasicBlock,
     instructions: &'b [Instruction],
@@ -194,6 +197,7 @@ pub fn compile_block<'a, 'b>(
                 b.build_cond_br(v, if_branch_block, Some(else_branch_block));
 
                 // Then compile what's inside the if statement. This will take us through the else to the end statement
+                let else_built = Cell::new(false);
                 remaining_instructions = compile_block(
                     m_ctx,
                     f_ctx,
@@ -201,12 +205,22 @@ pub fn compile_block<'a, 'b>(
                     &inner_termination_target,
                     Some(IfCtx {
                         else_block: else_branch_block,
-                        else_locals: else_branch_locals,
+                        else_locals: else_branch_locals.clone(),
+                        else_built: &else_built
                     }),
                     if_branch_locals,
                     if_branch_block,
                     remaining_instructions,
                 );
+
+                // Handle the case where there is no else
+                if !else_built.get() {
+                    let fake_stack = Vec::new(); // Tacitly assumes an if with no else can't produce a value
+                    let mut tt = inner_termination_target.borrow_mut();
+                    tt.add_jump(else_branch_block, &else_branch_locals, &fake_stack);
+                    b.position_at_end(else_branch_block);
+                    b.build_br(tt.bb);
+                }
 
                 // Now we pop off the breakout stack
                 let used_breakout_target = breakout_stack.pop().unwrap();
@@ -235,6 +249,9 @@ pub fn compile_block<'a, 'b>(
                 b.build_br(tt.bb);
                 // Fetch the ctx
                 let if_ctx_resolved = if_ctx.as_ref().expect("malformed wasm -- else with no if");
+                // Ensure we don't build a duplicate else
+                assert_eq!(if_ctx_resolved.else_built.get(), false);
+                if_ctx_resolved.else_built.set(true);
                 // Reset the stack / locals
                 stack = Vec::new();
                 locals = if_ctx_resolved.else_locals.clone();
