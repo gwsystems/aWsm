@@ -255,10 +255,12 @@ WEAK void populate_globals() {}
 // Code that actually runs the wasm code
 IMPORT void wasmf__start(void);
 
-int runtime_argc = 0;
+u32 runtime_argc = 0;
 
 char *runtime_argv_buffer = NULL;
-int runtime_argv_buffer_len = 0;
+u32 runtime_argv_buffer_len = 0;
+
+u32 *runtime_argv_buffer_offsets = NULL;
 
 void runtime_cleanup() {
     // Cancel any pending timeout
@@ -268,17 +270,21 @@ void runtime_cleanup() {
 
     free(runtime_argv_buffer);
     runtime_argv_buffer_len = 0;
+    free(runtime_argv_buffer_offsets);
 }
 
 int runtime_main(int argc, char** argv) {
     // Set argc and argv to globals, these are later used by the WASI syscalls 
     runtime_argc = argc;
 
+    runtime_argv_buffer_offsets = calloc(argc, sizeof(u32));
+
     // Copy the null terminated args one after the other into a global with the format WASI calls expect
     for (int i = 0; i < argc; i++) {
-        size_t arg_len = strlen(argv[i]);
+        runtime_argv_buffer_offsets[i] = runtime_argv_buffer_len;
+        size_t arg_len = strlen(argv[i]) + 1;
         runtime_argv_buffer = realloc(runtime_argv_buffer, runtime_argv_buffer_len + arg_len);
-        strncpy(&runtime_argv_buffer[runtime_argv_buffer_len], argv[i], arg_len);
+        strcpy(&runtime_argv_buffer[runtime_argv_buffer_len], argv[i]);
         runtime_argv_buffer_len += (int)arg_len;
     }
 

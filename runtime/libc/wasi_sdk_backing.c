@@ -342,12 +342,15 @@ i32 wasi_snapshot_preview1_path_open(
  * @param argv_buf_offset 
  * @return i32 
  */
-i32 wasi_snapshot_preview1_args_get(i32 argv_p_offset, i32 argv_buf_offset){
+i32 wasi_snapshot_preview1_args_get(u32 argv_p_offset, u32 argv_buf_offset){
     char *argv_buf = get_memory_ptr_for_runtime(argv_buf_offset, runtime_argv_buffer_len);
-    strncpy(argv_buf, runtime_argv_buffer, runtime_argv_buffer_len);
+    memcpy(argv_buf, runtime_argv_buffer, runtime_argv_buffer_len);
 
-    u32 *argv_p = (u32 *)get_memory_ptr_for_runtime(argv_p_offset, sizeof(i32));
-    *argv_p = argv_buf_offset;
+    // Write the vector of argument base offset
+    u32 *argv_p = (u32 *)get_memory_ptr_for_runtime(argv_p_offset, sizeof(u32) * runtime_argc);
+    for (u32 i = 0; i < runtime_argc; i++){
+        *(argv_p++) = argv_buf_offset + runtime_argv_buffer_offsets[i];
+    }
 
     // TODO: What is the expected return type here
     return 0;
