@@ -18,7 +18,8 @@ jobs:
 
     strategy:
       matrix:
-        libc: [wasmception, wasi-sdk]
+        # libc: [wasmception, wasi-sdk]
+        libc: [wasi-sdk]
 
     steps:
       - uses: actions/checkout@v2
@@ -33,12 +34,12 @@ jobs:
           PATH=/usr/bin:$PATH
           llvm-config --version
 
-      - name: Get wasmception
-        if: matrix.libc == 'wasmception'
-        run: |
-          wget $WASMCEPTION_URL -O wasmception.tar.gz
-          mkdir -p wasmception
-          tar xvfz wasmception.tar.gz -C wasmception
+      # - name: Get wasmception
+      #   if: matrix.libc == 'wasmception'
+      #   run: |
+      #     wget $WASMCEPTION_URL -O wasmception.tar.gz
+      #     mkdir -p wasmception
+      #     tar xvfz wasmception.tar.gz -C wasmception
 
       - name: Get wasi-sdk
         if: matrix.libc == 'wasi-sdk'
