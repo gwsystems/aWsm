@@ -6,10 +6,10 @@ env:
   # Rust equivalent of -Werror
   RUSTFLAGS: --deny warnings
   # used during LLVM installation
-  LLVM_VERSION: 9
+  LLVM_VERSION: 12
   # URLs for WebAssembly libcs
   WASMCEPTION_URL: https://github.com/gwsystems/wasmception/releases/download/v0.2.0/wasmception-linux-x86_64-0.2.0.tar.gz
-  WASI_SDK_URL: https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-8/wasi-sdk-8.0-linux.tar.gz
+  WASI_SDK_URL: https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk-12.0-linux.tar.gz
 
 # job control
 jobs:
