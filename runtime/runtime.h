@@ -78,8 +78,6 @@ float truncf(float x);
 
 #define WASM_PAGE_SIZE (1024 * 64)
 
-#define MAX_ARGS 1
-
 // The code generator compiles in the starting number of wasm pages, and the maximum number of pages
 // If we try and allocate more than max_pages, we should fault
 extern u32 starting_pages;
