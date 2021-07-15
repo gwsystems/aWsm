@@ -109,8 +109,6 @@ INLINE i64 i64_rem(i64 a, i64 b) {
     return a % b;
 }
 
-
-
 // float to integer conversion methods
 // In C, float => int conversions always truncate
 // If a int2float(int::min_value) <= float <= int2float(int::max_value), it must always be safe to truncate it
@@ -226,29 +224,6 @@ void* allocate_n_bytes_ptr(u32 n) {
     return get_memory_ptr_for_runtime(addr, n);
 }
 
-// FIXME: Currently the timer support stuff is disabled, pending cortex_m results
-// this provides a way to add a timeout for wasm execution, and support for that
-// TODO: Add a way for awsm to give us this value
-//WEAK unsigned int wasm_execution_timeout_ms = 0;
-//sigjmp_buf timeout_jump;
-//#define JUMPING_BACK 0xBACC
-
-// Precondition: you've already loaded timeout_jump with where we should jump after the timeout
-//void handle_sigalarm(int sig) {
-//    // TODO: We use siglongjmp which resets signal stuff, so perhaps this call is unnessesary
-//    signal(sig, SIG_IGN);
-//    siglongjmp(timeout_jump, JUMPING_BACK);
-//}
-//
-//void schedule_timeout() {
-//    signal(SIGALRM, handle_sigalarm);
-//    ualarm(wasm_execution_timeout_ms * 1000, 0);
-//}
-//
-//void cancel_timeout() {
-//    ualarm(0, 0);
-//}
-
 // If we are using runtime globals, we need to populate them
 WEAK void populate_globals() {}
 
@@ -263,11 +238,6 @@ u32 runtime_argv_buffer_len = 0;
 u32 *runtime_argv_buffer_offsets = NULL;
 
 void runtime_cleanup() {
-    // Cancel any pending timeout
-    //    if (wasm_execution_timeout_ms) {
-    //        cancel_timeout();
-    //    }
-
     free(runtime_argv_buffer);
     runtime_argv_buffer_len = 0;
     free(runtime_argv_buffer_offsets);
@@ -304,18 +274,6 @@ int runtime_main(int argc, char** argv) {
     populate_globals();
     switch_into_runtime();
     populate_memory();
-
-    // In the case of a real timeout being compiled in, handle that
-//    if (wasm_execution_timeout_ms) {
-//        // Set the jumpoint to here, and save the signal mask
-//        int res = sigsetjmp(timeout_jump, 1);
-//        if (res != 0) {
-//            assert(res == JUMPING_BACK);
-//            printf("WE DECIDED TO GIVE UP\n");
-//            return -JUMPING_BACK;
-//        }
-//        schedule_timeout();
-//    }
 
     stub_init();
     atexit(runtime_cleanup);
