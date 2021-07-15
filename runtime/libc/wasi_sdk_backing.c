@@ -288,50 +288,6 @@ static i32 wasi_fromerrno(int errno_) {
     return 0;
 }
 
-// file operations
-i32 wasi_snapshot_preview1_path_open(
-        i32 dirfd,
-        u32 lookupflags,
-        u32 path_off,
-        u32 path_len,
-        u32 oflags,
-        u64 fs_rights_base,
-        u64 fs_rights_inheriting,
-        u32 fdflags,
-        u32 fd_off) {
-    // get path
-    char* path = get_memory_string(path_off);
-
-    // translate o_flags and fs_flags into flags and mode
-    int flags = (
-            ((oflags & WASI_O_CREAT    ) ? O_CREAT     : 0) |
-            ((oflags & WASI_O_DIRECTORY) ? O_DIRECTORY : 0) |
-            ((oflags & WASI_O_EXCL     ) ? O_EXCL      : 0) |
-            ((oflags & WASI_O_TRUNC    ) ? O_TRUNC     : 0) |
-            ((fdflags & WASI_FDFLAG_APPEND  ) ? O_APPEND   : 0) |
-            ((fdflags & WASI_FDFLAG_DSYNC   ) ? O_DSYNC    : 0) |
-            ((fdflags & WASI_FDFLAG_NONBLOCK) ? O_NONBLOCK : 0) |
-            ((fdflags & WASI_FDFLAG_RSYNC   ) ? O_RSYNC    : 0) |
-            ((fdflags & WASI_FDFLAG_SYNC    ) ? O_SYNC     : 0));
-    if ((fs_rights_base & WASI_RIGHT_FD_WRITE) &&
-        (fs_rights_base & WASI_RIGHT_FD_READ)) {
-        flags |= O_RDWR;
-    } else if (fs_rights_base & WASI_RIGHT_FD_WRITE) {
-        flags |= O_WRONLY;
-    } else if (fs_rights_base & WASI_RIGHT_FD_READ) {
-        flags |= O_RDONLY;
-    }
-
-    int mode = 0644;
-    int fd = openat(dirfd, path, flags, mode);
-    if (fd < 0) {
-        return wasi_fromerrno(errno);
-    }
-
-    set_i32(fd_off, fd);
-    return WASI_ESUCCESS;
-}
-
 /**
  * @brief Used by a WASI module to copy the argument buffer into linear memory write an 
  * indirect to the base offset of the buffer 
@@ -373,6 +329,23 @@ i32 wasi_snapshot_preview1_args_sizes_get(i32 argc_offset, i32 args_size_offset)
     return 0;
 }
 
+// TODO: wasi_snapshot_preview1_clock_res_get
+
+i32 wasi_snapshot_preview1_clock_time_get(u32 clock_id, u64 precision, u32 time_off) {
+    struct timespec tp;
+    clock_gettime(clock_id, &tp);
+    set_i64(time_off, (uint64_t)tp.tv_sec*1000000000ULL + (uint64_t)tp.tv_nsec);
+    return WASI_ESUCCESS;
+}
+
+// TODO: wasi_snapshot_preview1_environ_get
+
+// TODO: wasi_snapshot_preview1_environ_sizes_get
+
+// TODO: wasi_snapshot_preview1_fd_advise
+
+// TODO: wasi_snapshot_preview1_fd_allocate
+
 i32 wasi_snapshot_preview1_fd_close(i32 fd) {
     i32 res = (i32) close(fd);
 
@@ -380,6 +353,15 @@ i32 wasi_snapshot_preview1_fd_close(i32 fd) {
         return wasi_fromerrno(errno);
     }
     return res;
+}
+
+i32 wasi_snapshot_preview1_fd_datasync(i32 fd) {
+    int res = fdatasync(fd);
+    if (res == -1) {
+        return wasi_fromerrno(errno);
+    }
+
+    return WASI_ESUCCESS;
 }
 
 i32 wasi_snapshot_preview1_fd_fdstat_get(i32 fd, u32 buf_offset) {
@@ -430,25 +412,21 @@ i32 wasi_snapshot_preview1_fd_fdstat_set_flags(i32 fd, u32 fdflags) {
     return WASI_ESUCCESS;
 }
 
-i32 wasi_snapshot_preview1_fd_seek(i32 fd, i64 file_offset, i32 whence, u32 newoffset_off) {
-    off_t res = lseek(fd, (off_t)file_offset, whence);
+// TODO: wasi_snapshot_preview1_fd_fdstat_set_rights
 
-    if (res == -1) {
-        return wasi_fromerrno(errno);
-    }
+// TODO: wasi_snapshot_preview1_fd_filestat_get
 
-    set_i64(newoffset_off, res);
-    return WASI_ESUCCESS;
-}
+// TODO: wasi_snapshot_preview1_fd_filestat_set_size
 
-i32 wasi_snapshot_preview1_fd_datasync(i32 fd) {
-    int res = fdatasync(fd);
-    if (res == -1) {
-        return wasi_fromerrno(errno);
-    }
+// TODO: wasi_snapshot_preview1_fd_filestat_set_times
 
-    return WASI_ESUCCESS;
-}
+// TODO: wasi_snapshot_preview1_fd_pread
+
+// TODO: wasi_snapshot_preview1_fd_prestat_get
+
+// TODO: wasi_snapshot_preview1_fd_prestat_dir_name
+
+// TODO: wasi_snapshot_preview1_fd_pwrite
 
 i32 wasi_snapshot_preview1_fd_read(i32 fd, i32 iov_offset, i32 iovcnt, i32 nread_off) {
     i32 sum = 0;
@@ -468,6 +446,25 @@ i32 wasi_snapshot_preview1_fd_read(i32 fd, i32 iov_offset, i32 iovcnt, i32 nread
     return WASI_ESUCCESS;
 }
 
+// TODO: wasi_snapshot_preview1_fd_readdir
+
+// TODO: wasi_snapshot_preview1_fd_renumber
+
+i32 wasi_snapshot_preview1_fd_seek(i32 fd, i64 file_offset, i32 whence, u32 newoffset_off) {
+    off_t res = lseek(fd, (off_t)file_offset, whence);
+
+    if (res == -1) {
+        return wasi_fromerrno(errno);
+    }
+
+    set_i64(newoffset_off, res);
+    return WASI_ESUCCESS;
+}
+
+// TODO: wasi_snapshot_preview1_fd_sync
+
+// TODO: wasi_snapshot_preview1_fd_tell
+
 i32 wasi_snapshot_preview1_fd_write(i32 fd, i32 iov_offset, i32 iovcnt, i32 nwritten_off) {
     i32 sum = 0;
     struct wasi_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasi_iovec));
@@ -486,7 +483,18 @@ i32 wasi_snapshot_preview1_fd_write(i32 fd, i32 iov_offset, i32 iovcnt, i32 nwri
     return WASI_ESUCCESS;
 }
 
-// other filesystem operations
+i32 wasi_snapshot_preview1_path_create_directory(i32 fd, u32 path_off, u32 path_len) {
+    // get path
+    char* path = get_memory_string(path_off);
+
+    int res = mkdirat(fd, path, 0777);
+    if (res == -1) {
+        return wasi_fromerrno(errno);
+    }
+
+    return WASI_ESUCCESS;
+}
+
 i32 wasi_snapshot_preview1_path_filestat_get(i32 fd, u32 flags, u32 path_off, u32 path_len, u32 buf_off) {
     // get path/filestat
     char* path = get_memory_string(path_off);
@@ -510,6 +518,61 @@ i32 wasi_snapshot_preview1_path_filestat_get(i32 fd, u32 flags, u32 path_off, u3
     return WASI_ESUCCESS;
 }
 
+// TODO: wasi_snapshot_preview1_path_filestat_set_times
+
+// TODO: wasi_snapshot_preview1_path_link
+
+i32 wasi_snapshot_preview1_path_open(
+        i32 dirfd,
+        u32 lookupflags,
+        u32 path_off,
+        u32 path_len,
+        u32 oflags,
+        u64 fs_rights_base,
+        u64 fs_rights_inheriting,
+        u32 fdflags,
+        u32 fd_off) {
+    // get path
+    char* path = get_memory_string(path_off);
+
+    // translate o_flags and fs_flags into flags and mode
+    int flags = (
+            ((oflags & WASI_O_CREAT    ) ? O_CREAT     : 0) |
+            ((oflags & WASI_O_DIRECTORY) ? O_DIRECTORY : 0) |
+            ((oflags & WASI_O_EXCL     ) ? O_EXCL      : 0) |
+            ((oflags & WASI_O_TRUNC    ) ? O_TRUNC     : 0) |
+            ((fdflags & WASI_FDFLAG_APPEND  ) ? O_APPEND   : 0) |
+            ((fdflags & WASI_FDFLAG_DSYNC   ) ? O_DSYNC    : 0) |
+            ((fdflags & WASI_FDFLAG_NONBLOCK) ? O_NONBLOCK : 0) |
+            ((fdflags & WASI_FDFLAG_RSYNC   ) ? O_RSYNC    : 0) |
+            ((fdflags & WASI_FDFLAG_SYNC    ) ? O_SYNC     : 0));
+    if ((fs_rights_base & WASI_RIGHT_FD_WRITE) &&
+        (fs_rights_base & WASI_RIGHT_FD_READ)) {
+        flags |= O_RDWR;
+    } else if (fs_rights_base & WASI_RIGHT_FD_WRITE) {
+        flags |= O_WRONLY;
+    } else if (fs_rights_base & WASI_RIGHT_FD_READ) {
+        flags |= O_RDONLY;
+    }
+
+    int mode = 0644;
+    int fd = openat(dirfd, path, flags, mode);
+    if (fd < 0) {
+        return wasi_fromerrno(errno);
+    }
+
+    set_i32(fd_off, fd);
+    return WASI_ESUCCESS;
+}
+
+// TODO: wasi_snapshot_preview1_path_readlink
+
+// TODO: wasi_snapshot_preview1_path_remove_directory
+
+// TODO: wasi_snapshot_preview1_path_rename
+
+// TODO: wasi_snapshot_preview1_path_symlink
+
 i32 wasi_snapshot_preview1_path_unlink_file(i32 fd, u32 path_off, u32 path_len) {
     // get path
     char* path = get_memory_string(path_off);
@@ -522,60 +585,21 @@ i32 wasi_snapshot_preview1_path_unlink_file(i32 fd, u32 path_off, u32 path_len) 
     return WASI_ESUCCESS;
 }
 
-i32 wasi_snapshot_preview1_path_create_directory(i32 fd, u32 path_off, u32 path_len) {
-    // get path
-    char* path = get_memory_string(path_off);
+// TODO: wasi_snapshot_preview1_poll_oneoff
 
-    int res = mkdirat(fd, path, 0777);
-    if (res == -1) {
-        return wasi_fromerrno(errno);
-    }
-
-    return WASI_ESUCCESS;
-}
-
-// clock operations
-i32 wasi_snapshot_preview1_clock_time_get(u32 clock_id, u64 precision, u32 time_off) {
-    struct timespec tp;
-    clock_gettime(clock_id, &tp);
-    set_i64(time_off, (uint64_t)tp.tv_sec*1000000000ULL + (uint64_t)tp.tv_nsec);
-    return WASI_ESUCCESS;
-}
-
-// process operations
 __attribute__((noreturn))
 void wasi_snapshot_preview1_proc_exit(i32 exitcode) {
     exit(exitcode);
 }
 
-// Unsupported WASI calls
-// TODO: wasi_snapshot_preview1_environ_get
-// TODO: wasi_snapshot_preview1_environ_sizes_get
-// TODO: wasi_snapshot_preview1_clock_res_get
-// TODO: wasi_snapshot_preview1_fd_advise
-// TODO: wasi_snapshot_preview1_fd_allocate
-// TODO: wasi_snapshot_preview1_fd_fdstat_set_rights
-// TODO: wasi_snapshot_preview1_fd_filestat_get
-// TODO: wasi_snapshot_preview1_fd_filestat_set_size
-// TODO: wasi_snapshot_preview1_fd_filestat_set_times
-// TODO: wasi_snapshot_preview1_fd_pread
-// TODO: wasi_snapshot_preview1_fd_prestat_get
-// TODO: wasi_snapshot_preview1_fd_prestat_dir_name
-// TODO: wasi_snapshot_preview1_fd_pwrite
-// TODO: wasi_snapshot_preview1_fd_readdir
-// TODO: wasi_snapshot_preview1_fd_renumber
-// TODO: wasi_snapshot_preview1_fd_sync
-// TODO: wasi_snapshot_preview1_fd_tell
-// TODO: wasi_snapshot_preview1_path_filestat_set_times
-// TODO: wasi_snapshot_preview1_path_link
-// TODO: wasi_snapshot_preview1_path_readlink
-// TODO: wasi_snapshot_preview1_path_remove_directory
-// TODO: wasi_snapshot_preview1_path_rename
-// TODO: wasi_snapshot_preview1_path_symlink
-// TODO: wasi_snapshot_preview1_poll_oneoff
 // TODO: wasi_snapshot_preview1_proc_raise
-// TODO: wasi_snapshot_preview1_sched_yield
+
 // TODO: wasi_snapshot_preview1_random_get
+
+// TODO: wasi_snapshot_preview1_sched_yield
+
 // TODO: wasi_snapshot_preview1_sock_recv
+
 // TODO: wasi_snapshot_preview1_sock_send
+
 // TODO: wasi_snapshot_preview1_sock_shutdown
