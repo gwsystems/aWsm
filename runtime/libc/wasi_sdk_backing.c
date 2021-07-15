@@ -34,9 +34,7 @@ int main(int argc, char* argv[]) {
 
 // Called before wasmf_main
 void stub_init() {
-    switch_out_of_runtime();
-    // wasmf___wasm_call_ctors();
-    switch_into_runtime();
+    return;
 }
 // WASI API implementations
 
