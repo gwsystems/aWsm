@@ -86,12 +86,14 @@ WASMCEPTION_CLANG = WASMCEPTION_PATH + "/dist/bin/clang"
 WASMCEPTION_SYSROOT = WASMCEPTION_PATH + "/sysroot"
 WASMCEPTION_FLAGS = "--target=wasm32-unknown-unknown-wasm -nostartfiles -O3 -flto"
 WASMCEPTION_BACKING = "wasmception_backing.c"
+WASMCEPTION_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--no-threads,--stack-first,--no-entry,--export-all,--export=main,--export=dummy"
 
 WASI_SDK_PATH = ROOT_PATH + "/wasi-sdk"
 WASI_SDK_CLANG = WASI_SDK_PATH + "/bin/clang"
 WASI_SDK_SYSROOT = WASI_SDK_PATH + "/share/wasi-sysroot"
 WASI_SDK_FLAGS = "--target=wasm32-wasi -mcpu=mvp -O3 -flto"
 WASI_SDK_BACKING = "wasi_sdk_backing.c"
+WASI_SDK_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--threads=1,--stack-first"
 
 # download WASI-SDK if it is not in the expected path
 if sys.platform == "linux" or sys.platform == "linux2":
@@ -111,13 +113,10 @@ if args.wasi_sdk:
         sp.check_call(['rm', 'wasi-sdk.tar.gz'], cwd=cwd)
 
 # determine best toolchain to use
-WASM_CLANG, WASM_SYSROOT, WASM_FLAGS, WASM_BACKING = bestpath([
-    (WASMCEPTION_CLANG, WASMCEPTION_SYSROOT, WASMCEPTION_FLAGS, WASMCEPTION_BACKING, args.wasmception),
-    (WASI_SDK_CLANG, WASI_SDK_SYSROOT, WASI_SDK_FLAGS, WASI_SDK_BACKING, args.wasi_sdk),
+WASM_CLANG, WASM_SYSROOT, WASM_FLAGS, WASM_BACKING, WASM_LINKER_FLAGS = bestpath([
+    (WASMCEPTION_CLANG, WASMCEPTION_SYSROOT, WASMCEPTION_FLAGS, WASMCEPTION_BACKING, WASMCEPTION_LINKER_FLAGS, args.wasmception),
+    (WASI_SDK_CLANG, WASI_SDK_SYSROOT, WASI_SDK_FLAGS, WASI_SDK_BACKING, WASI_SDK_LINKER_FLAGS, args.wasi_sdk),
 ])
-
-# These flags are all somewhat important -- see @Others for more information
-WASM_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--threads=1"
 
 WASM_FLAGS = ' '.join([
     WASM_LINKER_FLAGS,
