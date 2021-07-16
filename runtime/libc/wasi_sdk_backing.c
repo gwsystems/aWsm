@@ -35,12 +35,17 @@ u32 runtime_argv_buffer_len = 0;
 u32 *runtime_argv_buffer_offsets = NULL;
 
 void runtime_cleanup() {
+    // TODO: What if atexit triggers when inside of runtime?
+    // Before implementing more complex state machine transitions, we should decide if segmentation
+    // (the only thing that uses these calls) merits this additional complexity.
+    switch_into_runtime();
     free(runtime_argv_buffer);
     runtime_argv_buffer_len = 0;
     free(runtime_argv_buffer_offsets);
+    printf("mem use = %d\n", (int) memory_size);
 }
 
-int main(int argc, char* argv[]) {
+void runtime_args_init(int argc, char* argv[]) {
     // Set argc and argv to globals, these are later used by the WASI syscalls 
     runtime_argc = argc;
 
@@ -54,31 +59,17 @@ int main(int argc, char* argv[]) {
         strcpy(&runtime_argv_buffer[runtime_argv_buffer_len], argv[i]);
         runtime_argv_buffer_len += (int)arg_len;
     }
+}
 
-    // Setup the linear memory and function table
-    alloc_linear_memory();
-    populate_table();
-
-    // Setup our allocation logic
-    runtime_heap_base = wasmg___heap_base;
-    printf("starting rhb %d\n", runtime_heap_base);
-    if (runtime_heap_base == 0) {
-        runtime_heap_base = memory_size;
-    }
-
-    // Setup the global values (if needed), and populate the linear memory
-    switch_out_of_runtime();
-    populate_globals();
-    switch_into_runtime();
-    populate_memory();
+int main(int argc, char* argv[]) {
+    runtime_init();
+    runtime_args_init(argc, argv);
 
     atexit(runtime_cleanup);
 
     switch_out_of_runtime();
     wasmf__start();
     switch_into_runtime();
-
-    printf("mem use = %d\n", (int) memory_size);
     
     // TODO: Improve "implicit exit" path
     // My understanding is that _start can optionally return. How can we get this?

@@ -5,20 +5,7 @@ int printf_(const char* format, ...);
 volatile int CORTEX_M_ARG_C = 0;
 
 int runtime_main(int argc, char** argv) {
-    // Setup the linear memory and function table
-    alloc_linear_memory();
-    populate_table();
-    // Setup our allocation logic
-    runtime_heap_base = wasmg___heap_base;
-    printf("starting rhb %d\n", runtime_heap_base);
-    if (runtime_heap_base == 0) {
-        runtime_heap_base = memory_size;
-    }
-    // Setup the global values (if needed), and populate the linear memory
-    switch_out_of_runtime();
-    populate_globals();
-    switch_into_runtime();
-    populate_memory();
+	runtime_init();
 
     u32 array_offset = allocate_n_bytes(argc * sizeof(i32));
     u32* array_ptr = get_memory_ptr_void(array_offset, argc * sizeof(i32));

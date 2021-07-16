@@ -226,3 +226,17 @@ void* allocate_n_bytes_ptr(u32 n) {
 
 // If we are using runtime globals, we need to populate them
 WEAK void populate_globals() {}
+
+void runtime_init(){
+    alloc_linear_memory();
+    populate_table();
+    switch_out_of_runtime();
+    populate_globals();
+    switch_into_runtime();
+    populate_memory();
+
+    runtime_heap_base = wasmg___heap_base;
+    if (runtime_heap_base == 0) {
+        runtime_heap_base = memory_size;
+    }
+}
