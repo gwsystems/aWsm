@@ -154,11 +154,5 @@ void stub_init();
 // The runtime entrypoint must be called
 int runtime_main(int argc, char** argv);
 
-// Globals used to buffer arguments pending WASI calls
-extern u32 runtime_argc;
-extern u32 *runtime_argv_buffer_offsets;
-extern char *runtime_argv_buffer;
-extern u32 runtime_argv_buffer_len;
-
 extern WEAK u32 wasmg___heap_base;
 extern u32 runtime_heap_base;
