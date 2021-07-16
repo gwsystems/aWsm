@@ -236,6 +236,7 @@ void runtime_init(){
     populate_memory();
 
     runtime_heap_base = wasmg___heap_base;
+    printf("starting rhb %d\n", runtime_heap_base);
     if (runtime_heap_base == 0) {
         runtime_heap_base = memory_size;
     }
