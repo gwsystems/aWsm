@@ -31,33 +31,56 @@
 IMPORT void wasmf__start(void);
 u32 runtime_argc = 0;
 char *runtime_argv_buffer = NULL;
+
+void runtime_argv_buffer_free() {
+    free(runtime_argv_buffer);
+}
+
 u32 runtime_argv_buffer_len = 0;
+
 u32 *runtime_argv_buffer_offsets = NULL;
 
-void runtime_cleanup() {
-    // TODO: What if atexit triggers when inside of runtime?
-    // Before implementing more complex state machine transitions, we should decide if segmentation
-    // (the only thing that uses these calls) merits this additional complexity.
-    switch_into_runtime();
-    free(runtime_argv_buffer);
-    runtime_argv_buffer_len = 0;
+void runtime_argv_buffer_offsets_free() {
     free(runtime_argv_buffer_offsets);
+}
+
+void runtime_cleanup() {
     printf("mem use = %d\n", (int) memory_size);
 }
 
+
 void runtime_args_init(int argc, char* argv[]) {
-    // Set argc and argv to globals, these are later used by the WASI syscalls 
+    /* Set argc and argv to globals, these are later used by the WASI syscalls */
     runtime_argc = argc;
-
     runtime_argv_buffer_offsets = calloc(argc, sizeof(u32));
+    if (runtime_argv_buffer_offsets == NULL) {
+        fprintf(stderr, "Error allocating runtime_argv_buffer_offsets: %s", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    atexit(runtime_argv_buffer_offsets_free);
 
-    // Copy the null terminated args one after the other into a global with the format WASI calls expect
-    for (int i = 0; i < argc; i++) {
+    int i;
+
+    /* Calculate vector of argument offsets and argument buffer length */
+    for (i = 0; i < argc; i++) {
         runtime_argv_buffer_offsets[i] = runtime_argv_buffer_len;
-        size_t arg_len = strlen(argv[i]) + 1;
-        runtime_argv_buffer = realloc(runtime_argv_buffer, runtime_argv_buffer_len + arg_len);
-        strcpy(&runtime_argv_buffer[runtime_argv_buffer_len], argv[i]);
-        runtime_argv_buffer_len += (int)arg_len;
+        runtime_argv_buffer_len += (u32)(strlen(argv[i]) + 1);
+    }
+
+    /* Allocate argument buffer */
+    runtime_argv_buffer = malloc(runtime_argv_buffer_len);
+    if (runtime_argv_buffer == NULL) {
+        fprintf(stderr, "Error allocating runtime_argv_buffer: %s", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    atexit(runtime_argv_buffer_free);
+        
+    /* Copy the arguments consecutively into the buffer based on the offsets */
+    for (i = 0; i < argc - 1; i++) {
+        strncpy(&runtime_argv_buffer[runtime_argv_buffer_offsets[i]], argv[i], runtime_argv_buffer_offsets[i + 1] - runtime_argv_buffer_offsets[i]);
+    }
+    if (argc > 0) {
+        strncpy(&runtime_argv_buffer[runtime_argv_buffer_offsets[i]], argv[i], runtime_argv_buffer_len - runtime_argv_buffer_offsets[i]);
     }
 }
 
