@@ -90,12 +90,10 @@ int main(int argc, char* argv[]) {
 
     atexit(runtime_cleanup);
 
+    atexit(switch_into_runtime);
     switch_out_of_runtime();
     wasmf__start();
-    switch_into_runtime();
-    
-    // TODO: Improve "implicit exit" path
-    // My understanding is that _start can optionally return. How can we get this?
+    /* WASI wrappes non zero status codes in exits, but silently returns on status code 0 */
     return 0;
 }
 
