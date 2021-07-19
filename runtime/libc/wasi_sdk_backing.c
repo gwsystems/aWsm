@@ -181,6 +181,8 @@ enum wasi_rights {
     WASI_RIGHT_SOCK_SHUTDOWN            = 0x0000000010000000ULL,
 };
 
+typedef uint16_t wasi_errno_t;
+
 enum wasi_errnos {
     WASI_ESUCCESS           = 0,
     WASI_E2BIG              = 1,
@@ -262,7 +264,7 @@ enum wasi_errnos {
 };
 
 // errno code handling
-static i32 wasi_fromerrno(int errno_) {
+static wasi_errno_t wasi_fromerrno(int errno_) {
     switch (errno_) {
         case 0:                 return WASI_ESUCCESS;
         case E2BIG:             return WASI_E2BIG;
@@ -357,7 +359,7 @@ static i32 wasi_fromerrno(int errno_) {
  * @param argv_buf_offset 
  * @return i32 
  */
-i32 wasi_snapshot_preview1_args_get(u32 argv_p_offset, u32 argv_buf_offset){
+wasi_errno_t wasi_snapshot_preview1_args_get(u32 argv_p_offset, u32 argv_buf_offset){
     char *argv_buf = get_memory_ptr_for_runtime(argv_buf_offset, runtime_argv_buffer_len);
     memcpy(argv_buf, runtime_argv_buffer, runtime_argv_buffer_len);
 
@@ -379,7 +381,7 @@ i32 wasi_snapshot_preview1_args_get(u32 argv_p_offset, u32 argv_buf_offset){
  * @param args_size linear memory offset where we should write the length of the args buffer
  * @return i32 
  */
-i32 wasi_snapshot_preview1_args_sizes_get(i32 argc_offset, i32 args_size_offset){
+wasi_errno_t wasi_snapshot_preview1_args_sizes_get(i32 argc_offset, i32 args_size_offset){
     u32 *argc = (u32 *)get_memory_ptr_for_runtime(argc_offset, sizeof(i32));
     *argc = runtime_argc;
     
@@ -392,7 +394,7 @@ i32 wasi_snapshot_preview1_args_sizes_get(i32 argc_offset, i32 args_size_offset)
 
 // TODO: wasi_snapshot_preview1_clock_res_get
 
-i32 wasi_snapshot_preview1_clock_time_get(u32 clock_id, u64 precision, u32 time_off) {
+wasi_errno_t wasi_snapshot_preview1_clock_time_get(u32 clock_id, u64 precision, u32 time_off) {
     struct timespec tp;
     clock_gettime(clock_id, &tp);
     set_i64(time_off, (uint64_t)tp.tv_sec*1000000000ULL + (uint64_t)tp.tv_nsec);
@@ -407,16 +409,16 @@ i32 wasi_snapshot_preview1_clock_time_get(u32 clock_id, u64 precision, u32 time_
 
 // TODO: wasi_snapshot_preview1_fd_allocate
 
-i32 wasi_snapshot_preview1_fd_close(i32 fd) {
+wasi_errno_t wasi_snapshot_preview1_fd_close(i32 fd) {
     i32 res = (i32) close(fd);
 
     if (res == -1) {
         return wasi_fromerrno(errno);
     }
-    return res;
+    return WASI_ESUCCESS;
 }
 
-i32 wasi_snapshot_preview1_fd_datasync(i32 fd) {
+wasi_errno_t wasi_snapshot_preview1_fd_datasync(i32 fd) {
     int res = fdatasync(fd);
     if (res == -1) {
         return wasi_fromerrno(errno);
@@ -425,7 +427,7 @@ i32 wasi_snapshot_preview1_fd_datasync(i32 fd) {
     return WASI_ESUCCESS;
 }
 
-i32 wasi_snapshot_preview1_fd_fdstat_get(i32 fd, u32 buf_offset) {
+wasi_errno_t wasi_snapshot_preview1_fd_fdstat_get(i32 fd, u32 buf_offset) {
     struct wasi_fdstat* fdstat = get_memory_ptr_void(buf_offset, sizeof(struct wasi_fdstat));
 
     struct stat stat;
@@ -459,7 +461,7 @@ i32 wasi_snapshot_preview1_fd_fdstat_get(i32 fd, u32 buf_offset) {
     return WASI_ESUCCESS;
 }
 
-i32 wasi_snapshot_preview1_fd_fdstat_set_flags(i32 fd, u32 fdflags) {
+wasi_errno_t wasi_snapshot_preview1_fd_fdstat_set_flags(i32 fd, u32 fdflags) {
     int flags = (
         ((flags & WASI_FDFLAG_APPEND  ) ? O_APPEND   : 0) |
         ((flags & WASI_FDFLAG_DSYNC   ) ? O_DSYNC    : 0) |
@@ -489,7 +491,7 @@ i32 wasi_snapshot_preview1_fd_fdstat_set_flags(i32 fd, u32 fdflags) {
 
 // TODO: wasi_snapshot_preview1_fd_pwrite
 
-i32 wasi_snapshot_preview1_fd_read(i32 fd, i32 iov_offset, i32 iovcnt, i32 nread_off) {
+wasi_errno_t wasi_snapshot_preview1_fd_read(i32 fd, i32 iov_offset, i32 iovcnt, i32 nread_off) {
     i32 sum = 0;
     struct wasi_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasi_iovec));
 
@@ -511,7 +513,7 @@ i32 wasi_snapshot_preview1_fd_read(i32 fd, i32 iov_offset, i32 iovcnt, i32 nread
 
 // TODO: wasi_snapshot_preview1_fd_renumber
 
-i32 wasi_snapshot_preview1_fd_seek(i32 fd, i64 file_offset, i32 whence, u32 newoffset_off) {
+wasi_errno_t wasi_snapshot_preview1_fd_seek(i32 fd, i64 file_offset, i32 whence, u32 newoffset_off) {
     off_t res = lseek(fd, (off_t)file_offset, whence);
 
     if (res == -1) {
@@ -526,7 +528,7 @@ i32 wasi_snapshot_preview1_fd_seek(i32 fd, i64 file_offset, i32 whence, u32 newo
 
 // TODO: wasi_snapshot_preview1_fd_tell
 
-i32 wasi_snapshot_preview1_fd_write(i32 fd, i32 iov_offset, i32 iovcnt, i32 nwritten_off) {
+wasi_errno_t wasi_snapshot_preview1_fd_write(i32 fd, i32 iov_offset, i32 iovcnt, i32 nwritten_off) {
     i32 sum = 0;
     struct wasi_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasi_iovec));
 
@@ -544,7 +546,7 @@ i32 wasi_snapshot_preview1_fd_write(i32 fd, i32 iov_offset, i32 iovcnt, i32 nwri
     return WASI_ESUCCESS;
 }
 
-i32 wasi_snapshot_preview1_path_create_directory(i32 fd, u32 path_off, u32 path_len) {
+wasi_errno_t wasi_snapshot_preview1_path_create_directory(i32 fd, u32 path_off, u32 path_len) {
     // get path
     char* path = get_memory_string(path_off);
 
@@ -556,7 +558,7 @@ i32 wasi_snapshot_preview1_path_create_directory(i32 fd, u32 path_off, u32 path_
     return WASI_ESUCCESS;
 }
 
-i32 wasi_snapshot_preview1_path_filestat_get(i32 fd, u32 flags, u32 path_off, u32 path_len, u32 buf_off) {
+wasi_errno_t wasi_snapshot_preview1_path_filestat_get(i32 fd, u32 flags, u32 path_off, u32 path_len, u32 buf_off) {
     // get path/filestat
     char* path = get_memory_string(path_off);
     struct wasi_filestat* filestat = get_memory_ptr_void(buf_off, sizeof(struct wasi_filestat));
@@ -583,7 +585,7 @@ i32 wasi_snapshot_preview1_path_filestat_get(i32 fd, u32 flags, u32 path_off, u3
 
 // TODO: wasi_snapshot_preview1_path_link
 
-i32 wasi_snapshot_preview1_path_open(
+wasi_errno_t wasi_snapshot_preview1_path_open(
         i32 dirfd,
         u32 lookupflags,
         u32 path_off,
@@ -634,7 +636,7 @@ i32 wasi_snapshot_preview1_path_open(
 
 // TODO: wasi_snapshot_preview1_path_symlink
 
-i32 wasi_snapshot_preview1_path_unlink_file(i32 fd, u32 path_off, u32 path_len) {
+wasi_errno_t wasi_snapshot_preview1_path_unlink_file(i32 fd, u32 path_off, u32 path_len) {
     // get path
     char* path = get_memory_string(path_off);
 
