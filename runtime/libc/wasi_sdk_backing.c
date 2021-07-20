@@ -28,16 +28,16 @@
 #define fdatasync fsync
 #endif
 
-// Code that actually runs the wasm code
+/* Code that actually runs the wasm code */
 IMPORT void wasmf__start(void);
 
-// Globals
+/* Globals */
 u32 runtime_argc = 0;
 char *runtime_argv_buffer = NULL;
 u32 runtime_argv_buffer_len = 0;
 u32 *runtime_argv_buffer_offsets = NULL;
 
-// Atexit callbacks
+/* Atexit callbacks */
 void runtime_argv_buffer_free() {
     free(runtime_argv_buffer);
 }

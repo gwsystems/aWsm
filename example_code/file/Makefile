@@ -10,4 +10,3 @@ file.bc: file.wasm
 
 file_vm: file.bc ../../runtime/runtime.c ../../runtime/libc/wasi_sdk_backing.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c
 	clang -lm  -O3 -flto -g file.bc ../../runtime/runtime.c ../../runtime/libc/wasi_sdk_backing.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c -o file_vm
-	
