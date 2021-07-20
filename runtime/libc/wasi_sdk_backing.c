@@ -689,14 +689,14 @@ wasi_errno_t wasi_snapshot_preview1_fd_renumber(
  * @param fd
  * @param file_offset The number of bytes to move.
  * @param whence The base from which the offset is relative.
- * @param newoffset_retprt The new offset of the file descriptor, relative to the start of the file.
+ * @param newoffset_retptr The new offset of the file descriptor, relative to the start of the file.
  * @return status code
  */
 wasi_errno_t wasi_snapshot_preview1_fd_seek(
     wasi_fd_t fd, 
     wasi_filedelta_t file_offset, 
     wasi_whence_t whence, 
-    wasi_filesize_t newoffset_retprt
+    wasi_filesize_t newoffset_retptr
 ) {
     off_t res = lseek(fd, (off_t)file_offset, whence);
 
@@ -704,7 +704,7 @@ wasi_errno_t wasi_snapshot_preview1_fd_seek(
         return wasi_fromerrno(errno);
     }
 
-    set_i64(newoffset_retprt, res);
+    set_i64(newoffset_retptr, res);
     return WASI_ESUCCESS;
 }
 
