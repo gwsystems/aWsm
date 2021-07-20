@@ -16,6 +16,7 @@
 #include <sys/uio.h>
 
 #include "../runtime.h"
+#include "./wasi_sdk_backing.h"
 
 /* POSIX compatibility shims */
 #ifndef O_RSYNC
@@ -29,16 +30,17 @@
 
 // Code that actually runs the wasm code
 IMPORT void wasmf__start(void);
+
+// Globals
 u32 runtime_argc = 0;
 char *runtime_argv_buffer = NULL;
+u32 runtime_argv_buffer_len = 0;
+u32 *runtime_argv_buffer_offsets = NULL;
 
+// Atexit callbacks
 void runtime_argv_buffer_free() {
     free(runtime_argv_buffer);
 }
-
-u32 runtime_argv_buffer_len = 0;
-
-u32 *runtime_argv_buffer_offsets = NULL;
 
 void runtime_argv_buffer_offsets_free() {
     free(runtime_argv_buffer_offsets);
@@ -48,7 +50,13 @@ void runtime_cleanup() {
     printf("mem use = %d\n", (int) memory_size);
 }
 
-
+/**
+ * @brief Copies arguments provided to the runtime process into global data structures accessible
+ * to the WASI argument syscalls
+ * 
+ * @param argc 
+ * @param argv 
+ */
 void runtime_args_init(int argc, char* argv[]) {
     /* Set argc and argv to globals, these are later used by the WASI syscalls */
     runtime_argc = argc;
@@ -99,171 +107,12 @@ int main(int argc, char* argv[]) {
 
 // WASI API implementations
 
-// some definitions we need
-struct wasi_iovec {
-    i32 base_offset;
-    i32 len;
-};
-
-struct wasi_fdstat {
-    u8  fs_filetype;
-    u16 fs_flags;
-    u64 fs_rights_base;
-    u64 fs_rights_inheriting;
-};
-
-struct wasi_filestat {
-    u64 st_dev;
-    u64 st_ino;
-    u8 st_filetype;
-    u32 st_nlink;
-    u64 st_size;
-    u64 st_atim;
-    u64 st_mtim;
-    u64 st_ctim;
-};
-
-enum wasi_filetype {
-    WASI_FILETYPE_UNKNOWN           = 0,
-    WASI_FILETYPE_BLOCK_DEVICE      = 1,
-    WASI_FILETYPE_CHARACTER_DEVICE  = 2,
-    WASI_FILETYPE_DIRECTORY         = 3,
-    WASI_FILETYPE_REGULAR_FILE      = 4,
-    WASI_FILETYPE_SOCKET_DGRAM      = 5,
-    WASI_FILETYPE_SOCKET_STREAM     = 6,
-    WASI_FILETYPE_SYMBOLIC_LINK     = 7,
-};
-
-enum wasi_oflags {
-    WASI_O_CREAT        = 0x0001,
-    WASI_O_DIRECTORY    = 0x0002,
-    WASI_O_EXCL         = 0x0004,
-    WASI_O_TRUNC        = 0x0008,
-};
-
-enum wasi_fdflags {
-    WASI_FDFLAG_APPEND      = 0x0001,
-    WASI_FDFLAG_DSYNC       = 0x0002,
-    WASI_FDFLAG_NONBLOCK    = 0x0004,
-    WASI_FDFLAG_RSYNC       = 0x0008,
-    WASI_FDFLAG_SYNC        = 0x0010,
-};
-
-enum wasi_rights {
-    WASI_RIGHT_FD_DATASYNC              = 0x0000000000000001ULL,
-    WASI_RIGHT_FD_READ                  = 0x0000000000000002ULL,
-    WASI_RIGHT_FD_SEEK                  = 0x0000000000000004ULL,
-    WASI_RIGHT_FD_FDSTAT_SET_FLAGS      = 0x0000000000000008ULL,
-    WASI_RIGHT_FD_SYNC                  = 0x0000000000000010ULL,
-    WASI_RIGHT_FD_TELL                  = 0x0000000000000020ULL,
-    WASI_RIGHT_FD_WRITE                 = 0x0000000000000040ULL,
-    WASI_RIGHT_FD_ADVISE                = 0x0000000000000080ULL,
-    WASI_RIGHT_FD_ALLOCATE              = 0x0000000000000100ULL,
-    WASI_RIGHT_PATH_CREATE_DIRECTORY    = 0x0000000000000200ULL,
-    WASI_RIGHT_PATH_CREATE_FILE         = 0x0000000000000400ULL,
-    WASI_RIGHT_PATH_LINK_SOURCE         = 0x0000000000000800ULL,
-    WASI_RIGHT_PATH_LINK_TARGET         = 0x0000000000001000ULL,
-    WASI_RIGHT_PATH_OPEN                = 0x0000000000002000ULL,
-    WASI_RIGHT_FD_READDIR               = 0x0000000000004000ULL,
-    WASI_RIGHT_PATH_READLINK            = 0x0000000000008000ULL,
-    WASI_RIGHT_PATH_RENAME_SOURCE       = 0x0000000000010000ULL,
-    WASI_RIGHT_PATH_RENAME_TARGET       = 0x0000000000020000ULL,
-    WASI_RIGHT_PATH_FILESTAT_GET        = 0x0000000000040000ULL,
-    WASI_RIGHT_PATH_FILESTAT_SET_SIZE   = 0x0000000000080000ULL,
-    WASI_RIGHT_PATH_FILESTAT_SET_TIMES  = 0x0000000000100000ULL,
-    WASI_RIGHT_FD_FILESTAT_GET          = 0x0000000000200000ULL,
-    WASI_RIGHT_FD_FILESTAT_SET_SIZE     = 0x0000000000400000ULL,
-    WASI_RIGHT_FD_FILESTAT_SET_TIMES    = 0x0000000000800000ULL,
-    WASI_RIGHT_PATH_SYMLINK             = 0x0000000001000000ULL,
-    WASI_RIGHT_PATH_REMOVE_DIRECTORY    = 0x0000000002000000ULL,
-    WASI_RIGHT_PATH_UNLINK_FILE         = 0x0000000004000000ULL,
-    WASI_RIGHT_POLL_FD_READWRITE        = 0x0000000008000000ULL,
-    WASI_RIGHT_SOCK_SHUTDOWN            = 0x0000000010000000ULL,
-};
-
-typedef uint16_t wasi_errno_t;
-
-enum wasi_errnos {
-    WASI_ESUCCESS           = 0,
-    WASI_E2BIG              = 1,
-    WASI_EACCES             = 2,
-    WASI_EADDRINUSE         = 3,
-    WASI_EADDRNOTAVAIL      = 4,
-    WASI_EAFNOSUPPORT       = 5,
-    WASI_EAGAIN             = 6,
-    WASI_EALREADY           = 7,
-    WASI_EBADF              = 8,
-    WASI_EBADMSG            = 9,
-    WASI_EBUSY              = 10,
-    WASI_ECANCELED          = 11,
-    WASI_ECHILD             = 12,
-    WASI_ECONNABORTED       = 13,
-    WASI_ECONNREFUSED       = 14,
-    WASI_ECONNRESET         = 15,
-    WASI_EDEADLK            = 16,
-    WASI_EDESTADDRREQ       = 17,
-    WASI_EDOM               = 18,
-    WASI_EDQUOT             = 19,
-    WASI_EEXIST             = 20,
-    WASI_EFAULT             = 21,
-    WASI_EFBIG              = 22,
-    WASI_EHOSTUNREACH       = 23,
-    WASI_EIDRM              = 24,
-    WASI_EILSEQ             = 25,
-    WASI_EINPROGRESS        = 26,
-    WASI_EINTR              = 27,
-    WASI_EINVAL             = 28,
-    WASI_EIO                = 29,
-    WASI_EISCONN            = 30,
-    WASI_EISDIR             = 31,
-    WASI_ELOOP              = 32,
-    WASI_EMFILE             = 33,
-    WASI_EMLINK             = 34,
-    WASI_EMSGSIZE           = 35,
-    WASI_EMULTIHOP          = 36,
-    WASI_ENAMETOOLONG       = 37,
-    WASI_ENETDOWN           = 38,
-    WASI_ENETRESET          = 39,
-    WASI_ENETUNREACH        = 40,
-    WASI_ENFILE             = 41,
-    WASI_ENOBUFS            = 42,
-    WASI_ENODEV             = 43,
-    WASI_ENOENT             = 44,
-    WASI_ENOEXEC            = 45,
-    WASI_ENOLCK             = 46,
-    WASI_ENOLINK            = 47,
-    WASI_ENOMEM             = 48,
-    WASI_ENOMSG             = 49,
-    WASI_ENOPROTOOPT        = 50,
-    WASI_ENOSPC             = 51,
-    WASI_ENOSYS             = 52,
-    WASI_ENOTCONN           = 53,
-    WASI_ENOTDIR            = 54,
-    WASI_ENOTEMPTY          = 55,
-    WASI_ENOTRECOVERABLE    = 56,
-    WASI_ENOTSOCK           = 57,
-    WASI_ENOTSUP            = 58,
-    WASI_ENOTTY             = 59,
-    WASI_ENXIO              = 60,
-    WASI_EOVERFLOW          = 61,
-    WASI_EOWNERDEAD         = 62,
-    WASI_EPERM              = 63,
-    WASI_EPIPE              = 64,
-    WASI_EPROTO             = 65,
-    WASI_EPROTONOSUPPORT    = 66,
-    WASI_EPROTOTYPE         = 67,
-    WASI_ERANGE             = 68,
-    WASI_EROFS              = 69,
-    WASI_ESPIPE             = 70,
-    WASI_ESRCH              = 71,
-    WASI_ESTALE             = 72,
-    WASI_ETIMEDOUT          = 73,
-    WASI_ETXTBSY            = 74,
-    WASI_EXDEV              = 75,
-    WASI_ENOTCAPABLE        = 76,
-};
-
-// errno code handling
+/**
+ * @brief Converts POSIX status codes to WASI
+ * 
+ * @param errno_ 
+ * @return wasi_errno_t 
+ */
 static wasi_errno_t wasi_fromerrno(int errno_) {
     switch (errno_) {
         case 0:                 return WASI_ESUCCESS;
@@ -351,26 +200,37 @@ static wasi_errno_t wasi_fromerrno(int errno_) {
     return 0;
 }
 
+__attribute__((noreturn))
+void wasi_unsupported_syscall(const char *syscall) {
+    fprintf(stderr, "Syscall %s is not supported\n", syscall);
+    exit(EXIT_FAILURE);
+}
+
 /**
- * @brief Used by a WASI module to copy the argument buffer into linear memory write an 
+ * @brief Returns arguments buffer into linear memory write an 
  * indirect to the base offset of the buffer 
  * 
- * @param argv_p_offset 
- * @param argv_buf_offset 
- * @return i32 
+ * @param argv_ptr
+ * @param argv_buf_ptr
+ * @return WASI_ESUCCESS
  */
-wasi_errno_t wasi_snapshot_preview1_args_get(u32 argv_p_offset, u32 argv_buf_offset){
-    char *argv_buf = get_memory_ptr_for_runtime(argv_buf_offset, runtime_argv_buffer_len);
+wasi_errno_t wasi_snapshot_preview1_args_get(
+    wasi_size_t argv_retptr, 
+    wasi_size_t argv_buf_retptr
+){
+    wasi_size_t *argv = (wasi_size_t *)get_memory_ptr_for_runtime(argv_retptr, sizeof(wasi_size_t) * runtime_argc);
+    char *argv_buf = get_memory_ptr_for_runtime(argv_buf_retptr, runtime_argv_buffer_len);
+    // TODO: What is the correct behavior if a bounds check fails? WASI error code?
+
+    /* Copy the argument buffer into the linear memory buffer */
     memcpy(argv_buf, runtime_argv_buffer, runtime_argv_buffer_len);
 
     // Write the vector of argument base offset
-    u32 *argv_p = (u32 *)get_memory_ptr_for_runtime(argv_p_offset, sizeof(u32) * runtime_argc);
     for (u32 i = 0; i < runtime_argc; i++){
-        *(argv_p++) = argv_buf_offset + runtime_argv_buffer_offsets[i];
+        *(argv++) = argv_buf_retptr + runtime_argv_buffer_offsets[i];
     }
 
-    // TODO: What is the expected return type here
-    return 0;
+    return WASI_ESUCCESS;
 }
 
 /**
@@ -378,39 +238,136 @@ wasi_errno_t wasi_snapshot_preview1_args_get(u32 argv_p_offset, u32 argv_buf_off
  * argument buffer
  * 
  * @param argc linear memory offset where we should write argc
- * @param args_size linear memory offset where we should write the length of the args buffer
- * @return i32 
+ * @param argv_buf_len linear memory offset where we should write the length of the args buffer
+ * @return WASI_ESUCCESS
  */
-wasi_errno_t wasi_snapshot_preview1_args_sizes_get(i32 argc_offset, i32 args_size_offset){
-    u32 *argc = (u32 *)get_memory_ptr_for_runtime(argc_offset, sizeof(i32));
+wasi_errno_t wasi_snapshot_preview1_args_sizes_get(
+    wasi_size_t argc_retptr, 
+    wasi_size_t argv_buf_len_retptr
+){
+    wasi_size_t *argc = (wasi_size_t *)get_memory_ptr_for_runtime(argc_retptr, sizeof(wasi_size_t));
+    wasi_size_t *argv_buf_len = (wasi_size_t *)get_memory_ptr_for_runtime(argv_buf_len_retptr, sizeof(wasi_size_t));
+
     *argc = runtime_argc;
-    
-    u32 *args_size = (u32 *)get_memory_ptr_for_runtime(args_size_offset, sizeof(i32));
-    *args_size = runtime_argv_buffer_len;
+    *argv_buf_len = runtime_argv_buffer_len;
 
-    // TODO: What is the expected return type here?
-    return 0;
-}
-
-// TODO: wasi_snapshot_preview1_clock_res_get
-
-wasi_errno_t wasi_snapshot_preview1_clock_time_get(u32 clock_id, u64 precision, u32 time_off) {
-    struct timespec tp;
-    clock_gettime(clock_id, &tp);
-    set_i64(time_off, (uint64_t)tp.tv_sec*1000000000ULL + (uint64_t)tp.tv_nsec);
     return WASI_ESUCCESS;
 }
 
-// TODO: wasi_snapshot_preview1_environ_get
+/**
+ * @brief Return the resolution of a clock.
+ * Implementations are required to provide a non-zero value for supported clocks. For unsupported clocks,
+ * return `errno::inval`.
+ * Note: This is similar to `clock_getres` in POSIX.
+ * 
+ * @param id The clock for which to return the resolution.
+ * @param res_retptr - The resolution of the clock
+ */
+wasi_errno_t wasi_snapshot_preview1_clock_res_get(
+    wasi_clockid_t id,
+    wasi_size_t res_retptr
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_environ_sizes_get
+/**
+ * Return the time value of a clock.
+ * Note: This is similar to `clock_gettime` in POSIX.
+ * 
+ * @param clock_id The clock for which to return the time.
+ * @param precision The maximum lag (exclusive) that the returned time value may have, compared to its actual value.
+ * @param time_retptr  The time value of the clock.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_clock_time_get(
+    wasi_clockid_t clock_id, 
+    wasi_timestamp_t precision, 
+    wasi_size_t time_retptr
+) {
+    struct timespec tp;
+    int rc = clock_gettime(clock_id, &tp);
+    if (rc == -1) {
+        return wasi_fromerrno(errno);
+    }
 
-// TODO: wasi_snapshot_preview1_fd_advise
+    set_i64(time_retptr, (uint64_t)tp.tv_sec*1000000000ULL + (uint64_t)tp.tv_nsec);
 
-// TODO: wasi_snapshot_preview1_fd_allocate
+    return WASI_ESUCCESS;
+}
 
-wasi_errno_t wasi_snapshot_preview1_fd_close(i32 fd) {
-    i32 res = (i32) close(fd);
+/**
+ * Read environment variable data.
+ * The sizes of the buffers should match that returned by `environ_sizes_get`.
+ * 
+ * @param environ_retptr
+ * @param environ_buf_retptr
+ */
+wasi_errno_t wasi_snapshot_preview1_environ_get(
+    wasi_size_t environ_retptr, 
+    wasi_size_t environ_buf_retptr
+) {
+    wasi_unsupported_syscall(__func__);
+}
+
+/**
+ * Returns the number of environment variable arguments and the size of the environment variable data.
+ * 
+ * @param environc_retptr - the offset where the resulting number of environment variable arguments should be written
+ * @param environv_buf_len_retptr - the offset where the resulting size of the environment variable data should be written
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_environ_sizes_get(
+    wasi_size_t environc_retptr, 
+    wasi_size_t environv_buf_len_retptr
+) {
+    wasi_unsupported_syscall(__func__);
+}
+
+/**
+ * Provide file advisory information on a file descriptor.
+ * Note: This is similar to `posix_fadvise` in POSIX.
+ * 
+ * @param fd
+ * @param offset The offset within the file to which the advisory applies.
+ * @param len The length of the region to which the advisory applies.
+ * @param advice
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_advise(
+    wasi_fd_t fd,
+    wasi_filesize_t offset,
+    wasi_filesize_t len,
+    wasi_advice_t advice
+) {
+    wasi_unsupported_syscall(__func__);
+}
+
+/**
+ * Force the allocation of space in a file.
+ * Note: This is similar to `posix_fallocate` in POSIX.
+ * 
+ * @param fd 
+ * @param offset The offset at which to start the allocation.
+ * @param len The length of the area that is allocated.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_allocate(
+    wasi_fd_t fd,
+    wasi_filesize_t offset,
+    wasi_filesize_t len
+){
+    wasi_unsupported_syscall(__func__);
+};
+
+/**
+ * Close a file descriptor.
+ * Note: This is similar to `close` in POSIX.
+ * 
+ * @param fd
+ * @return WASI_ESUCCESS, WASI_EBADF, WASI_EINTR, WASI_EIO, WASI_ENOSPC, or WASI_EDQUOT
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_close(wasi_fd_t fd) {
+    int res = (wasi_fd_t) close(fd);
 
     if (res == -1) {
         return wasi_fromerrno(errno);
@@ -418,7 +375,14 @@ wasi_errno_t wasi_snapshot_preview1_fd_close(i32 fd) {
     return WASI_ESUCCESS;
 }
 
-wasi_errno_t wasi_snapshot_preview1_fd_datasync(i32 fd) {
+/**
+ * Synchronize the data of a file to disk.
+ * Note: This is similar to `fdatasync` in POSIX.
+ * 
+ * @param fd
+ * @return WASI_ESUCCESS, WASI_EBADF, WASI_EIO, WASI_ENOSPC, WASI_EROFS, WASI_EINVAL, WASI_ENOSPC, WASI_EDQUOT
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_datasync(wasi_fd_t fd) {
     int res = fdatasync(fd);
     if (res == -1) {
         return wasi_fromerrno(errno);
@@ -427,8 +391,20 @@ wasi_errno_t wasi_snapshot_preview1_fd_datasync(i32 fd) {
     return WASI_ESUCCESS;
 }
 
-wasi_errno_t wasi_snapshot_preview1_fd_fdstat_get(i32 fd, u32 buf_offset) {
-    struct wasi_fdstat* fdstat = get_memory_ptr_void(buf_offset, sizeof(struct wasi_fdstat));
+/**
+ * Get the attributes of a file descriptor.
+ * Note: This returns similar flags to `fsync(fd, F_GETFL)` in POSIX, as well as additional fields.
+ * 
+ * @param fd 
+ * @param fdstat_retptr the offset where the resulting wasi_fdstat structure should be written
+ * @return WASI_ESUCCESS, WASI_EACCES, WASI_EAGAIN, WASI_EBADF, WASI_EFAULT, WASI_EINVAL, WASI_ELOOP, 
+ * WASI_ENAMETOOLONG, WASI_ENOTDIR, WASI_ENOENT, WASI_ENOMEM, or WASI_EOVERFLOW
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_fdstat_get(
+    wasi_fd_t fd, 
+    wasi_size_t fdstat_retptr
+) {
+    struct wasi_fdstat* fdstat = get_memory_ptr_void(fdstat_retptr, sizeof(struct wasi_fdstat));
 
     struct stat stat;
     i32 res = fstat(fd, &stat);
@@ -461,7 +437,18 @@ wasi_errno_t wasi_snapshot_preview1_fd_fdstat_get(i32 fd, u32 buf_offset) {
     return WASI_ESUCCESS;
 }
 
-wasi_errno_t wasi_snapshot_preview1_fd_fdstat_set_flags(i32 fd, u32 fdflags) {
+/**
+ * Adjust the flags associated with a file descriptor.
+ * Note: This is similar to `fcntl(fd, F_SETFL, flags)` in POSIX.
+ * @param fd
+ * @param fdflags The desired values of the file descriptor flags.
+ * @return WASI_ESUCCESS, WASI_EACCES, WASI_EAGAIN, WASI_EBADF, WASI_EFAULT, WASI_EINVAL, 
+ * WASI_ENOENT, or WASI_EPERM
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_fdstat_set_flags(
+    wasi_fd_t fd, 
+    wasi_fdflags_t fdflags
+) {
     int flags = (
         ((flags & WASI_FDFLAG_APPEND  ) ? O_APPEND   : 0) |
         ((flags & WASI_FDFLAG_DSYNC   ) ? O_DSYNC    : 0) |
@@ -475,29 +462,166 @@ wasi_errno_t wasi_snapshot_preview1_fd_fdstat_set_flags(i32 fd, u32 fdflags) {
     return WASI_ESUCCESS;
 }
 
-// TODO: wasi_snapshot_preview1_fd_fdstat_set_rights
+/**
+ * Adjust the rights associated with a file descriptor.
+ * This can only be used to remove rights, and returns `errno::notcapable` if called in a way that would attempt to add rights
+ * 
+ * @param fd
+ * @param fs_rights_base The desired rights of the file descriptor.
+ * @param fs_rights_inheriting
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_fdstat_set_rights(
+    wasi_fd_t fd,
+    wasi_rights_t fs_rights_base,
+    wasi_rights_t fs_rights_inheriting
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_fd_filestat_get
+/**
+ * Return the attributes of an open file.
+ * 
+ * @param fd
+ * @param filestat_retptr The buffer where we should store the file's attributes
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_filestat_get(
+    wasi_fd_t fd,
+    wasi_size_t filestat_retptr
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_fd_filestat_set_size
+/**
+ * Adjust the size of an open file. If this increases the file's size, the extra bytes are filled with zeros.
+ * Note: This is similar to `ftruncate` in POSIX.
+ * 
+ * @param fd 
+ * @param size The desired file size.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_filestat_set_size(
+    wasi_fd_t fd,
+    wasi_filesize_t size
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_fd_filestat_set_times
+/**
+ * Adjust the timestamps of an open file or directory.
+ * Note: This is similar to `futimens` in POSIX.
+ * 
+ * @param fd
+ * @param atim The desired values of the data access timestamp.
+ * @param mtim The desired values of the data modification timestamp.
+ * @param fst_flags A bitmask indicating which timestamps to adjust.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_filestat_set_times(
+    wasi_fd_t fd,
+    wasi_timestamp_t atim,
+    wasi_timestamp_t mtim,
+    wasi_fstflags_t fst_flags
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_fd_pread
+/**
+ * Read from a file descriptor, without using and updating the file descriptor's offset.
+ * Note: This is similar to `preadv` in POSIX.
+ * 
+ * @param fd 
+ * @param iovs_ptr List of scatter/gather vectors in which to store data.
+ * @param iovs_len The length of the array pointed to by `iovs`.
+ * @param offset The offset within the file at which to read.
+ * @param nbytes_retptr The number of bytes read.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_pread(
+    wasi_fd_t fd,
+    wasi_size_t iovs_ptr,
+    size_t iovs_len,
+    wasi_filesize_t offset,
+    wasi_size_t nbytes_retptr
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_fd_prestat_get
+/**
+ * Return a description of the given preopened file descriptor.
+ * 
+ * @param fd
+ * @param prestat_retptr The buffer where the description is stored.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_prestat_get(
+    wasi_fd_t fd,
+    wasi_size_t prestat_retptr 
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_fd_prestat_dir_name
+/**
+ * Return a description of the given preopened file descriptor.
+ * 
+ * @param fd
+ * @param path_retptr A buffer into which to write the preopened directory name.
+ * @param path_len The length of the buffer at path_retptr
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_prestat_dir_name(
+    wasi_fd_t fd,
+    wasi_size_t path_retptr,
+    wasi_size_t path_len
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_fd_pwrite
+/**
+ * Write to a file descriptor, without using and updating the file descriptor's offset.
+ * Note: This is similar to `pwritev` in POSIX.
+ * 
+ * @param fd
+ * @param iovs_ptr List of scatter/gather vectors from which to retrieve data.
+ * @param iovs_len The length of the array pointed to by `iovs`.
+ * @param offset The offset within the file at which to write.
+ * @param nwritten_retptr The number of bytes written.
+ * @return status code
+ * 
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_pwrite(
+    wasi_fd_t fd,
+    wasi_size_t iovs_ptr,
+    size_t iovs_len,
+    wasi_filesize_t offset,
+    wasi_size_t nwritten_retptr
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-wasi_errno_t wasi_snapshot_preview1_fd_read(i32 fd, i32 iov_offset, i32 iovcnt, i32 nread_off) {
+/**
+ * Read from a file descriptor.
+ * Note: This is similar to `readv` in POSIX.
+ * 
+ * @param fd
+ * @param iovs_ptr
+ * @param iovs_len
+ * @param nwritten_retptr The number of bytes read.
+ * @return WASI_ESUCCESS, WASI_EAGAIN, WASI_EWOULDBLOCK, WASI_EBADF, WASI_EFAULT, WASI_EINTR, WASI_EIO, WASI_EISDIR, or others
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_read(
+    wasi_fd_t fd, 
+    wasi_size_t iovs_ptr, 
+    size_t iovs_len, 
+    wasi_size_t nwritten_retptr
+) {
     i32 sum = 0;
-    struct wasi_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasi_iovec));
+    const struct wasi_iovec *const iovs = get_memory_ptr_void(iovs_ptr, iovs_len * sizeof(struct wasi_iovec));
 
-    for (int i = 0; i < iovcnt; i++) {
-        void* ptr = get_memory_ptr_void(iov[i].base_offset, iov[i].len);
-        ssize_t res = read(fd, ptr, iov[i].len);
+    for (int i = 0; i < iovs_len; i++) {
+        void* ptr = get_memory_ptr_void(iovs[i].base_offset, iovs[i].len);
+        ssize_t res = read(fd, ptr, iovs[i].len);
         if (res == -1) {
             return wasi_fromerrno(errno);
         }
@@ -505,50 +629,163 @@ wasi_errno_t wasi_snapshot_preview1_fd_read(i32 fd, i32 iov_offset, i32 iovcnt, 
         sum += res;
     }
 
-    set_i32(nread_off, sum);
+    set_i32(nwritten_retptr, sum);
     return WASI_ESUCCESS;
 }
 
-// TODO: wasi_snapshot_preview1_fd_readdir
+/**
+ * Read directory entries from a directory.
+ * When successful, the contents of the output buffer consist of a sequence of
+ * directory entries. Each directory entry consists of a `dirent` object,
+ * followed by `dirent::d_namlen` bytes holding the name of the directory
+ * entry.
+ * This function fills the output buffer as much as possible, potentially
+ * truncating the last directory entry. This allows the caller to grow its
+ * read buffer size in case it's too small to fit a single large directory
+ * entry, or skip the oversized directory entry.
+ * 
+ * @param fd
+ * @param buf_ptr The buffer where directory entries are stored
+ * @param buf_len
+ * @param cookie The location within the directory to start reading
+ * @param nwritten_retptr The number of bytes stored in the read buffer. If less than the size of the read buffer, the end of the directory has been reached.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_readdir(
+    wasi_fd_t fd,
+    wasi_size_t buf_ptr,
+    wasi_size_t buf_len,
+    wasi_dircookie_t cookie,
+    wasi_size_t nwritten_retptr
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_fd_renumber
+/**
+ * Atomically replace a file descriptor by renumbering another file descriptor.
+ * Due to the strong focus on thread safety, this environment does not provide
+ * a mechanism to duplicate or renumber a file descriptor to an arbitrary
+ * number, like `dup2()`. This would be prone to race conditions, as an actual
+ * file descriptor with the same number could be allocated by a different
+ * thread at the same time.
+ * This function provides a way to atomically renumber file descriptors, which
+ * would disappear if `dup2()` were to be removed entirely.
+ * 
+ * @param fd
+ * @param to the file descriptor to overwrite
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_renumber(
+    wasi_fd_t fd,
+    wasi_fd_t to
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-wasi_errno_t wasi_snapshot_preview1_fd_seek(i32 fd, i64 file_offset, i32 whence, u32 newoffset_off) {
+/**
+ * Move the offset of a file descriptor.
+ * Note: This is similar to `lseek` in POSIX.
+ * 
+ * @param fd
+ * @param file_offset The number of bytes to move.
+ * @param whence The base from which the offset is relative.
+ * @param newoffset_retprt The new offset of the file descriptor, relative to the start of the file.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_seek(
+    wasi_fd_t fd, 
+    wasi_filedelta_t file_offset, 
+    wasi_whence_t whence, 
+    wasi_filesize_t newoffset_retprt
+) {
     off_t res = lseek(fd, (off_t)file_offset, whence);
 
     if (res == -1) {
         return wasi_fromerrno(errno);
     }
 
-    set_i64(newoffset_off, res);
+    set_i64(newoffset_retprt, res);
     return WASI_ESUCCESS;
 }
 
-// TODO: wasi_snapshot_preview1_fd_sync
+/**
+ * Synchronize the data and metadata of a file to disk.
+ * Note: This is similar to `fsync` in POSIX.
+ * 
+ * @param fd
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_sync(
+    wasi_fd_t fd
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_fd_tell
+/**
+ * Return the current offset of a file descriptor.
+ * Note: This is similar to `lseek(fd, 0, SEEK_CUR)` in POSIX.
+ * 
+ * @param fd
+ * @param fileoffset_retptr The current offset of the file descriptor, relative to the start of the file.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_tell(
+    wasi_fd_t fd,
+    wasi_size_t fileoffset_retptr
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-wasi_errno_t wasi_snapshot_preview1_fd_write(i32 fd, i32 iov_offset, i32 iovcnt, i32 nwritten_off) {
-    i32 sum = 0;
-    struct wasi_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasi_iovec));
+/**
+ * Write to a file descriptor.
+ * Note: This is similar to `writev` in POSIX.
+ * 
+ * @param fd
+ * @param iovs_ptr List of scatter/gather vectors from which to retrieve data.
+ * @param iovs_len The length of the array pointed to by `iovs`.
+ * @param nwritten_retptr
+ * @return WASI_ESUCCESS, WASI_EAGAIN, WASI_EWOULDBLOCK, WASI_EBADF, WASI_EFAULT, 
+ * WASI_EFBIG, WASI_EINTR, WASI_EIO, WASI_ENOSPC, WASI_EPERM, WASI_EPIPE, or others
+ */
+wasi_errno_t wasi_snapshot_preview1_fd_write(
+    wasi_fd_t fd, 
+    wasi_size_t iovs_ptr, 
+    size_t iovs_len, 
+    wasi_size_t nwritten_retptr
+) {
+    wasi_size_t sum = 0;
+    const struct wasi_iovec *const iovs = get_memory_ptr_void(iovs_ptr, iovs_len * sizeof(struct wasi_iovec));
 
-    for (int i = 0; i < iovcnt; i++) {
-        void* ptr = get_memory_ptr_void(iov[i].base_offset, iov[i].len);
-        ssize_t res = write(fd, ptr, iov[i].len);
+    for (int i = 0; i < iovs_len; i++) {
+        void* ptr = get_memory_ptr_void(iovs[i].base_offset, iovs[i].len);
+        ssize_t res = write(fd, ptr, iovs[i].len);
         if (res == -1) {
             return wasi_fromerrno(errno);
         }
-
         sum += res;
     }
+    set_i32(nwritten_retptr, sum);
 
-    set_i32(nwritten_off, sum);
     return WASI_ESUCCESS;
 }
 
-wasi_errno_t wasi_snapshot_preview1_path_create_directory(i32 fd, u32 path_off, u32 path_len) {
-    // get path
-    char* path = get_memory_string(path_off);
+/**
+ * Create a directory.
+ * Note: This is similar to `mkdirat` in POSIX.
+ * 
+ * @param fd
+ * @param path_ptr
+ * @param path_len
+ * @return WASI_ESUCCESS, WASI_EACCES, WASI_EBADF, WASI_EDQUOT, WASI_EEXIST, 
+ * WASI_EFAULT, WASI_EINVAL, WASI_ELOOP, WASI_EMLINK, WASI_ENAMETOOLONG, 
+ * WASI_ENOENT, WASI_ENOMEM, WASI_ENOSPC, WASI_ENOTDIR, WASI_EPERM, or WASI_EROFS
+ */
+wasi_errno_t wasi_snapshot_preview1_path_create_directory(
+    wasi_fd_t fd, 
+    u32 path_ptr, 
+    u32 path_len
+) {
+    const char *const path = get_memory_string(path_ptr);
 
     int res = mkdirat(fd, path, 0777);
     if (res == -1) {
@@ -558,10 +795,27 @@ wasi_errno_t wasi_snapshot_preview1_path_create_directory(i32 fd, u32 path_off, 
     return WASI_ESUCCESS;
 }
 
-wasi_errno_t wasi_snapshot_preview1_path_filestat_get(i32 fd, u32 flags, u32 path_off, u32 path_len, u32 buf_off) {
+/**
+ * Return the attributes of a file or directory.
+ * Note: This is similar to `stat` in POSIX.
+ * 
+ * @param fd
+ * @param flags Flags determining the method of how the path is resolved.
+ * @param path_ptr The path of the file or directory to inspect.
+ * @param filestat_retptr The buffer where the file's attributes are stored.
+ * @return WASI_ESUCCESS, WASI_EACCES, WASI_EBAD, WASI_EFAUL, WASI_EINVAL, WASI_ELOOP, 
+ * WASI_ENAMETOOLON, WASI_ENOENT, WASI_ENOENT, WASI_ENOMEM, WASI_ENOTDI, or WASI_EOVERFLOW
+ */
+wasi_errno_t wasi_snapshot_preview1_path_filestat_get(
+    wasi_fd_t fd, 
+    wasi_lookupflags_t flags, 
+    wasi_size_t path_ptr, 
+    wasi_size_t path_len, 
+    wasi_size_t filestat_retptr
+) {
     // get path/filestat
-    char* path = get_memory_string(path_off);
-    struct wasi_filestat* filestat = get_memory_ptr_void(buf_off, sizeof(struct wasi_filestat));
+    const char *const path = get_memory_string(path_ptr);
+    wasi_filestat_t *const filestat = get_memory_ptr_void(filestat_retptr, sizeof(wasi_filestat_t));
 
     struct stat stat;
     int res = fstatat(fd, path, &stat, 0);
@@ -569,32 +823,95 @@ wasi_errno_t wasi_snapshot_preview1_path_filestat_get(i32 fd, u32 flags, u32 pat
         return wasi_fromerrno(errno);
     }
 
-    filestat->st_dev = stat.st_dev;
-    filestat->st_ino = stat.st_ino;
-    filestat->st_filetype =  stat.st_mode;
-    filestat->st_nlink = stat.st_nlink;
-    filestat->st_size = stat.st_size;
-    filestat->st_atim = stat.st_atime;
-    filestat->st_mtim = stat.st_mtime;
-    filestat->st_ctim = stat.st_ctime;
+    filestat->dev = stat.st_dev;
+    filestat->ino = stat.st_ino;
+    filestat->filetype =  stat.st_mode;
+    filestat->nlink = stat.st_nlink;
+    filestat->size = stat.st_size;
+    filestat->atim = stat.st_atime;
+    filestat->mtim = stat.st_mtime;
+    filestat->ctim = stat.st_ctime;
 
     return WASI_ESUCCESS;
 }
 
-// TODO: wasi_snapshot_preview1_path_filestat_set_times
+/**
+ * Adjust the timestamps of a file or directory.
+ * Note: This is similar to `utimensat` in POSIX.
+ * 
+ * @param fd
+ * @param flags Flags determining the method of how the path is resolved.
+ * @param path The path of the file or directory to operate on.
+ * @param atim The desired values of the data access timestamp.
+ * @param mtim The desired values of the data modification timestamp.
+ * @param fst_flags A bitmask indicating which timestamps to adjust.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_path_filestat_set_times(
+    wasi_fd_t fd,
+    wasi_lookupflags_t flags,
+    wasi_size_t path_ptr,
+    wasi_size_t path_len, 
+    wasi_timestamp_t atim,
+    wasi_timestamp_t mtim,
+    wasi_fstflags_t fst_flags
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_path_link
+/**
+ * Create a hard link.
+ * Note: This is similar to `linkat` in POSIX.
+ * 
+ * @param old_fd
+ * @param old_flags Flags determining the method of how the path is resolved.
+ * @param old_path The source path from which to link.
+ * @param new_fd The working directory at which the resolution of the new path starts.
+ * @param new_path  The destination path at which to create the hard link.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_path_link(
+    wasi_fd_t old_fd,
+    wasi_lookupflags_t old_flags,
+    wasi_size_t old_path_ptr,
+    wasi_size_t old_path_len,
+    wasi_fd_t new_fd,
+    wasi_size_t new_path_ptr,
+    wasi_size_t new_path_len
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
+/**
+ * Open a file or directory.
+ * The returned file descriptor is not guaranteed to be the lowest-numbered
+ * file descriptor not currently open; it is randomized to prevent
+ * applications from depending on making assumptions about indexes, since this
+ * is error-prone in multi-threaded contexts. The returned file descriptor is
+ * guaranteed to be less than 2**31.
+ * Note: This is similar to `openat` in POSIX.
+ * 
+ * @param dirfd
+ * @param lookupflags
+ * @param path_off
+ * @param path_len
+ * @param oflags
+ * @param fs_rights_base
+ * @param fs_rights_inheriting
+ * @param fdflags
+ * @param fd_off The file descriptor of the file that has been opened.
+ * @return status code
+ */
 wasi_errno_t wasi_snapshot_preview1_path_open(
-        i32 dirfd,
-        u32 lookupflags,
-        u32 path_off,
-        u32 path_len,
-        u32 oflags,
-        u64 fs_rights_base,
-        u64 fs_rights_inheriting,
-        u32 fdflags,
-        u32 fd_off) {
+        wasi_fd_t dirfd,
+        wasi_lookupflags_t lookupflags,
+        wasi_size_t path_off,
+        wasi_size_t path_len,
+        wasi_oflags_t oflags,
+        wasi_rights_t fs_rights_base,
+        wasi_rights_t fs_rights_inheriting,
+        wasi_fdflags_t fdflags,
+        wasi_fd_t fd_off) {
     // get path
     char* path = get_memory_string(path_off);
 
@@ -628,17 +945,104 @@ wasi_errno_t wasi_snapshot_preview1_path_open(
     return WASI_ESUCCESS;
 }
 
-// TODO: wasi_snapshot_preview1_path_readlink
+/**
+ * Read the contents of a symbolic link.
+ * Note: This is similar to `readlinkat` in POSIX.
+ * 
+ * @param fd
+ * @param path_ptr The path of the symbolic link from which to read.
+ * @param path_len
+ * @param buf_retptr The buffer to which to write the contents of the symbolic link.
+ * @param buf_len
+ * @param nread_retptr The number of bytes placed in the buffer.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_path_readlink(
+    wasi_fd_t fd,
+    wasi_size_t path_ptr,
+    wasi_size_t path_len,
+    wasi_size_t buf_retptr,
+    wasi_size_t buf_len,
+    wasi_size_t nread_retptr
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_path_remove_directory
+/**
+ * Remove a directory.
+ * Return `errno::notempty` if the directory is not empty.
+ * Note: This is similar to `unlinkat(fd, path, AT_REMOVEDIR)` in POSIX.
+ * 
+ * @param fd
+ * @param path The path to a directory to remove.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_path_remove_directory(
+    wasi_fd_t fd,
+    wasi_size_t path_ptr,
+    wasi_size_t path_len
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_path_rename
+/**
+ * Rename a file or directory.
+ * Note: This is similar to `renameat` in POSIX.
+ * 
+ * @param fd
+ * @param old_path The source path of the file or directory to rename.
+ * @param new_fd The working directory at which the resolution of the new path starts.
+ * @param new_path The destination path to which to rename the file or directory.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_path_rename(
+    wasi_fd_t fd,
+    wasi_size_t old_path_ptr,
+    wasi_size_t old_path_len,
+    wasi_fd_t new_fd,
+    wasi_size_t new_path_ptr,
+    wasi_size_t new_path_len
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_path_symlink
+/**
+ * Create a symbolic link.
+ * Note: This is similar to `symlinkat` in POSIX.
+ * 
+ * @param old_path_ptr The contents of the symbolic link.
+ * @param old_path_len
+ * @param fd
+ * @param new_path The destination path at which to create the symbolic link.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_path_symlink(
+    wasi_size_t old_path_ptr,
+    wasi_size_t old_path_len,
+    wasi_fd_t fd,
+    wasi_size_t new_path_ptr,
+    wasi_size_t new_path_len
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-wasi_errno_t wasi_snapshot_preview1_path_unlink_file(i32 fd, u32 path_off, u32 path_len) {
+/**
+ * Unlink a file.
+ * Return `errno::isdir` if the path refers to a directory.
+ * Note: This is similar to `unlinkat(fd, path, 0)` in POSIX.
+ * 
+ * @param fd
+ * @param path_ptr
+ * @param path_len
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_path_unlink_file(
+    wasi_fd_t fd, 
+    wasi_size_t path_ptr, 
+    wasi_size_t path_len
+) {
     // get path
-    char* path = get_memory_string(path_off);
+    char* path = get_memory_string(path_ptr);
 
     int res = unlinkat(fd, path, 0);
     if (res == -1) {
@@ -648,21 +1052,135 @@ wasi_errno_t wasi_snapshot_preview1_path_unlink_file(i32 fd, u32 path_off, u32 p
     return WASI_ESUCCESS;
 }
 
-// TODO: wasi_snapshot_preview1_poll_oneoff
+/**
+ * Concurrently poll for the occurrence of a set of events.
+ * @param in The events to which to subscribe.
+ * @param out The events that have occurred.
+ * @param nsubscriptions Both the number of subscriptions and events.
+ * @param retptr The number of events stored.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_poll_oneoff(
+    const wasi_subscription_t * in,
+    wasi_event_t * out,
+    wasi_size_t nsubscriptions,
+    wasi_size_t *retptr0
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
+/**
+ * Terminate the process normally. An exit code of 0 indicates successful
+ * termination of the program. The meanings of other values is dependent on
+ * the environment.
+ * 
+ * @param exitcode
+ */
 __attribute__((noreturn))
-void wasi_snapshot_preview1_proc_exit(i32 exitcode) {
+void wasi_snapshot_preview1_proc_exit(wasi_exitcode_t exitcode) {
     exit(exitcode);
 }
 
-// TODO: wasi_snapshot_preview1_proc_raise
+/**
+ * Send a signal to the process of the calling thread.
+ * Note: This is similar to `raise` in POSIX.
+ * 
+ * @param sig The signal condition to trigger.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_proc_raise(
+    wasi_signal_t sig
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_random_get
+/**
+ * Write high-quality random data into a buffer.
+ * This function blocks when the implementation is unable to immediately
+ * provide sufficient high-quality random data.
+ * This function may execute slowly, so when large mounts of random data are
+ * required, it's advisable to use this function to seed a pseudo-random
+ * number generator, rather than to provide the random data directly.
+ * 
+ * @param buf_ptr The buffer to fill with random data.
+ * @param buf_len The length of the buffer
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_random_get(
+    wasi_size_t buf_ptr,
+    wasi_size_t buf_len
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_sched_yield
+/**
+ * Temporarily yield execution of the calling thread.
+ * Note: This is similar to `sched_yield` in POSIX.
+ * 
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_sched_yield(void) {
+    // Does nothing
+    return WASI_ESUCCESS;
+}
 
-// TODO: wasi_snapshot_preview1_sock_recv
+/**
+ * Receive a message from a socket.
+ * Note: This is similar to `recv` in POSIX, though it also supports reading
+ * the data into multiple buffers in the manner of `readv`.
+ * 
+ * @param fd
+ * @param ri_data_ptr List of scatter/gather vectors to which to store data.
+ * @param ri_data_len The length of the array pointed to by `ri_data`.
+ * @param ri_flags Message flags.
+ * @param ri_data_nbytes_retptr Number of bytes stored in ri_data flags.
+ * @param message_nbytes_retptr Number of bytes stored in message flags.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_sock_recv(
+    wasi_fd_t fd,
+    wasi_size_t ri_data_ptr,
+    wasi_size_t ri_data_len,
+    wasi_riflags_t ri_flags,
+    wasi_size_t ri_data_nbytes_retptr,
+    wasi_size_t message_nbytes_retptr
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_sock_send
+/**
+ * Send a message on a socket.
+ * Note: This is similar to `send` in POSIX, though it also supports writing
+ * the data from multiple buffers in the manner of `writev`.
+ * 
+ * @param fd
+ * @param si_data_ptr List of scatter/gather vectors to which to retrieve data
+ * @param si_data_len The length of the array pointed to by `si_data`.
+ * @param si_flags Message flags.
+ * @param nbytes_retptr Number of bytes transmitted.
+ * @return status code 
+ */
+wasi_errno_t wasi_snapshot_preview1_sock_send(
+    wasi_fd_t fd,
+    wasi_size_t si_data_ptr,
+    size_t si_data_len,
+    wasi_siflags_t si_flags,
+    wasi_size_t *retptr0
+) {
+    wasi_unsupported_syscall(__func__);
+}
 
-// TODO: wasi_snapshot_preview1_sock_shutdown
+/**
+ * Shut down socket send and receive channels.
+ * Note: This is similar to `shutdown` in POSIX.
+ * 
+ * @param fd
+ * @param how Which channels on the socket to shut down.
+ * @return status code
+ */
+wasi_errno_t wasi_snapshot_preview1_sock_shutdown(
+    wasi_fd_t fd,
+    wasi_sdflags_t how
+) {
+    wasi_unsupported_syscall(__func__);
+}
