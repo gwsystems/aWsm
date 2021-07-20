@@ -36,6 +36,8 @@ int runtime_argc = 0;
 char *runtime_argv_buffer = NULL;
 uint32_t runtime_argv_buffer_len = 0;
 wasi_size_t *runtime_argv_buffer_offsets = NULL;
+wasi_size_t runtime_environc = 0;
+wasi_size_t runtime_environv_buf_len = 0;
 
 /* Atexit callbacks */
 void runtime_argv_buffer_free() {
@@ -275,7 +277,7 @@ wasi_errno_t wasi_snapshot_preview1_clock_res_get(
  * @param clock_id The clock for which to return the time.
  * @param precision The maximum lag (exclusive) that the returned time value may have, compared to its actual value.
  * @param time_retptr  The time value of the clock.
- * @return status code
+ * @return WASI_ESUCCESS code
  */
 wasi_errno_t wasi_snapshot_preview1_clock_time_get(
     wasi_clockid_t clock_id, 
@@ -297,14 +299,26 @@ wasi_errno_t wasi_snapshot_preview1_clock_time_get(
  * Read environment variable data.
  * The sizes of the buffers should match that returned by `environ_sizes_get`.
  * 
- * @param environ_retptr
- * @param environ_buf_retptr
+ * @param environ_baseretptr
+ * @param environ_buf_baseretptr
+ * @return WASI_ESUCCESS
  */
 wasi_errno_t wasi_snapshot_preview1_environ_get(
-    wasi_size_t environ_retptr, 
-    wasi_size_t environ_buf_retptr
+    wasi_size_t environ_baseretptr, 
+    wasi_size_t environ_buf_baseretptr
 ) {
-    wasi_unsupported_syscall(__func__);
+    wasi_size_t *environ_offset_vector = (wasi_size_t *)get_memory_ptr_for_runtime(environ_baseretptr, runtime_environc);
+    char *environ_buf = get_memory_ptr_for_runtime(environ_buf_baseretptr, runtime_environv_buf_len);
+    extern char **environ;
+
+    wasi_size_t environ_offset = 0;
+    for (wasi_size_t i = 0; i < runtime_environc; i++){
+        environ_offset_vector[i] = environ_buf_baseretptr + environ_offset;
+        strncpy(&environ_buf[environ_offset],environ[i], runtime_environv_buf_len - environ_offset);
+        environ_offset += (strlen(environ[i]) + 1);
+    }
+
+    return WASI_ESUCCESS;
 }
 
 /**
@@ -318,7 +332,17 @@ wasi_errno_t wasi_snapshot_preview1_environ_sizes_get(
     wasi_size_t environc_retptr, 
     wasi_size_t environv_buf_len_retptr
 ) {
-    wasi_unsupported_syscall(__func__);
+    extern char **environ;
+
+    for (char **cursor = environ; *cursor != NULL; cursor++) {
+        runtime_environc++;
+        runtime_environv_buf_len += (strlen(*cursor) + 1);
+    }
+
+    set_i32(environc_retptr, runtime_environc);
+    set_i32(environv_buf_len_retptr, runtime_environv_buf_len);
+
+    return WASI_ESUCCESS;
 }
 
 /**
