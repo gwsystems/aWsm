@@ -46,8 +46,11 @@ void runtime_argv_buffer_offsets_free() {
     free(runtime_argv_buffer_offsets);
 }
 
+/**
+ * @brief Lifecycle function that runs at end at termination of WebAssembly module. Suitable for logging and cleanup
+ */
 void runtime_cleanup() {
-    printf("mem use = %d\n", (int) memory_size);
+    return;
 }
 
 /**
