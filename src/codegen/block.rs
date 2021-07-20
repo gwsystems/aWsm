@@ -215,7 +215,15 @@ pub fn compile_block<'a, 'b, 'c>(
 
                 // Handle the case where there is no else
                 if !else_built.get() {
-                    let fake_stack = Vec::new(); // Tacitly assumes an if with no else can't produce a value
+                    // Tacitly assumes an if with no else can't produce a value
+                    // This is safe, since WASM assumes you always statically know the type of everything on the stack.
+                    // Consider the following scenario:
+                    // - We have an u32 on the stack
+                    // - We execute an `if` with no else, that produces a u64
+                    // - Now the stack has a u32 on it, and MAYBE a u64
+                    // - What is the type of value yielded by the next pop instruction?
+                    // This is the kind of issue that wasm avoids by dissallowing this scenario
+                    let fake_stack = Vec::new();
                     let mut tt = inner_termination_target.borrow_mut();
                     tt.add_jump(else_branch_block, &else_branch_locals, &fake_stack);
                     b.position_at_end(else_branch_block);
@@ -250,7 +258,9 @@ pub fn compile_block<'a, 'b, 'c>(
                 // Fetch the ctx
                 let if_ctx_resolved = if_ctx.as_ref().expect("malformed wasm -- else with no if");
                 // Ensure we don't build a duplicate else
-                assert_eq!(if_ctx_resolved.else_built.get(), false);
+                if if_ctx_resolved.else_built.get() {
+                    panic!("Invalid WASM! If with two `else` blocks!")
+                }
                 if_ctx_resolved.else_built.set(true);
                 // Reset the stack / locals
                 stack = Vec::new();
