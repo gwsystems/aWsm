@@ -1104,7 +1104,16 @@ wasi_errno_t wasi_snapshot_preview1_random_get(
     wasi_size_t buf_baseretptr,
     wasi_size_t buf_len
 ) {
-    wasi_unsupported_syscall(__func__);
+    srandom(time(NULL));
+    wasi_size_t buf_cursor = 0; 
+    for (; (buf_len - buf_cursor) >= 4; buf_cursor += 4) {
+        set_i64(buf_baseretptr + buf_cursor, random());
+    }
+    for (; buf_cursor < buf_len; buf_cursor += 1){
+        set_i8(buf_baseretptr  + buf_cursor, random() % UINT8_MAX);
+    }
+
+    return WASI_ESUCCESS;
 }
 
 /**
