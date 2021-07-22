@@ -3,39 +3,56 @@
     (import "wasi_snapshot_preview1" "random_get" (func $random_get (param i32 i32) (result i32)))
     (import "wasi_snapshot_preview1" "proc_exit" (func $proc_exit (param i32)))
     
-    (memory 1)
+    (memory 10)
     (export "memory" (memory 0))
+
+    (global $stdout i32 (i32.const 1))
+
+    ;; newline string
+    (data (i32.const 6) "\n")
+    (global $newline i32 (i32.const 6))
+
+    ;; Buffer space set prior to calling fd_write
+    
+    (global $iov_base i32 (i32.const 8))
+    (global $iov_len i32 (i32.const 12))
+    (global $iov2_base i32 (i32.const 16))
+    (global $iov2_len i32 (i32.const 20))
+    (global $nchars i32 (i32.const 24))
 
     (table $tbl 0 anyfunc)
 
     ;; We also need to manually stub out this function
     (func (export "__wasm_call_ctors"))
 
-    (func $panic
-        (i32.store (i32.const 0) (i32.const 8))  ;; iov.iov_base 
-        (i32.store (i32.const 4) (i32.const 6))  ;; iov.iov_len 
-        (call $fd_write
-            (i32.const 1) ;; file_descriptor - 1 for stdout
-            (i32.const 0) ;; *iovs - The pointer to the iov array, which is stored at memory location 0
-            (i32.const 1) ;; iovs_len - We're printing 1 string stored in an iov - so one.
-            (i32.const 20) ;; nwritten - A place in memory to store the number of bytes written
-        )
-        drop ;; Discard the number of bytes written from the top of the stack
-        (call $proc_exit (i32.const 1))
-    )
-    ;; Returns the number of passed tests
     (func $_start (export "_start")
+        ;; Setting second iov in vector to newline
+        (i32.store (global.get $iov2_base) (global.get $newline))
+        (i32.store (global.get $iov2_len) (i32.const 2))
+
+        ;; Get 5 random bytes and write to stdout
         (call $random_get (i32.const 0) (i32.const 5))
         drop
-
-        (i32.store (i32.const 8) (i32.const 0))  ;; iov.iov_base 
-        (i32.store (i32.const 12) (i32.const 5))  ;; iov.iov_len 
-
+        (i32.store (global.get $iov_base) (i32.const 0))  ;; iov.iov_base 
+        (i32.store (global.get $iov_len) (i32.const 5))  ;; iov.iov_len 
         (call $fd_write
-            (i32.const 1) ;; file_descriptor - 1 for stdout
-            (i32.const 8) ;; *iovs - The pointer to the iov array, which is stored at memory location 0
-            (i32.const 1) ;; iovs_len - We're printing 1 string stored in an iov - so one.
-            (i32.const 20) ;; nwritten - A place in memory to store the number of bytes written
+            (global.get $stdout) ;; target
+            (global.get $iov_base) ;; start of iovs vector
+            (i32.const 2) ;; size of iovs vector
+            (global.get $nchars) ;; nwritten - A place in memory to store the number of bytes written
+        )
+        drop
+
+        ;; Get 1000 random bytes and write to stdout
+        (call $random_get (i32.const 100) (i32.const 100))
+        drop
+        (i32.store (global.get $iov_base) (i32.const 100))
+        (i32.store (global.get $iov_len) (i32.const 100))
+        (call $fd_write
+            (global.get $stdout) ;; target
+            (global.get $iov_base) ;; start of iovs vector
+            (i32.const 2) ;; size of iovs vector
+            (global.get $nchars) ;; nwritten
         )
         drop
 
