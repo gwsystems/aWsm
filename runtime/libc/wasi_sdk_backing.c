@@ -49,7 +49,7 @@ void runtime_argv_buffer_offsets_free() {
 /**
  * @brief Lifecycle function that runs at end at termination of WebAssembly module. Suitable for logging and cleanup
  */
-void runtime_cleanup() {
+void runtime_on_module_exit() {
     return;
 }
 
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
     runtime_init();
     runtime_args_init(argc, argv);
 
-    atexit(runtime_cleanup);
+    atexit(runtime_on_module_exit);
 
     switch_out_of_runtime();
     wasmf__start();
