@@ -53,7 +53,7 @@ MaxEmptyLinesToKeep: 2
 DerivePointerAlignment: false
 PointerAlignment: Left
 
-SortIncludes: false
+SortIncludes: true
 
 SpaceAfterCStyleCast: false
 SpaceBeforeAssignmentOperators: true

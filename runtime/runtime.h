@@ -43,10 +43,10 @@ typedef unsigned long long u64;
 #endif
 
 #if __has_include("string.h") && __has_include("math.h") && __has_include("stdio.h") && __has_include("stdlib.h")
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #else
 
 #define size_t u32

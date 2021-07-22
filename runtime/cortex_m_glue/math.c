@@ -217,9 +217,10 @@ static __inline unsigned long long __DOUBLE_BITS(double __f) {
     return __u.__i;
 }
 
-#define isnan(x)                                                              \
-    (sizeof(x) == sizeof(float) ? (__FLOAT_BITS(x) & 0x7fffffff) > 0x7f800000 \
-                                : sizeof(x) == sizeof(double) ? (__DOUBLE_BITS(x) & -1ULL >> 1) > 0x7ffULL << 52 : 0)
+#define isnan(x)                                                                      \
+    (sizeof(x) == sizeof(float)    ? (__FLOAT_BITS(x) & 0x7fffffff) > 0x7f800000      \
+     : sizeof(x) == sizeof(double) ? (__DOUBLE_BITS(x) & -1ULL >> 1) > 0x7ffULL << 52 \
+                                   : 0)
 
 
 #define EPS (0x1p-52)
