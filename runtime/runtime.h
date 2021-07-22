@@ -153,3 +153,5 @@ void stub_init();
 
 // The runtime entrypoint must be called
 int runtime_main(int argc, char** argv);
+
+void runtime_init();

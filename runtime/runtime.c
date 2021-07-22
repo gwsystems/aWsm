@@ -109,8 +109,6 @@ INLINE i64 i64_rem(i64 a, i64 b) {
     return a % b;
 }
 
-
-
 // float to integer conversion methods
 // In C, float => int conversions always truncate
 // If a int2float(int::min_value) <= float <= int2float(int::max_value), it must always be safe to truncate it
@@ -226,84 +224,19 @@ void* allocate_n_bytes_ptr(u32 n) {
     return get_memory_ptr_for_runtime(addr, n);
 }
 
-// FIXME: Currently the timer support stuff is disabled, pending cortex_m results
-// this provides a way to add a timeout for wasm execution, and support for that
-// TODO: Add a way for awsm to give us this value
-//WEAK unsigned int wasm_execution_timeout_ms = 0;
-//sigjmp_buf timeout_jump;
-//#define JUMPING_BACK 0xBACC
-
-// Precondition: you've already loaded timeout_jump with where we should jump after the timeout
-//void handle_sigalarm(int sig) {
-//    // TODO: We use siglongjmp which resets signal stuff, so perhaps this call is unnessesary
-//    signal(sig, SIG_IGN);
-//    siglongjmp(timeout_jump, JUMPING_BACK);
-//}
-//
-//void schedule_timeout() {
-//    signal(SIGALRM, handle_sigalarm);
-//    ualarm(wasm_execution_timeout_ms * 1000, 0);
-//}
-//
-//void cancel_timeout() {
-//    ualarm(0, 0);
-//}
-
 // If we are using runtime globals, we need to populate them
 WEAK void populate_globals() {}
 
-// Code that actually runs the wasm code
-IMPORT i32 wasmf_main(i32 a, i32 b);
-
-int runtime_main(int argc, char** argv) {
-    // Setup the linear memory and function table
+void runtime_init(){
     alloc_linear_memory();
     populate_table();
-
-    // Setup our allocation logic
-    runtime_heap_base = wasmg___heap_base;
-    printf("starting rhb %d\n", runtime_heap_base);
-    if (runtime_heap_base == 0) {
-        runtime_heap_base = memory_size;
-    }
-
-    // Setup the global values (if needed), and populate the linear memory
     switch_out_of_runtime();
     populate_globals();
     switch_into_runtime();
     populate_memory();
 
-    // In the case of a real timeout being compiled in, handle that
-//    if (wasm_execution_timeout_ms) {
-//        // Set the jumpoint to here, and save the signal mask
-//        int res = sigsetjmp(timeout_jump, 1);
-//        if (res != 0) {
-//            assert(res == JUMPING_BACK);
-//            printf("WE DECIDED TO GIVE UP\n");
-//            return -JUMPING_BACK;
-//        }
-//        schedule_timeout();
-//    }
-
-    u32 array_offset = allocate_n_bytes(argc * sizeof(i32));
-    u32* array_ptr = get_memory_ptr_void(array_offset, argc * sizeof(i32));
-    for (int i = 0; i < argc; i++) {
-        size_t str_size = strlen(argv[i]) + 1;
-        u32 str_offset = allocate_n_bytes(str_size);
-        char* str_ptr = get_memory_ptr_for_runtime(str_offset, str_size);
-        strcpy(str_ptr, argv[i]);
-        array_ptr[i] = str_offset;
+    runtime_heap_base = wasmg___heap_base;
+    if (runtime_heap_base == 0) {
+        runtime_heap_base = memory_size;
     }
-
-    stub_init();
-
-    switch_out_of_runtime();
-    int ret = wasmf_main(argc, array_offset);
-    switch_into_runtime();
-
-    // Cancel any pending timeout
-//    if (wasm_execution_timeout_ms) {
-//        cancel_timeout();
-//    }
-    return ret;
 }
