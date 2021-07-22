@@ -101,7 +101,6 @@ int main(int argc, char* argv[]) {
 
     atexit(runtime_cleanup);
 
-    atexit(switch_into_runtime);
     switch_out_of_runtime();
     wasmf__start();
     /* WASI wrappes non zero status codes in exits, but silently returns on status code 0 */
@@ -1072,6 +1071,7 @@ wasi_errno_t wasi_snapshot_preview1_poll_oneoff(
  */
 __attribute__((noreturn))
 void wasi_snapshot_preview1_proc_exit(wasi_exitcode_t exitcode) {
+    switch_into_runtime();
     exit(exitcode);
 }
 
