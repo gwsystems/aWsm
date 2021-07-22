@@ -5,7 +5,7 @@ int printf_(const char* format, ...);
 volatile int CORTEX_M_ARG_C = 0;
 
 int runtime_main(int argc, char** argv) {
-	runtime_init();
+    runtime_init();
 
     u32 array_offset = allocate_n_bytes(argc * sizeof(i32));
     u32* array_ptr = get_memory_ptr_void(array_offset, argc * sizeof(i32));
