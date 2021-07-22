@@ -154,6 +154,4 @@ void stub_init();
 // The runtime entrypoint must be called
 int runtime_main(int argc, char** argv);
 
-extern WEAK u32 wasmg___heap_base;
-extern u32 runtime_heap_base;
-extern void runtime_init();
+void runtime_init();
