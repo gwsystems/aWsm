@@ -8,5 +8,5 @@ file.wasm: file.c
 file.bc: file.wasm
 	../../target/release/awsm  file.wasm -o file.bc
 
-file_vm: file.bc ../../runtime/runtime.c ../../runtime/libc/wasi_sdk_backing.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c
-	clang -lm  -O3 -flto -g file.bc ../../runtime/runtime.c ../../runtime/libc/wasi_sdk_backing.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c -o file_vm
+file_vm: file.bc ../../runtime/runtime.c ../../runtime/libc/uvwasi_backing.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c
+	clang -pthread -ldl -lm -O0 -g -I../../runtime/uvwasi/include file.bc ../../runtime/runtime.c ../../runtime/libc/uvwasi_backing.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c ../../runtime/uvwasi/out/cmake/libuvwasi_a.a ../../runtime/libuv/build/libuv_a.a -o file_vm

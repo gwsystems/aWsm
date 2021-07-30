@@ -8,5 +8,5 @@ args.wasm: args.c
 args.bc: args.wasm
 	../../target/release/awsm  args.wasm -o args.bc
 
-args_vm: args.bc ../../runtime/runtime.c ../../runtime/libc/wasi_sdk_backing.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c
-	clang -lm  -O3 -flto -g args.bc ../../runtime/runtime.c ../../runtime/libc/wasi_sdk_backing.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c -o args_vm
+args_vm: args.bc ../../runtime/runtime.c ../../runtime/libc/uvwasi_backing.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c
+	clang -pthread -ldl -lm -O0 -g -I../../runtime/uvwasi/include args.bc ../../runtime/runtime.c ../../runtime/libc/uvwasi_backing.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c ../../runtime/uvwasi/out/cmake/libuvwasi_a.a ../../runtime/libuv/build/libuv_a.a -o args_vm
