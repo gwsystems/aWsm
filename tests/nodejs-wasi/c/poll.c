@@ -5,17 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main(void) {
+int main(void)
+{
   struct pollfd fds[4];
   time_t before, now;
   int ret;
-  char* platform;
-  int is_aix;
-  int is_win;
-
-  platform = getenv("NODE_PLATFORM");
-  is_aix = platform != NULL && 0 == strcmp(platform, "aix");
-  is_win = platform != NULL && 0 == strcmp(platform, "win32");
 
   // Test sleep() behavior.
   time(&before);
@@ -30,10 +24,6 @@ int main(void) {
   time(&now);
   assert(ret == 0);
   assert(now - before >= 2);
-
-  // The rest of the test is unsupported on Windows.
-  if (is_win)
-    return 0;
 
   fds[0] = (struct pollfd){.fd = 1, .events = POLLOUT, .revents = 0};
   fds[1] = (struct pollfd){.fd = 2, .events = POLLOUT, .revents = 0};
@@ -56,18 +46,10 @@ int main(void) {
   assert(fds[2].revents == 0);
   assert(fds[3].revents == 0);
 
-  // The original version of this test expected a timeout and return value of
-  // zero. In the Node test suite, STDIN is not a TTY, and poll() returns one,
-  // with revents = POLLHUP | POLLIN, except on AIX whose poll() does not
-  // support POLLHUP.
+  // Test timeout
   fds[0] = (struct pollfd){.fd = 0, .events = POLLIN, .revents = 0};
   ret = poll(fds, 1, 2000);
-  assert(ret == 1);
-
-  if (is_aix)
-    assert(fds[0].revents == POLLIN);
-  else
-    assert(fds[0].revents == (POLLHUP | POLLIN));
+  assert(ret == 0);
 
   return 0;
 }

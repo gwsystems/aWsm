@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 
-static char* message = "hello, file!";
+static char *message = "hello, file!";
 
-int main() {
-  FILE* file = fopen("/tmp/output.txt", "w");
+int main()
+{
+  FILE *file = fopen("/sandbox/data/output.txt", "w");
   assert(file != NULL);
 
   int nwritten = fprintf(file, "%s", message);

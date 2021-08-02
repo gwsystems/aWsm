@@ -3,7 +3,7 @@
 #include <errno.h>
 
 int main() {
-  DIR* dir = opendir("/sandbox/notadir");
+  DIR* dir = opendir("/sandbox/data/notadir");
   assert(dir == NULL);
   assert(errno == ENOTDIR);
 

@@ -6,21 +6,25 @@
 
 int main()
 {
-  FILE *file_orig = fopen("/sandbox/input.txt", "r");
-  if (file_orig != NULL)
+  FILE *file_orig = fopen("/sandbox/data/original.txt", "r");
+  if (file_orig == NULL)
   {
-    // strerror(errno);
+    strerror(errno);
     exit(EXIT_FAILURE);
   }
 
-  FILE *file_new = freopen("/sandbox/input2.txt", "r", file_orig);
-  assert(file_new != NULL);
+  FILE *file_new = freopen("/sandbox/data/replacement.txt", "r", file_orig);
+  if (file_new == NULL)
+  {
+    strerror(errno);
+    exit(EXIT_FAILURE);
+  }
 
-  int c = fgetc(file_new);
+  int c = fgetc(file_orig);
   while (c != EOF)
   {
     int wrote = fputc((char)c, stdout);
     assert(wrote != EOF);
-    c = fgetc(file_new);
+    c = fgetc(file_orig);
   }
 }

@@ -3,11 +3,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define BASE_DIR "/tmp"
+#define BASE_DIR "/sandbox/data"
 #define OUTPUT_DIR BASE_DIR "/testdir"
 #define PATH OUTPUT_DIR "/output.txt"
 
-int main(void) {
+int main(void)
+{
   struct stat st;
   int fd;
 

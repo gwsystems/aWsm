@@ -2,8 +2,8 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#define OLD "/sandbox/input.txt"
-#define NEW "/tmp/output.txt"
+#define OLD "/sandbox/data/input.txt"
+#define NEW "/sandbox/data/hard_link.txt"
 
 int main() {
   struct stat st_old;

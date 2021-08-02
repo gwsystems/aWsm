@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 int main() {
-  FILE* file = fopen("/sandbox/subdir/loop1", "r");
+  FILE* file = fopen("/sandbox/data/loop1", "r");
   assert(file == NULL);
   assert(errno == ELOOP);
 }

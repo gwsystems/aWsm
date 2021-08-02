@@ -36,10 +36,25 @@ int main(int argc, char *argv[])
     uvwasi_options_t init_options;
     uvwasi_options_init(&init_options);
 
-    /* Pass through arguments from host process */
+    /* 
+     * Pass through arguments from host process 
+     * The name of the executable is passed as the first arg.
+     * This truncates the relative path from the caller's host pwd
+    */
     init_options.argc = argc;
     init_options.argv = calloc(argc, sizeof(char *));
-    for (int i = 0; i < argc; i++)
+    int i;
+    for (i = strlen(argv[0]); i > 0; i--)
+    {
+        if (argv[0][i] == '/')
+        {
+            i++;
+            break;
+        }
+    }
+    init_options.argv[0] = &argv[0][i];
+
+    for (int i = 1; i < argc; i++)
     {
         init_options.argv[i] = argv[i];
     }
