@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Tests WASI syscalls via C test programs and wasi-libc
-# Modified from the Node.js suite of WASI tests
 
 make all
 pushd ./vm || exit 1
@@ -11,7 +10,9 @@ declare -a tests_failed=()
 ./cant_dotdot_vm || tests_failed+=("cant_dotdot")
 ./clock_getres_vm || tests_failed+=("clock_getres")
 ./create_symlink.sh || tests_failed+=("create_symlink")
+./environ.sh || tests_failed+=("environ")
 ./exitcode.sh || tests_failed+=("exitcode")
+./exitcode_explicit.sh || tests_failed+=("exitcode_explicit")
 ./follow_symlink.sh || tests_failed+=("follow_symlink")
 ./freopen.sh || tests_failed+=("freopen")
 ./ftruncate.sh || tests_failed+=("ftruncate")
@@ -26,6 +27,7 @@ declare -a tests_failed=()
 ./read_file.sh || tests_failed+=("read_file")
 ./read_file_twice.sh || tests_failed+=("read_file_twice")
 ./readdir.sh || tests_failed+=("readdir")
+./signal.sh || tests_failed+=("signal")
 ./stat.sh || tests_failed+=("stat")
 ./stdin.sh || tests_failed+=("stdin")
 ./symlink_escape.sh || tests_failed+=("symlink_escape")
