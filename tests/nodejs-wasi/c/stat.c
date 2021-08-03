@@ -50,20 +50,8 @@ int main(void)
   ret = access(PATH, R_OK);
   assert(ret == 0);
 
-  printf("stat: %s\n", PATH);
-  fflush(STDOUT_FILENO);
   ret = stat(PATH, &st);
   assert(ret == 0);
-  printf("st_dev: %lu\n", st.st_dev);
-  printf("st_ino: %lu\n", st.st_ino);
-  printf("st_mode: %u\n", st.st_mode);
-  printf("st_nlink: %lu\n", st.st_nlink);
-  printf("st_uid: %u\n", st.st_uid);
-  printf("st_gid: %u\n", st.st_gid);
-  printf("st_rdev: %lu\n", st.st_rdev);
-  printf("st_size: %lu\n", st.st_size);
-  // printf("%lu\n", st.st_size);
-  printf("%lu\n", SIZE);
   assert(st.st_size == SIZE);
 
   ret = unlink(PATH);

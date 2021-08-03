@@ -115,19 +115,20 @@ uint32_t wasi_snapshot_preview1_args_get(
     char argv_buf[uvwasi.argv_buf_size];
     uvwasi_errno_t rc = uvwasi_args_get(&uvwasi, (char **)&argv, argv_buf);
 
-    if (rc == UVWASI_ESUCCESS)
-    {
-        /* Adjust argv to use offsets, not host pointers */
-        for (size_t i = 0; i < uvwasi.argc; i++)
-        {
-            argv[i] = argv_buf_retptr + (uvwasi.argv[i] - uvwasi.argv[0]);
-        }
+    if (rc != UVWASI_ESUCCESS)
+        goto done;
 
-        /* Write argv and argv_buf to linear memory */
-        memcpy(&memory[argv_retptr], &argv, uvwasi.argc * sizeof(uvwasi_size_t));
-        memcpy(&memory[argv_buf_retptr], &argv_buf, uvwasi.argv_buf_size);
+    /* Adjust argv to use offsets, not host pointers */
+    for (size_t i = 0; i < uvwasi.argc; i++)
+    {
+        argv[i] = argv_buf_retptr + (uvwasi.argv[i] - uvwasi.argv[0]);
     }
 
+    /* Write argv and argv_buf to linear memory */
+    memcpy(&memory[argv_retptr], &argv, uvwasi.argc * sizeof(uvwasi_size_t));
+    memcpy(&memory[argv_buf_retptr], &argv_buf, uvwasi.argv_buf_size);
+
+done:
     return (uint32_t)rc;
 }
 
@@ -193,9 +194,12 @@ uint32_t wasi_snapshot_preview1_clock_res_get(
                                              &resolution);
 
     /* write buffer to linear memory */
-    if (rc == UVWASI_ESUCCESS)
-        uvwasi_serdes_write_timestamp_t(memory, res_retptr, resolution);
+    if (rc != UVWASI_ESUCCESS)
+        goto done;
 
+    uvwasi_serdes_write_timestamp_t(memory, res_retptr, resolution);
+
+done:
     return (uint32_t)rc;
 }
 
@@ -928,7 +932,7 @@ uint32_t wasi_snapshot_preview1_fd_tell(
     /* Execute WASI Call */
     uvwasi_filesize_t fileoffset;
     uvwasi_errno_t rc = uvwasi_fd_tell(&uvwasi, fd, &fileoffset);
-    if (rc == UVWASI_ESUCCESS)
+    if (rc != UVWASI_ESUCCESS)
         goto done;
 
     /* Write results to linear memory */
@@ -1043,7 +1047,7 @@ uint32_t wasi_snapshot_preview1_path_filestat_get(
                                                  &memory[path_baseptr],
                                                  path_len,
                                                  &stats);
-    if (rc == UVWASI_ESUCCESS)
+    if (rc != UVWASI_ESUCCESS)
         goto done;
 
     uvwasi_serdes_write_filestat_t(memory, filestat_retptr, &stats);
