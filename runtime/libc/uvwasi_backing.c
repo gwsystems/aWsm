@@ -99,6 +99,10 @@ uint32_t wasi_snapshot_preview1_args_get(
     uvwasi_size_t argv_retptr,
     uvwasi_size_t argv_buf_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_args_get(%u,%u)\n", argv_retptr, argv_buf_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(argv_retptr, sizeof(uvwasi_size_t) * uvwasi.argc);
     check_bounds(argv_buf_retptr, uvwasi.argv_buf_size);
@@ -139,6 +143,10 @@ uint32_t wasi_snapshot_preview1_args_sizes_get(
     uvwasi_size_t argc_retptr,
     uvwasi_size_t argv_buf_len_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_args_sizes_get(%u,%u)\n", argc_retptr, argv_buf_len_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(argc_retptr, sizeof(uint32_t));
     check_bounds(argv_buf_len_retptr, sizeof(uint32_t));
@@ -171,6 +179,10 @@ uint32_t wasi_snapshot_preview1_clock_res_get(
     uvwasi_clockid_t id,
     uvwasi_size_t res_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_clock_res_get(%u,%u)\n", id, res_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(res_retptr, sizeof(uvwasi_timestamp_t));
 
@@ -200,6 +212,10 @@ uint32_t wasi_snapshot_preview1_clock_time_get(
     uvwasi_timestamp_t precision,
     uvwasi_size_t time_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_clock_time_get(%u,%lu,%u)\n", clock_id, precision, time_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(time_retptr, sizeof(uvwasi_timestamp_t));
 
@@ -228,6 +244,10 @@ uint32_t wasi_snapshot_preview1_environ_get(
     uvwasi_size_t environ_retptr,
     uvwasi_size_t environ_buf_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_environ_get(%u,%u)\n", environ_retptr, environ_buf_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(environ_retptr, uvwasi.envc * UVWASI_SERDES_SIZE_size_t);
     check_bounds(environ_buf_retptr, uvwasi.env_buf_size);
@@ -265,6 +285,10 @@ uint32_t wasi_snapshot_preview1_environ_sizes_get(
     uvwasi_size_t environc_retptr,
     uvwasi_size_t environv_buf_len_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_environ_sizes_get(%u,%u)\n", environc_retptr, environv_buf_len_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(environc_retptr, UVWASI_SERDES_SIZE_size_t);
     check_bounds(environv_buf_len_retptr, UVWASI_SERDES_SIZE_size_t);
@@ -302,6 +326,10 @@ uint32_t wasi_snapshot_preview1_fd_advise(
     uvwasi_filesize_t len,
     uint32_t advice)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_advise(%u,%lu,%lu,%u)\n", fd, offset, len, advice);
+#endif
+
     uvwasi_errno_t rc;
 
     if (unlikely(advice > UINT8_MAX))
@@ -329,6 +357,10 @@ uint32_t wasi_snapshot_preview1_fd_allocate(
     uvwasi_filesize_t offset,
     uvwasi_filesize_t len)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_allocate(%u,%lu,%lu)\n", fd, offset, len);
+#endif
+
     return (uint32_t)uvwasi_fd_allocate(&uvwasi, fd, offset, len);
 };
 
@@ -340,6 +372,10 @@ uint32_t wasi_snapshot_preview1_fd_allocate(
  */
 uint32_t wasi_snapshot_preview1_fd_close(uvwasi_fd_t fd)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_close(%u)\n", fd);
+#endif
+
     return (uint32_t)uvwasi_fd_close(&uvwasi, fd);
 }
 
@@ -351,6 +387,10 @@ uint32_t wasi_snapshot_preview1_fd_close(uvwasi_fd_t fd)
  */
 uint32_t wasi_snapshot_preview1_fd_datasync(uvwasi_fd_t fd)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_datasync(%u)\n", fd);
+#endif
+
     return (uint32_t)uvwasi_fd_datasync(&uvwasi, fd);
 }
 
@@ -365,6 +405,10 @@ uint32_t wasi_snapshot_preview1_fd_fdstat_get(
     uvwasi_fd_t fd,
     uvwasi_size_t fdstat_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_fdstat_get(%u,%u)\n", fd, fdstat_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(fdstat_retptr, UVWASI_SERDES_SIZE_fdstat_t);
 
@@ -392,6 +436,10 @@ uint32_t wasi_snapshot_preview1_fd_fdstat_set_flags(
     uvwasi_fd_t fd,
     uint32_t fdflags)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_fdstat_set_flags(%u,%u)\n", fd, fdflags);
+#endif
+
     uvwasi_errno_t rc;
 
     /* fdflags should be a zero-extended uint16_t */
@@ -421,6 +469,9 @@ uint32_t wasi_snapshot_preview1_fd_fdstat_set_rights(
     uvwasi_rights_t fs_rights_base,
     uvwasi_rights_t fs_rights_inheriting)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_fdstat_set_rights(%u,%lu,%lu)\n", fd, fs_rights_base, fs_rights_inheriting);
+#endif
     return (uint32_t)uvwasi_fd_fdstat_set_rights(&uvwasi,
                                                  fd,
                                                  fs_rights_base,
@@ -438,6 +489,10 @@ uint32_t wasi_snapshot_preview1_fd_filestat_get(
     uvwasi_fd_t fd,
     uvwasi_size_t filestat_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_filestat_get(%u,%u)\n", fd, filestat_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(filestat_retptr, UVWASI_SERDES_SIZE_filestat_t);
 
@@ -465,6 +520,10 @@ uint32_t wasi_snapshot_preview1_fd_filestat_set_size(
     uvwasi_fd_t fd,
     uvwasi_filesize_t size)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_filestat_set_size(%u,%lu)\n", fd, size);
+#endif
+
     return (uint32_t)uvwasi_fd_filestat_set_size(&uvwasi, fd, size);
 }
 
@@ -483,6 +542,10 @@ uint32_t wasi_snapshot_preview1_fd_filestat_set_times(
     uvwasi_timestamp_t mtim,
     uint32_t fst_flags)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_filestat_set_times(%u,%lu,%lu,%u)\n", fd, atim, mtim, fst_flags);
+#endif
+
     uvwasi_errno_t rc;
     if (unlikely(fst_flags > UINT16_MAX))
         goto err_fst_flags_overflow;
@@ -517,6 +580,10 @@ uint32_t wasi_snapshot_preview1_fd_pread(
     uvwasi_filesize_t offset,
     uvwasi_size_t nbytes_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_pread(%u,%u,%u,%lu,%u)\n", fd, iovs_baseptr, iovs_len, offset, nbytes_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(iovs_baseptr, iovs_len * UVWASI_SERDES_SIZE_iovec_t);
     check_bounds(nbytes_retptr, UVWASI_SERDES_SIZE_size_t);
@@ -555,6 +622,10 @@ uint32_t wasi_snapshot_preview1_fd_prestat_get(
     uvwasi_fd_t fd,
     uvwasi_size_t prestat_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_prestat_get(%u,%u)\n", fd, prestat_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(prestat_retptr, UVWASI_SERDES_SIZE_prestat_t);
 
@@ -584,6 +655,10 @@ uint32_t wasi_snapshot_preview1_fd_prestat_dir_name(
     uvwasi_size_t path_retptr,
     uvwasi_size_t path_len)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_prestat_dir_name(%u,%u,%u)\n", fd, path_retptr, path_len);
+#endif
+
     /* Check Bounds */
     check_bounds(path_retptr, path_len);
 
@@ -612,6 +687,10 @@ uint32_t wasi_snapshot_preview1_fd_pwrite(
     uvwasi_filesize_t offset,
     uvwasi_size_t nwritten_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_pwrite(%u,%u,%u,%lu,%u)\n", fd, iovs_baseptr, iovs_len, offset, nwritten_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(iovs_baseptr, iovs_len * UVWASI_SERDES_SIZE_ciovec_t);
     check_bounds(nwritten_retptr, UVWASI_SERDES_SIZE_size_t);
@@ -659,6 +738,10 @@ uint32_t wasi_snapshot_preview1_fd_read(
     uvwasi_size_t iovs_len,
     uvwasi_size_t nread_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_read(%u,%u,%u,%u)\n", fd, iovs_baseptr, iovs_len, nread_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(iovs_baseptr, iovs_len * UVWASI_SERDES_SIZE_iovec_t);
     check_bounds(nread_retptr, UVWASI_SERDES_SIZE_size_t);
@@ -710,6 +793,10 @@ uint32_t wasi_snapshot_preview1_fd_readdir(
     uvwasi_dircookie_t cookie,
     uvwasi_size_t nread_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_readdir(%u,%u,%u,%lu,%u)\n", fd, buf_baseptr, buf_len, cookie, nread_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(buf_baseptr, buf_len);
     check_bounds(nread_retptr, UVWASI_SERDES_SIZE_size_t);
@@ -750,6 +837,10 @@ uint32_t wasi_snapshot_preview1_fd_renumber(
     uvwasi_fd_t fd,
     uvwasi_fd_t to)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_renumber(%u,%u)\n", fd, to);
+#endif
+
     return (uint32_t)uvwasi_fd_renumber(&uvwasi, fd, to);
 }
 
@@ -768,6 +859,10 @@ uint32_t wasi_snapshot_preview1_fd_seek(
     uint32_t whence,
     uvwasi_size_t newoffset_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_seek(%u,%ld,%u,%u)\n", fd, file_offset, whence, newoffset_retptr);
+#endif
+
     uvwasi_errno_t rc;
 
     /* Validate types zero-extended by wasm32 ABI */
@@ -805,6 +900,10 @@ done:
  */
 uint32_t wasi_snapshot_preview1_fd_sync(uvwasi_fd_t fd)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_sync(%u)\n", fd);
+#endif
+
     return (uint32_t)uvwasi_fd_sync(&uvwasi, fd);
 }
 
@@ -819,6 +918,10 @@ uint32_t wasi_snapshot_preview1_fd_tell(
     uvwasi_fd_t fd,
     uvwasi_size_t fileoffset_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_tell(%u,%u)\n", fd, fileoffset_retptr);
+#endif
+
     /* Check Bounds */
     check_bounds(fileoffset_retptr, UVWASI_SERDES_SIZE_filesize_t);
 
@@ -851,6 +954,10 @@ uint32_t wasi_snapshot_preview1_fd_write(
     uvwasi_size_t iovs_len,
     uvwasi_size_t nwritten_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_fd_write(%u,%u,%u,%u)\n", fd, iovs_baseptr, iovs_len, nwritten_retptr);
+#endif
+
     /* Check bounds */
     check_bounds(iovs_baseptr, UVWASI_SERDES_SIZE_ciovec_t * iovs_len);
     check_bounds(nwritten_retptr, UVWASI_SERDES_SIZE_size_t);
@@ -893,6 +1000,10 @@ uint32_t wasi_snapshot_preview1_path_create_directory(
     uvwasi_size_t path_baseptr,
     uvwasi_size_t path_len)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_path_create_directory(%u,%u,%u)\n", fd, path_baseptr, path_len);
+#endif
+
     check_bounds(path_baseptr, path_len);
 
     return (uint32_t)uvwasi_path_create_directory(&uvwasi,
@@ -918,6 +1029,10 @@ uint32_t wasi_snapshot_preview1_path_filestat_get(
     uvwasi_size_t path_len,
     uvwasi_size_t filestat_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_path_filestat_get(%u,%u,%u,%u,%u)\n", fd, flags, path_baseptr, path_len, filestat_retptr);
+#endif
+
     check_bounds(path_baseptr, path_len);
     check_bounds(filestat_retptr, UVWASI_SERDES_SIZE_filestat_t);
 
@@ -958,6 +1073,10 @@ uint32_t wasi_snapshot_preview1_path_filestat_set_times(
     uvwasi_timestamp_t mtim,
     uint32_t fst_flags)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_path_filestat_set_times(%u,%u,%u,%u,%lu,%lu,%u)\n", fd, flags, path_baseptr, path_len, atim, mtim, fst_flags);
+#endif
+
     uvwasi_errno_t rc;
 
     if (unlikely(fst_flags > UINT16_MAX))
@@ -1002,6 +1121,10 @@ uint32_t wasi_snapshot_preview1_path_link(
     uvwasi_size_t new_path_baseptr,
     uvwasi_size_t new_path_len)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_path_link(%u,%u,%u,%u,%u,%u,%u)\n", old_fd, old_flags, old_path_baseptr, old_path_len, new_fd, new_path_baseptr, new_path_len);
+#endif
+
     check_bounds(old_path_baseptr, old_path_len);
     check_bounds(new_path_baseptr, new_path_len);
 
@@ -1045,6 +1168,10 @@ uint32_t wasi_snapshot_preview1_path_open(
     uint32_t fdflags,
     uvwasi_size_t fd_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_path_open(%u,%u,%u,%u,%u,%lu,%lu,%u,%u)\n", dirfd, lookupflags, path_baseptr, path_len, oflags, fs_rights_base, fs_rights_inheriting, fdflags, fd_retptr);
+#endif
+
     check_bounds(path_baseptr, path_len);
     check_bounds(fd_retptr, UVWASI_SERDES_SIZE_fd_t);
 
@@ -1096,6 +1223,10 @@ uint32_t wasi_snapshot_preview1_path_readlink(
     uvwasi_size_t buf_len,
     uvwasi_size_t nread_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_path_open(%u,%u,%u,%u,%u,%u)\n", fd, path_baseptr, path_len, buf_baseretptr, buf_len, nread_retptr);
+#endif
+
     check_bounds(path_baseptr, path_len);
     check_bounds(buf_baseretptr, buf_len);
     check_bounds(nread_retptr, UVWASI_SERDES_SIZE_size_t);
@@ -1131,6 +1262,10 @@ uint32_t wasi_snapshot_preview1_path_remove_directory(
     uvwasi_size_t path_baseptr,
     uvwasi_size_t path_len)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_path_remove_directory(%u,%u,%u)\n", fd, path_baseptr, path_len);
+#endif
+
     check_bounds(path_baseptr, path_len);
 
     return (uint32_t)uvwasi_path_remove_directory(&uvwasi,
@@ -1156,6 +1291,10 @@ uint32_t wasi_snapshot_preview1_path_rename(
     uvwasi_size_t new_path_baseptr,
     uvwasi_size_t new_path_len)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_path_remove_directory(%u,%u,%u,%u,%u,%u)\n", fd, old_path_baseptr, old_path_len, new_fd, new_path_baseptr, new_path_len);
+#endif
+
     check_bounds(old_path_baseptr, old_path_len);
     check_bounds(new_path_baseptr, new_path_len);
 
@@ -1185,6 +1324,10 @@ uint32_t wasi_snapshot_preview1_path_symlink(
     uvwasi_size_t new_path_baseptr,
     uvwasi_size_t new_path_len)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_path_symlink(%u,%u,%u,%u,%u)\n", old_path_baseptr, old_path_len, fd, new_path_baseptr, new_path_len);
+#endif
+
     check_bounds(old_path_baseptr, old_path_len);
     check_bounds(new_path_baseptr, new_path_len);
 
@@ -1210,6 +1353,10 @@ uint32_t wasi_snapshot_preview1_path_unlink_file(
     uvwasi_size_t path_baseptr,
     uvwasi_size_t path_len)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_path_unlink_file(%u,%u,%u)\n", fd, path_baseptr, path_len);
+#endif
+
     check_bounds(path_baseptr, path_len);
 
     return (uint32_t)uvwasi_path_unlink_file(&uvwasi,
@@ -1233,6 +1380,10 @@ uint32_t wasi_snapshot_preview1_poll_oneoff(
     uvwasi_size_t nsubscriptions,
     uvwasi_size_t nevents_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_poll_oneoff(%u,%u,%u,%u)\n", in_baseptr, out_baseptr, nsubscriptions, nevents_retptr);
+#endif
+
     check_bounds(in_baseptr,
                  nsubscriptions * UVWASI_SERDES_SIZE_subscription_t);
     check_bounds(out_baseptr,
@@ -1281,6 +1432,10 @@ done:
  */
 __attribute__((noreturn)) void wasi_snapshot_preview1_proc_exit(uvwasi_exitcode_t exitcode)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_proc_exit(%u)\n", exitcode);
+#endif
+
     uvwasi_proc_exit(&uvwasi, exitcode);
     assert(0);
 }
@@ -1294,6 +1449,10 @@ __attribute__((noreturn)) void wasi_snapshot_preview1_proc_exit(uvwasi_exitcode_
 uint32_t wasi_snapshot_preview1_proc_raise(
     uint32_t sig)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_proc_raise(%u)\n", sig);
+#endif
+
     uvwasi_errno_t rc;
 
     if (sig > UINT8_MAX)
@@ -1324,6 +1483,10 @@ uint32_t wasi_snapshot_preview1_random_get(
     uvwasi_size_t buf_baseretptr,
     uvwasi_size_t buf_len)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_random_get(%u,%u)\n", buf_baseretptr, buf_len);
+#endif
+
     /* Check Bounds */
     check_bounds(buf_baseretptr, buf_len);
 
@@ -1339,6 +1502,10 @@ uint32_t wasi_snapshot_preview1_random_get(
  */
 uint32_t wasi_snapshot_preview1_sched_yield(void)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_sched_yield()\n");
+#endif
+
     return (uint32_t)uvwasi_sched_yield(&uvwasi);
 }
 
@@ -1366,6 +1533,10 @@ uint32_t wasi_snapshot_preview1_sock_recv(
     uvwasi_size_t ri_data_nbytes_retptr,
     uvwasi_size_t message_nbytes_retptr)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_sock_recv(%u,%u,%u,%u,%u,%u)\n", fd, ri_data_baseretptr, ri_data_len, ri_flags, ri_data_nbytes_retptr, message_nbytes_retptr);
+#endif
+
     wasi_unsupported_syscall(__func__);
 
     /* ri_flags is type uvwasi_riflags_t, which is uint16_t and zero extended to an wasm i32 */
@@ -1391,8 +1562,11 @@ uint32_t wasi_snapshot_preview1_sock_send(
     uvwasi_size_t si_data_baseptr,
     uvwasi_size_t si_data_len,
     uint32_t si_flags,
-    uvwasi_size_t *retptr0)
+    uvwasi_size_t retptr0)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_sock_send(%u,%u,%u,%u,%u)\n", fd, si_data_baseptr, si_data_len, si_flags, retptr0);
+#endif
     wasi_unsupported_syscall(__func__);
 
     /* si_flags is type uvwasi_siflags_t, which is uint16_t and zero extended to an wasm i32 */
@@ -1412,6 +1586,10 @@ uint32_t wasi_snapshot_preview1_sock_shutdown(
     uvwasi_fd_t fd,
     uint32_t how)
 {
+#ifdef LOG_WASI
+    fprintf(stderr, "wasi_snapshot_preview1_sock_shutdown(%u,%u)\n", fd, how);
+#endif
+
     wasi_unsupported_syscall(__func__);
 
     /* how is type uvwasi_sdflags_t, which is uint8_t and zero extended to an wasm i32 */
