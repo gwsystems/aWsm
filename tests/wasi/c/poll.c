@@ -77,9 +77,12 @@ int main(void)
   assert(fds[3].revents == 0);
 
   // Test timeout
-  fds[0] = (struct pollfd){.fd = 0, .events = POLLIN, .revents = 0};
-  ret = poll(fds, 1, 2000);
-  assert(ret == 0);
+  // Commented out because relying on STDIN is too fragile
+  // This should try to read from a socket, but this is probably
+  // impossible due to the WASI spec flux around sockets
+  // fds[0] = (struct pollfd){.fd = 0, .events = POLLIN, .revents = 0};
+  // ret = poll(fds, 1, 2000);
+  // assert(ret == 0);
 
   return 0;
 }
