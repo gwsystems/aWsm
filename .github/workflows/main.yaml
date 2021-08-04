@@ -54,14 +54,14 @@ jobs:
         run: |
           wget $LIBUV_URL -O libuv.tar.gz
           mkdir -p ./runtime/libuv
-          tar xvfz libuv --strip-components=1 -C ./runtime/libuv
+          tar xvfz libuv.tar.gz --strip-components=1 -C ./runtime/libuv
           
       - name: Get uvwasi
         if: matrix.libc == 'wasi-sdk'
         run: |
           wget $UVWASI_URL -O uvwasi.tar.gz
           mkdir -p ./runtime/uvwasi
-          tar xvfz uvwasi.tar.gz.tar.gz --strip-components=1 -C ./runtime/uvwasi
+          tar xvfz uvwasi.tar.gz --strip-components=1 -C ./runtime/uvwasi
 
       - name: Compile
         run: |
