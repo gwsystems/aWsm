@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit
+mkdir -p data
 
 rm -f ./data/loop2 ./data/loop1
 touch ./data/loop2

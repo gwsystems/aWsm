@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit
+mkdir -p data
 
 rm -rf ./data/dummy.txt ./data/input_link.txt
 data="Hello World\n"
