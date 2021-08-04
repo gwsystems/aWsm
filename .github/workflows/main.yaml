@@ -81,7 +81,7 @@ jobs:
         if: matrix.libc == 'wasi-sdk'
         run: |
           make -C tests/wasi all
-          cd tests/wasi && ./run.sh
+          cd tests/wasi && bash ./run.sh
 
       - name: Code benches
         run: |
