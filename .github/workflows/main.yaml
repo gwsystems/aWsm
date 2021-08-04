@@ -10,6 +10,8 @@ env:
   # URLs for WebAssembly libcs
   WASMCEPTION_URL: https://github.com/gwsystems/wasmception/releases/download/v0.2.0/wasmception-linux-x86_64-0.2.0.tar.gz
   WASI_SDK_URL: https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk-12.0-linux.tar.gz
+  LIBUV_URL: https://github.com/libuv/libuv/archive/refs/tags/v1.42.0.tar.gz
+  UVWASI_URL: https://github.com/nodejs/uvwasi/archive/refs/tags/v0.0.11.tar.gz
 
 # job control
 jobs:
@@ -47,6 +49,20 @@ jobs:
           mkdir -p wasi-sdk
           tar xvfz wasi-sdk.tar.gz --strip-components=1 -C wasi-sdk
 
+      - name: Get libuv
+        if: matrix.libc == 'wasi-sdk'
+        run: |
+          wget $LIBUV_URL -O libuv.tar.gz
+          mkdir -p ./runtime/libuv
+          tar xvfz libuv --strip-components=1 -C ./runtime/libuv
+          
+      - name: Get uvwasi
+        if: matrix.libc == 'wasi-sdk'
+        run: |
+          wget $UVWASI_URL -O uvwasi.tar.gz
+          mkdir -p ./runtime/uvwasi
+          tar xvfz uvwasi.tar.gz.tar.gz --strip-components=1 -C ./runtime/uvwasi
+
       - name: Compile
         run: |
           cargo build
@@ -56,6 +72,11 @@ jobs:
         # to pass explicit flags
         run: |
           cargo test -- --skip code_benches
+
+      - name: WASI Tests
+        if: matrix.libc == 'wasi-sdk'
+        run: |
+          cd tests/wasi && ./run.sh
 
       - name: Code benches
         run: |
