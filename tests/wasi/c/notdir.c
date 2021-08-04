@@ -1,4 +1,4 @@
-/* 
+/*
 This test was derived from Node.js source code located at the following URL:
 https://github.com/nodejs/node/blob/d872aaf1cf20d5b6f56a699e2e3a64300e034269/test/wasi/c/notdir.c
 
@@ -31,11 +31,12 @@ IN THE SOFTWARE.
 #include <assert.h>
 #include <dirent.h>
 #include <errno.h>
+#include <stdlib.h>
 
 int main() {
-  DIR* dir = opendir("/sandbox/data/notadir");
-  assert(dir == NULL);
-  assert(errno == ENOTDIR);
+    DIR* dir = opendir("/sandbox/data/notadir");
+    assert(dir == NULL);
+    assert(errno == ENOTDIR);
 
-  return 0;
+    return 0;
 }

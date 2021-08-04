@@ -1,6 +1,5 @@
 #include <stdlib.h>
 
-int main()
-{
-  exit(120);
+int main() {
+    exit(120);
 }

@@ -1,4 +1,4 @@
-/* 
+/*
 This test was derived from Node.js source code located at the following URL:
 https://github.com/nodejs/node/blob/d872aaf1cf20d5b6f56a699e2e3a64300e034269/test/wasi/c/readdir.c
 
@@ -28,6 +28,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
 */
 
+#define _BSD_SOURCE
+
 #include <assert.h>
 #include <dirent.h>
 #include <errno.h>
@@ -35,39 +37,31 @@ IN THE SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
-int main()
-{
-  DIR *dir;
-  struct dirent *entry;
-  int cnt;
+int main() {
+    DIR*           dir;
+    struct dirent* entry;
+    int            cnt;
 
-  dir = opendir("/sandbox/data/readdir");
-  assert(dir != NULL);
+    dir = opendir("/sandbox/data/readdir");
+    assert(dir != NULL);
 
-  cnt = 0;
-  errno = 0;
-  while (NULL != (entry = readdir(dir)))
-  {
-    if (strcmp(entry->d_name, "input.txt") == 0 ||
-        strcmp(entry->d_name, "input2.txt") == 0 ||
-        strcmp(entry->d_name, "notadir") == 0)
-    {
-      assert(entry->d_type == DT_REG);
-    }
-    else if (strcmp(entry->d_name, "subdir") == 0)
-    {
-      assert(entry->d_type == DT_DIR);
-    }
-    else
-    {
-      assert(0);
+    cnt   = 0;
+    errno = 0;
+    while (NULL != (entry = readdir(dir))) {
+        if (strcmp(entry->d_name, "input.txt") == 0 || strcmp(entry->d_name, "input2.txt") == 0
+            || strcmp(entry->d_name, "notadir") == 0) {
+            assert(entry->d_type == DT_REG);
+        } else if (strcmp(entry->d_name, "subdir") == 0) {
+            assert(entry->d_type == DT_DIR);
+        } else {
+            assert(0);
+        }
+
+        cnt++;
     }
 
-    cnt++;
-  }
-
-  assert(errno == 0);
-  assert(cnt == 4);
-  closedir(dir);
-  return 0;
+    assert(errno == 0);
+    assert(cnt == 4);
+    closedir(dir);
+    return 0;
 }

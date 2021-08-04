@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* 
+/*
  * We have to manually define this because wasi-libc errors out if we include <signal.h>
  * complaining that WebAssembly requires various flags to emulate signals. This is because
  * WASI does not seem to have a means to support registering signal handlers. WASI does
@@ -10,9 +10,8 @@
  */
 #define SIGINT 2
 
-int main(int argc, char **argv)
-{
-    /* 
+int main(int argc, char** argv) {
+    /*
      * Send SIGINT to runtime process
      * The string should not print, and the status code of the runtime should be
      * EOWNERDEAD 130 Owner died

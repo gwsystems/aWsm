@@ -1,4 +1,4 @@
-/* 
+/*
 This test was derived from Node.js source code located at the following URL:
 https://github.com/nodejs/node/blob/d872aaf1cf20d5b6f56a699e2e3a64300e034269/test/wasi/c/write_file.c
 
@@ -32,15 +32,14 @@ IN THE SOFTWARE.
 #include <stdio.h>
 #include <string.h>
 
-static char *message = "hello, file!";
+static char* message = "hello, file!";
 
-int main()
-{
-  FILE *file = fopen("/sandbox/data/output.txt", "w");
-  assert(file != NULL);
+int main() {
+    FILE* file = fopen("/sandbox/data/output.txt", "w");
+    assert(file != NULL);
 
-  int nwritten = fprintf(file, "%s", message);
-  assert(nwritten == strlen(message));
-  int r = fclose(file);
-  assert(r == 0);
+    int nwritten = fprintf(file, "%s", message);
+    assert(nwritten == strlen(message));
+    int r = fclose(file);
+    assert(r == 0);
 }

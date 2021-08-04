@@ -1,4 +1,4 @@
-/* 
+/*
 This test was derived from Node.js source code located at the following URL:
 https://github.com/nodejs/node/blob/d872aaf1cf20d5b6f56a699e2e3a64300e034269/test/wasi/c/symlink_loop.c
 
@@ -33,7 +33,7 @@ IN THE SOFTWARE.
 #include <stdio.h>
 
 int main() {
-  FILE* file = fopen("/sandbox/data/loop1", "r");
-  assert(file == NULL);
-  assert(errno == ELOOP);
+    FILE* file = fopen("/sandbox/data/loop1", "r");
+    assert(file == NULL);
+    assert(errno == ELOOP);
 }

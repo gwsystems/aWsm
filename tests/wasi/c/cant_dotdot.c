@@ -1,4 +1,4 @@
-/* 
+/*
 This test was derived from Node.js source code located at the following URL:
 https://github.com/nodejs/node/blob/d872aaf1cf20d5b6f56a699e2e3a64300e034269/test/wasi/c/cant_dotdot.c
 
@@ -28,15 +28,15 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
 */
 
+#include <__errno_values.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 
-int main()
-{
-  FILE *file = fopen("/sandbox/../outside.txt", "r");
-  assert(file == NULL);
-  assert(errno == ENOTCAPABLE);
+int main() {
+    FILE* file = fopen("/sandbox/../outside.txt", "r");
+    assert(file == NULL);
+    assert(errno == ENOTCAPABLE);
 
-  return 0;
+    return 0;
 }

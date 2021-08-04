@@ -1,4 +1,4 @@
-/* 
+/*
 This test was derived from Node.js source code located at the following URL:
 https://github.com/nodejs/node/blob/d872aaf1cf20d5b6f56a699e2e3a64300e034269/test/wasi/c/follow_symlink.c
 
@@ -32,21 +32,19 @@ IN THE SOFTWARE.
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-int main()
-{
-  FILE *file = fopen("/sandbox/data/input_link.txt", "r");
-  if (file == NULL)
-  {
-    fprintf(stderr, "Error: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  };
+int main() {
+    FILE* file = fopen("/sandbox/data/input_link.txt", "r");
+    if (file == NULL) {
+        fprintf(stderr, "Error: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    };
 
-  char c = fgetc(file);
-  while (c != EOF)
-  {
-    int wrote = fputc(c, stdout);
-    assert(wrote != EOF);
-    c = fgetc(file);
-  }
+    char c = fgetc(file);
+    while (c != EOF) {
+        int wrote = fputc(c, stdout);
+        assert(wrote != EOF);
+        c = fgetc(file);
+    }
 }

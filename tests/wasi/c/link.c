@@ -1,4 +1,4 @@
-/* 
+/*
 This test was derived from Node.js source code located at the following URL:
 https://github.com/nodejs/node/blob/d872aaf1cf20d5b6f56a699e2e3a64300e034269/test/wasi/c/link.c
 
@@ -29,19 +29,19 @@ IN THE SOFTWARE.
 */
 
 #include <assert.h>
-#include <unistd.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #define OLD "/sandbox/data/input.txt"
 #define NEW "/sandbox/data/hard_link.txt"
 
 int main() {
-  struct stat st_old;
-  struct stat st_new;
+    struct stat st_old;
+    struct stat st_new;
 
-  assert(0 == stat(OLD, &st_old));
-  assert(0 == link(OLD, NEW));
-  assert(0 == stat(NEW, &st_new));
-  assert(st_old.st_ino == st_new.st_ino);
-  return 0;
+    assert(0 == stat(OLD, &st_old));
+    assert(0 == link(OLD, NEW));
+    assert(0 == stat(NEW, &st_new));
+    assert(st_old.st_ino == st_new.st_ino);
+    return 0;
 }

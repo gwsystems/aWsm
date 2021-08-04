@@ -1,4 +1,4 @@
-/* 
+/*
 This test was derived from Node.js source code located at the following URL:
 https://github.com/nodejs/node/blob/d872aaf1cf20d5b6f56a699e2e3a64300e034269/test/wasi/c/freopen.c
 
@@ -34,27 +34,23 @@ IN THE SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
-int main()
-{
-  FILE *file_orig = fopen("/sandbox/data/original.txt", "r");
-  if (file_orig == NULL)
-  {
-    strerror(errno);
-    exit(EXIT_FAILURE);
-  }
+int main() {
+    FILE* file_orig = fopen("/sandbox/data/original.txt", "r");
+    if (file_orig == NULL) {
+        strerror(errno);
+        exit(EXIT_FAILURE);
+    }
 
-  FILE *file_new = freopen("/sandbox/data/replacement.txt", "r", file_orig);
-  if (file_new == NULL)
-  {
-    strerror(errno);
-    exit(EXIT_FAILURE);
-  }
+    FILE* file_new = freopen("/sandbox/data/replacement.txt", "r", file_orig);
+    if (file_new == NULL) {
+        strerror(errno);
+        exit(EXIT_FAILURE);
+    }
 
-  int c = fgetc(file_orig);
-  while (c != EOF)
-  {
-    int wrote = fputc((char)c, stdout);
-    assert(wrote != EOF);
-    c = fgetc(file_orig);
-  }
+    int c = fgetc(file_orig);
+    while (c != EOF) {
+        int wrote = fputc((char)c, stdout);
+        assert(wrote != EOF);
+        c = fgetc(file_orig);
+    }
 }

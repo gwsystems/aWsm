@@ -1,4 +1,4 @@
-/* 
+/*
 This test was derived from Node.js source code located at the following URL:
 https://github.com/nodejs/node/blob/d872aaf1cf20d5b6f56a699e2e3a64300e034269/test/wasi/c/getentropy.c
 
@@ -34,19 +34,14 @@ IN THE SOFTWARE.
 
 #define BUF_LEN 256
 
-int main()
-{
-  char buf[BUF_LEN] = {0};
-  int r = getentropy(buf, BUF_LEN);
-  assert(r == 0);
+int main() {
+    char buf[BUF_LEN] = { 0 };
+    int  r            = getentropy(buf, BUF_LEN);
+    assert(r == 0);
 
-  for (int i = 0; i < BUF_LEN; i++)
-  {
-    if (buf[i] != 0)
-    {
-      return EXIT_SUCCESS;
+    for (int i = 0; i < BUF_LEN; i++) {
+        if (buf[i] != 0) { return EXIT_SUCCESS; }
     }
-  }
 
-  return EXIT_FAILURE;
+    return EXIT_FAILURE;
 }

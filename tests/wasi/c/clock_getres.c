@@ -1,4 +1,4 @@
-/* 
+/*
 This test was derived from Node.js source code located at the following URL:
 https://github.com/nodejs/node/blob/d872aaf1cf20d5b6f56a699e2e3a64300e034269/test/wasi/c/clock_getres.c
 
@@ -28,20 +28,22 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
 */
 
+#define _POSIX_C_SOURCE 200809L
+
 #include <assert.h>
 #include <time.h>
 
 int main() {
-  struct timespec ts;
-  int r;
+    struct timespec ts;
+    int             r;
 
-  // supported clocks
-  r = clock_getres(CLOCK_REALTIME, &ts);
-  assert(r == 0);
-  r = clock_getres(CLOCK_MONOTONIC, &ts);
-  assert(r == 0);
-  r = clock_getres(CLOCK_PROCESS_CPUTIME_ID, &ts);
-  assert(r == 0);
-  r = clock_getres(CLOCK_THREAD_CPUTIME_ID, &ts);
-  assert(r == 0);
+    // supported clocks
+    r = clock_getres(CLOCK_REALTIME, &ts);
+    assert(r == 0);
+    r = clock_getres(CLOCK_MONOTONIC, &ts);
+    assert(r == 0);
+    r = clock_getres(CLOCK_PROCESS_CPUTIME_ID, &ts);
+    assert(r == 0);
+    r = clock_getres(CLOCK_THREAD_CPUTIME_ID, &ts);
+    assert(r == 0);
 }
