@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit
+
 rm -rf ./data/readdir
 mkdir ./data/readdir
 touch ./data/readdir/input.txt

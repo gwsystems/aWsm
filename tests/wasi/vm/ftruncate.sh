@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit
+
 rm -rf ./data/testdir
 
 if [[ $(./ftruncate_vm) -ne 0 ]]; then

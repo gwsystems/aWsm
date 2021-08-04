@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit
+
 rm -f ./data/dummy.txt ./data/test_link
 
 data="Hello World\n"

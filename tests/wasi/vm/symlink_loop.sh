@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit
+
 rm -f ./data/loop2 ./data/loop1
 touch ./data/loop2
 ln -s ./data/loop2 ./data/loop1

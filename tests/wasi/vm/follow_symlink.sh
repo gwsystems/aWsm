@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit
+
 rm -rf ./data/dummy.txt ./data/input_link.txt
 data="Hello World\n"
 echo -n "$data" > ./data/dummy.txt
