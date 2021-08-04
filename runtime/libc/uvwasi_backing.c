@@ -13,13 +13,6 @@ IMPORT void wasmf__start(void);
 
 static uvwasi_t uvwasi;
 
-/* TODO: This likely makes assumptions about the memory model and needs to be generalized */
-static inline void check_bounds(uint32_t offset, uint32_t bounds_check)
-{
-    // Due to how we setup memory for x86, the virtual memory mechanism will catch the error, if bounds < WASM_PAGE_SIZE
-    assert(bounds_check < WASM_PAGE_SIZE || (memory_size > bounds_check && offset <= memory_size - bounds_check));
-}
-
 /**
  * @brief Lifecycle function that runs at end at termination of WebAssembly module. Suitable for logging and cleanup
  */

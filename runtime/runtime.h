@@ -97,6 +97,7 @@ extern u32 memory_size;
 
 void alloc_linear_memory();
 void expand_memory();
+INLINE void check_bounds(u32 offset, u32 bounds_check);
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check);
 
 INLINE i8 get_i8(u32 offset);
