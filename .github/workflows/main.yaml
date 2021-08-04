@@ -65,7 +65,7 @@ jobs:
 
       - name: Compile
         run: |
-          cargo build
+          cargo build --release
 
       - name: Preliminary tests
         # note we skip code_benches; we run code_benches/run.py ourselves
