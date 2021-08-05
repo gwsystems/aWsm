@@ -20,7 +20,7 @@ WASM_BACKING:=${WASI_SDK_BACKING}
 # Excludes stack-size, as this may vary between apps
 WASM_LINKER_FLAGS:=-Wl,--allow-undefined,--no-threads,--stack-first,--no-entry,--export-all,--export=main,--export=dummy
 
-clean: if_clean args_clean
+clean: if_clean args_clean random_clean
 
 # Should work for Linux. Alternate installation options at https://wasmtime.dev/
 .PHONY: install_wasmtime
@@ -76,3 +76,28 @@ args_vm: args.bc
 .PHONY: args_clean
 args_clean:
 	@rm -f args.wasm args.bc args_vm
+
+random.wasm: random.wat
+	@wat2wasm random.wat -o random.wasm
+
+.PHONY: random_wasmtime
+random_wasmtime: random.wasm
+	@wasmtime random.wasm arg1 arg2 arg3
+
+random.bc: random.wasm
+	@RUST_BACKTRACE=1 ${AWSM_CC} ./random.wasm -o ./random.bc
+
+random_vm: random.bc
+	@${CC} -lm ${OPTFLAGS} \
+	./random.bc \
+	${RUNTIME_PATH}/runtime.c \
+	${RUNTIME_PATH}/libc/${WASM_BACKING} \
+	${RUNTIME_PATH}/libc/env.c \
+	${RUNTIME_PATH}/memory/64bit_nix.c \
+	-o ./random_vm
+
+.PHONY: random_clean
+random_clean:
+	@rm -f random.wasm random.bc random_vm
+
+
