@@ -1,6 +1,5 @@
 use std::str;
 
-use wasmparser::{CustomSectionKind, TypeOrFuncType};
 use wasmparser::ExternalKind;
 use wasmparser::FuncType;
 use wasmparser::ImportSectionEntryType;
@@ -12,6 +11,7 @@ use wasmparser::SectionCode;
 use wasmparser::TableType;
 use wasmparser::Type;
 use wasmparser::WasmDecoder;
+use wasmparser::{CustomSectionKind, TypeOrFuncType};
 
 #[derive(Debug)]
 pub struct WasmModule {
@@ -66,14 +66,8 @@ impl Global {
 
     pub fn in_memory_size(&self) -> usize {
         let typ = match self {
-            Global::Imported {
-                content_type,
-                ..
-            } => content_type,
-            Global::InModule {
-                content_type,
-                ..
-            } => content_type
+            Global::Imported { content_type, .. } => content_type,
+            Global::InModule { content_type, .. } => content_type,
         };
 
         match typ {
@@ -864,7 +858,8 @@ impl WasmModule {
     }
 
     pub fn log_diagnostics(&self) {
-        let global_variable_memory_use: usize = self.globals.iter().map(|g| g.in_memory_size()).sum();
+        let global_variable_memory_use: usize =
+            self.globals.iter().map(|g| g.in_memory_size()).sum();
         info!("Globals taking up {} bytes", global_variable_memory_use);
 
         let mut data_initializer_memory_use = 0;
@@ -873,13 +868,19 @@ impl WasmModule {
                 data_initializer_memory_use += body_bytes.len();
             }
         }
-        info!("Data initializers taking up {} bytes", data_initializer_memory_use);
+        info!(
+            "Data initializers taking up {} bytes",
+            data_initializer_memory_use
+        );
 
         let mut function_table_entries = 0;
         for initializer in &self.table_initializers {
             function_table_entries += initializer.function_indexes.len();
         }
-        info!("Function table entries {} (ignoring fragmentation)", function_table_entries);
+        info!(
+            "Function table entries {} (ignoring fragmentation)",
+            function_table_entries
+        );
     }
 
     fn implement_function(&mut self, mut f: ImplementedFunction) {

@@ -13,8 +13,18 @@ env:
 
 # job control
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Clang Format
+        run: find runtime example_code -type f -print | grep --exclude-dir -i -E '^*.(c|h|ld|s)$' | xargs clang-format -Werror -n -ferror-limit=0
+      - name: Cargo Format
+        run: cargo fmt -- --check
+
   test:
     runs-on: ubuntu-latest
+    if: always()
 
     strategy:
       matrix:
@@ -22,7 +32,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
       - name: Install
         run: |
           sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" bash $LLVM_VERSION
