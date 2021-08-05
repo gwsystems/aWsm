@@ -147,16 +147,22 @@ i32 wasm_get_time(i32 clock_id, i32 timespec_off) {
 
 
 i32 inner_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
-    if (n == SYS_MMAP) { return wasm_mmap(a, b, c, d, e, f); }
+    if (n == SYS_MMAP) {
+        return wasm_mmap(a, b, c, d, e, f);
+    }
 
-    if (n == SYS_WRITEV) { return wasm_writev(a, b, c); }
+    if (n == SYS_WRITEV) {
+        return wasm_writev(a, b, c);
+    }
 
     if (n == SYS_MUNMAP || n == SYS_BRK || n == SYS_RT_SIGACTION || n == SYS_RT_SIGPROGMASK || n == SYS_IOCTL
         || n == SYS_SET_THREAD_AREA || n == SYS_SET_TID_ADDRESS) {
         return 0;
     }
 
-    if (n == SYS_GET_TIME) { return wasm_get_time(a, b); }
+    if (n == SYS_GET_TIME) {
+        return wasm_get_time(a, b);
+    }
 
     printf_("unknown syscall %d\n", n);
     awsm_assert(0);
@@ -290,7 +296,8 @@ i32 env_a_cas(i32 p_off, i32 old_val, i32 new_val) {
     i32* p = get_memory_ptr_void(p_off, sizeof(i32));
 
     i32 val = *p;
-    if (val == old_val) *p = new_val;
+    if (val == old_val)
+        *p = new_val;
     return val;
 }
 
@@ -437,10 +444,13 @@ double trunc(double x) {
     int e = (int)(u.i >> 52 & 0x7ff) - 0x3ff + 12;
     u64 m;
 
-    if (e >= 52 + 12) return x;
-    if (e < 12) e = 1;
+    if (e >= 52 + 12)
+        return x;
+    if (e < 12)
+        e = 1;
     m = -1ULL >> e;
-    if ((u.i & m) == 0) return x;
+    if ((u.i & m) == 0)
+        return x;
     FORCE_EVAL(x + 0x1p120f);
     u.i &= ~m;
     return u.f;
@@ -454,10 +464,13 @@ float truncf(float x) {
     int e = (int)(u.i >> 23 & 0xff) - 0x7f + 9;
     u32 m;
 
-    if (e >= 23 + 9) return x;
-    if (e < 9) e = 1;
+    if (e >= 23 + 9)
+        return x;
+    if (e < 9)
+        e = 1;
     m = -1U >> e;
-    if ((u.i & m) == 0) return x;
+    if ((u.i & m) == 0)
+        return x;
     FORCE_EVAL(x + 0x1p120f);
     u.i &= ~m;
     return u.f;
@@ -474,7 +487,8 @@ double floor(double x) {
     int    e = u.i >> 52 & 0x7ff;
     double y;
 
-    if (e >= 0x3ff + 52 || x == 0) return x;
+    if (e >= 0x3ff + 52 || x == 0)
+        return x;
     /* y = int(x) - x, where int(x) is an integer neighbor of x */
     if (u.i >> 63)
         y = x - toint + toint - x;
@@ -485,7 +499,8 @@ double floor(double x) {
         FORCE_EVAL(y);
         return u.i >> 63 ? -1 : 0;
     }
-    if (y > 0) return x + y - 1;
+    if (y > 0)
+        return x + y - 1;
     return x + y;
 }
 
@@ -503,7 +518,8 @@ double scalbn(double x, int n) {
         if (n > 1023) {
             y *= 0x1p1023;
             n -= 1023;
-            if (n > 1023) n = 1023;
+            if (n > 1023)
+                n = 1023;
         }
     } else if (n < -1022) {
         /* make sure final n < -53 to avoid double
@@ -513,7 +529,8 @@ double scalbn(double x, int n) {
         if (n < -1022) {
             y *= 0x1p-1022 * 0x1p53;
             n += 1022 - 53;
-            if (n < -1022) n = -1022;
+            if (n < -1022)
+                n = -1022;
         }
     }
     u.i = (uint64_t)(0x3ff + n) << 52;
@@ -532,11 +549,15 @@ double sqrt(double x) {
     EXTRACT_WORDS(ix0, ix1, x);
 
     /* take care of Inf and NaN */
-    if ((ix0 & 0x7ff00000) == 0x7ff00000) { return x * x + x; /* sqrt(NaN)=NaN, sqrt(+inf)=+inf, sqrt(-inf)=sNaN */ }
+    if ((ix0 & 0x7ff00000) == 0x7ff00000) {
+        return x * x + x; /* sqrt(NaN)=NaN, sqrt(+inf)=+inf, sqrt(-inf)=sNaN */
+    }
     /* take care of zero */
     if (ix0 <= 0) {
-        if (((ix0 & ~sign) | ix1) == 0) return x; /* sqrt(+-0) = +-0 */
-        if (ix0 < 0) return (x - x) / (x - x);    /* sqrt(-ve) = sNaN */
+        if (((ix0 & ~sign) | ix1) == 0)
+            return x; /* sqrt(+-0) = +-0 */
+        if (ix0 < 0)
+            return (x - x) / (x - x); /* sqrt(-ve) = sNaN */
     }
     /* normalize x */
     m = ix0 >> 20;
@@ -584,9 +605,11 @@ double sqrt(double x) {
         t  = s0;
         if (t < ix0 || (t == ix0 && t1 <= ix1)) {
             s1 = t1 + r;
-            if ((t1 & sign) == sign && (s1 & sign) == 0) s0++;
+            if ((t1 & sign) == sign && (s1 & sign) == 0)
+                s0++;
             ix0 -= t;
-            if (ix1 < t1) ix0--;
+            if (ix1 < t1)
+                ix0--;
             ix1 -= t1;
             q1 += r;
         }
@@ -604,7 +627,8 @@ double sqrt(double x) {
                 q1 = 0;
                 q++;
             } else if (z > 1.0) {
-                if (q1 == (uint32_t)0xfffffffe) q++;
+                if (q1 == (uint32_t)0xfffffffe)
+                    q++;
                 q1 += 2;
             } else
                 q1 += q1 & 1;
@@ -612,7 +636,8 @@ double sqrt(double x) {
     }
     ix0 = (q >> 1) + 0x3fe00000;
     ix1 = q1 >> 1;
-    if (q & 1) ix1 |= sign;
+    if (q & 1)
+        ix1 |= sign;
     INSERT_WORDS(z, ix0 + ((uint32_t)m << 20), ix1);
     return z;
 }
@@ -722,7 +747,8 @@ int __rem_pio2_large(double* x, double* y, int e0, int nx, int prec) {
     /* determine jx,jv,q0, note that 3>q0 */
     jx = nx - 1;
     jv = (e0 - 3) / 24;
-    if (jv < 0) jv = 0;
+    if (jv < 0)
+        jv = 0;
     q0 = e0 - 24 * (jv + 1);
 
     /* set up f[0] to f[jx+jk] where f[jx+jk] = ipio2[jv+jk] */
@@ -784,7 +810,8 @@ recompute:
         }
         if (ih == 2) {
             z = 1.0 - z;
-            if (carry != 0) z -= scalbn(1.0, q0);
+            if (carry != 0)
+                z -= scalbn(1.0, q0);
         }
     }
 
@@ -1092,13 +1119,15 @@ double env_sin(double x) {
     if (ix <= 0x3fe921fb) {
         if (ix < 0x3e500000) { /* |x| < 2**-26 */
             /* raise inexact if x != 0 */
-            if ((int)x == 0) return x;
+            if ((int)x == 0)
+                return x;
         }
         return __sin(x, z, 0);
     }
 
     /* sin(Inf or NaN) is NaN */
-    if (ix >= 0x7ff00000) return x - x;
+    if (ix >= 0x7ff00000)
+        return x - x;
 
     /* argument reduction needed */
     n = __rem_pio2(x, y);
@@ -1129,7 +1158,8 @@ double env_cos(double x) {
     }
 
     /* cos(Inf or NaN) is NaN */
-    if (ix >= 0x7ff00000) return x - x;
+    if (ix >= 0x7ff00000)
+        return x - x;
 
     /* argument reduction */
     n = __rem_pio2(x, y);

@@ -135,7 +135,9 @@ static inline char* get_memory_string(u32 offset) {
         // Keep bounds checking the waters over and over until we know it's safe (we find a terminating
         // character)
         char ith_element = get_memory_ptr_for_runtime(offset, i + 1)[i];
-        if (ith_element == '\0') { return naive_ptr; }
+        if (ith_element == '\0') {
+            return naive_ptr;
+        }
         i++;
     }
 }

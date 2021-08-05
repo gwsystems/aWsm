@@ -11,11 +11,10 @@ AlignEscapedNewlines: Left
 AlignTrailingComments: true
 
 AllowShortBlocksOnASingleLine: Empty
-AllowShortCaseLabelsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: Inline 
-AllowShortIfStatementsOnASingleLine: true
-AllowShortLoopsOnASingleLine: false 
 AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Empty 
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false 
 
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None

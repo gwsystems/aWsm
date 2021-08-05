@@ -131,7 +131,9 @@ i32 wasm_write(i32 fd, i32 buf_offset, i32 buf_size) {
     char* buf = get_memory_ptr_void(buf_offset, buf_size);
     i32   res = (i32)write(fd, buf, buf_size);
 
-    if (res == -1) { return -errno; }
+    if (res == -1) {
+        return -errno;
+    }
     return res;
 }
 
@@ -190,7 +192,9 @@ i32 wasm_open(i32 path_off, i32 flags, i32 mode) {
 
     i32 res = (i32)open(path, modified_flags, mode);
 
-    if (res == -1) { return -errno; }
+    if (res == -1) {
+        return -errno;
+    }
     return res;
 }
 
@@ -198,7 +202,9 @@ i32 wasm_open(i32 path_off, i32 flags, i32 mode) {
 i32 wasm_close(i32 fd) {
     i32 res = (i32)close(fd);
 
-    if (res == -1) { return -errno; }
+    if (res == -1) {
+        return -errno;
+    }
     return res;
 }
 
@@ -393,7 +399,9 @@ i32 wasm_lstat(i32 path_str_offset, i32 stat_offset) {
 i32 wasm_lseek(i32 filedes, i32 file_offset, i32 whence) {
     i32 res = (i32)lseek(filedes, file_offset, whence);
 
-    if (res == -1) { return -errno; }
+    if (res == -1) {
+        return -errno;
+    }
     return res;
 }
 
@@ -478,7 +486,9 @@ i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
     }
 
     i32 res = (i32)writev(fd, vecs, iovcnt);
-    if (res == -1) { return -errno; }
+    if (res == -1) {
+        return -errno;
+    }
     return res;
 }
 
@@ -519,7 +529,9 @@ u32 wasm_fcntl(u32 fd, u32 cmd, u32 arg_or_lock_ptr) {
 #define SYS_FSYNC 74
 u32 wasm_fsync(u32 filedes) {
     u32 res = fsync(filedes);
-    if (res == -1) { return -errno; }
+    if (res == -1) {
+        return -errno;
+    }
     return 0;
 }
 
@@ -528,7 +540,8 @@ u32 wasm_getcwd(u32 buf_offset, u32 buf_size) {
     char* buf = get_memory_ptr_void(buf_offset, buf_size);
     char* res = getcwd(buf, buf_size);
 
-    if (!res) return 0;
+    if (!res)
+        return 0;
     return buf_offset;
 }
 
@@ -536,7 +549,9 @@ u32 wasm_getcwd(u32 buf_offset, u32 buf_size) {
 u32 wasm_unlink(u32 path_str_offset) {
     char* str = get_memory_string(path_str_offset);
     u32   res = unlink(str);
-    if (res == -1) { return -errno; }
+    if (res == -1) {
+        return -errno;
+    }
     return 0;
 }
 
@@ -568,7 +583,9 @@ i32 wasm_get_time(i32 clock_id, i32 timespec_off) {
 
     struct timespec native_timespec = { 0, 0 };
     int             res             = clock_gettime(real_clock, &native_timespec);
-    if (res == -1) { return -errno; }
+    if (res == -1) {
+        return -errno;
+    }
 
     timespec->sec     = native_timespec.tv_sec;
     timespec->nanosec = native_timespec.tv_nsec;

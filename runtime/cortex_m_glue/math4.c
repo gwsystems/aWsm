@@ -167,7 +167,8 @@ float expf(float x) {
     xx = x * x;
     c  = x - xx * (P1 + xx * P2);
     y  = 1 + (x * c / (2 - c) - lo + hi);
-    if (k == 0) return y;
+    if (k == 0)
+        return y;
     return scalbnf(y, k);
 }
 
@@ -182,12 +183,15 @@ float sqrtf(float x) {
     GET_FLOAT_WORD(ix, x);
 
     /* take care of Inf and NaN */
-    if ((ix & 0x7f800000) == 0x7f800000) return x * x + x; /* sqrt(NaN)=NaN, sqrt(+inf)=+inf, sqrt(-inf)=sNaN */
+    if ((ix & 0x7f800000) == 0x7f800000)
+        return x * x + x; /* sqrt(NaN)=NaN, sqrt(+inf)=+inf, sqrt(-inf)=sNaN */
 
     /* take care of zero */
     if (ix <= 0) {
-        if ((ix & ~sign) == 0) return x;      /* sqrt(+-0) = +-0 */
-        if (ix < 0) return (x - x) / (x - x); /* sqrt(-ve) = sNaN */
+        if ((ix & ~sign) == 0)
+            return x; /* sqrt(+-0) = +-0 */
+        if (ix < 0)
+            return (x - x) / (x - x); /* sqrt(-ve) = sNaN */
     }
     /* normalize x */
     m = ix >> 23;

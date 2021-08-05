@@ -270,7 +270,9 @@ wasi_errno_t
 wasi_snapshot_preview1_clock_time_get(wasi_clockid_t clock_id, wasi_timestamp_t precision, wasi_size_t time_retptr) {
     struct timespec tp;
     int             rc = clock_gettime(clock_id, &tp);
-    if (rc == -1) { return wasi_fromerrno(errno); }
+    if (rc == -1) {
+        return wasi_fromerrno(errno);
+    }
 
     set_i64(time_retptr, (uint64_t)tp.tv_sec * 1000000000ULL + (uint64_t)tp.tv_nsec);
 
@@ -337,7 +339,9 @@ wasi_errno_t wasi_snapshot_preview1_fd_allocate(wasi_fd_t fd, wasi_filesize_t of
  */
 wasi_errno_t wasi_snapshot_preview1_fd_close(wasi_fd_t fd) {
     int res = close(fd);
-    if (res == -1) { return wasi_fromerrno(errno); }
+    if (res == -1) {
+        return wasi_fromerrno(errno);
+    }
 
     return WASI_ESUCCESS;
 }
@@ -350,7 +354,9 @@ wasi_errno_t wasi_snapshot_preview1_fd_close(wasi_fd_t fd) {
  */
 wasi_errno_t wasi_snapshot_preview1_fd_datasync(wasi_fd_t fd) {
     int res = fdatasync(fd);
-    if (res == -1) { return wasi_fromerrno(errno); }
+    if (res == -1) {
+        return wasi_fromerrno(errno);
+    }
 
     return WASI_ESUCCESS;
 }
@@ -368,11 +374,15 @@ wasi_errno_t wasi_snapshot_preview1_fd_fdstat_get(wasi_fd_t fd, wasi_size_t fdst
 
     struct stat stat;
     int         res = fstat(fd, &stat);
-    if (res == -1) { return wasi_fromerrno(errno); }
+    if (res == -1) {
+        return wasi_fromerrno(errno);
+    }
     int mode = stat.st_mode;
 
     int fl = fcntl(fd, F_GETFL);
-    if (fl < 0) { return wasi_fromerrno(errno); }
+    if (fl < 0) {
+        return wasi_fromerrno(errno);
+    }
 
     fdstat->fs_filetype =
       ((S_ISBLK(mode) ? WASI_FILETYPE_BLOCK_DEVICE : 0) | (S_ISCHR(mode) ? WASI_FILETYPE_CHARACTER_DEVICE : 0)
@@ -399,7 +409,9 @@ wasi_errno_t wasi_snapshot_preview1_fd_fdstat_set_flags(wasi_fd_t fd, wasi_fdfla
                  | ((flags & WASI_FDFLAG_NONBLOCK) ? O_NONBLOCK : 0) | ((flags & WASI_FDFLAG_RSYNC) ? O_RSYNC : 0)
                  | ((flags & WASI_FDFLAG_SYNC) ? O_SYNC : 0));
     int err   = fcntl(fd, F_SETFL, fdflags);
-    if (err < 0) { return wasi_fromerrno(errno); }
+    if (err < 0) {
+        return wasi_fromerrno(errno);
+    }
     return WASI_ESUCCESS;
 }
 
@@ -531,7 +543,9 @@ wasi_snapshot_preview1_fd_read(wasi_fd_t fd, wasi_size_t iovs_baseptr, size_t io
     for (int i = 0; i < iovs_len; i++) {
         void*   ptr = get_memory_ptr_void(iovs[i].base_offset, iovs[i].len);
         ssize_t res = read(fd, ptr, iovs[i].len);
-        if (res == -1) { return wasi_fromerrno(errno); }
+        if (res == -1) {
+            return wasi_fromerrno(errno);
+        }
 
         sum += res;
     }
@@ -594,7 +608,9 @@ wasi_errno_t wasi_snapshot_preview1_fd_seek(wasi_fd_t fd, wasi_filedelta_t file_
                                             wasi_filesize_t newoffset_retptr) {
     off_t res = lseek(fd, (off_t)file_offset, whence);
 
-    if (res == -1) { return wasi_fromerrno(errno); }
+    if (res == -1) {
+        return wasi_fromerrno(errno);
+    }
 
     set_i64(newoffset_retptr, res);
     return WASI_ESUCCESS;
@@ -642,7 +658,9 @@ wasi_snapshot_preview1_fd_write(wasi_fd_t fd, wasi_size_t iovs_baseptr, size_t i
     for (int i = 0; i < iovs_len; i++) {
         void*   ptr = get_memory_ptr_void(iovs[i].base_offset, iovs[i].len);
         ssize_t res = write(fd, ptr, iovs[i].len);
-        if (res == -1) { return wasi_fromerrno(errno); }
+        if (res == -1) {
+            return wasi_fromerrno(errno);
+        }
         sum += res;
     }
     set_i32(nwritten_retptr, sum);
@@ -665,7 +683,9 @@ wasi_snapshot_preview1_path_create_directory(wasi_fd_t fd, wasi_size_t path_base
     const char* const path = get_memory_string(path_baseptr);
 
     int res = mkdirat(fd, path, 0777);
-    if (res == -1) { return wasi_fromerrno(errno); }
+    if (res == -1) {
+        return wasi_fromerrno(errno);
+    }
 
     return WASI_ESUCCESS;
 }
@@ -688,7 +708,9 @@ wasi_errno_t wasi_snapshot_preview1_path_filestat_get(wasi_fd_t fd, wasi_lookupf
 
     struct stat stat;
     int         res = fstatat(fd, path, &stat, 0);
-    if (res == -1) { return wasi_fromerrno(errno); }
+    if (res == -1) {
+        return wasi_fromerrno(errno);
+    }
 
     filestat->dev      = stat.st_dev;
     filestat->ino      = stat.st_ino;
@@ -783,7 +805,9 @@ wasi_snapshot_preview1_path_open(wasi_fd_t dirfd, wasi_lookupflags_t lookupflags
 
     int mode = 0644;
     int fd   = openat(dirfd, path, flags, mode);
-    if (fd < 0) { return wasi_fromerrno(errno); }
+    if (fd < 0) {
+        return wasi_fromerrno(errno);
+    }
 
     set_i32(fd_off, fd);
     return WASI_ESUCCESS;
@@ -868,7 +892,9 @@ wasi_errno_t wasi_snapshot_preview1_path_unlink_file(wasi_fd_t fd, wasi_size_t p
     const char* path = get_memory_string(path_baseptr);
 
     int res = unlinkat(fd, path, 0);
-    if (res == -1) { return wasi_fromerrno(errno); }
+    if (res == -1) {
+        return wasi_fromerrno(errno);
+    }
 
     return WASI_ESUCCESS;
 }

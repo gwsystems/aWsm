@@ -25,7 +25,8 @@ int main(int argc, char** argv) {
             }
 
             byte_acc <<= 1;
-            if (Tr + Ti <= limit * limit) byte_acc |= 0x01;
+            if (Tr + Ti <= limit * limit)
+                byte_acc |= 0x01;
 
             ++bit_num;
 
