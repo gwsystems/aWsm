@@ -238,58 +238,31 @@ pub struct TableInitializer {
 #[derive(Clone, Debug, PartialEq)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum Instruction {
-    BlockStart {
-        produced_type: Option<TypeOrFuncType>,
-    },
-    LoopStart {
-        produced_type: Option<TypeOrFuncType>,
-    },
-    If {
-        produced_type: Option<TypeOrFuncType>,
-    },
+    BlockStart { produced_type: Option<TypeOrFuncType> },
+    LoopStart { produced_type: Option<TypeOrFuncType> },
+    If { produced_type: Option<TypeOrFuncType> },
     Else,
     End,
 
-    Br {
-        depth: u32,
-    },
-    BrIf {
-        depth: u32,
-    },
-    BrTable {
-        table: Vec<u32>,
-        default: u32,
-    },
+    Br { depth: u32 },
+    BrIf { depth: u32 },
+    BrTable { table: Vec<u32>, default: u32 },
 
     Return,
     Unreachable,
 
-    Call {
-        index: u32,
-    },
-    CallIndirect {
-        type_index: u32,
-    },
+    Call { index: u32 },
+    CallIndirect { type_index: u32 },
     Drop,
     Nop,
     Select,
 
-    GetLocal {
-        index: u32,
-    },
-    SetLocal {
-        index: u32,
-    },
-    TeeLocal {
-        index: u32,
-    },
+    GetLocal { index: u32 },
+    SetLocal { index: u32 },
+    TeeLocal { index: u32 },
 
-    GetGlobal {
-        index: u32,
-    },
-    SetGlobal {
-        index: u32,
-    },
+    GetGlobal { index: u32 },
+    SetGlobal { index: u32 },
 
     I32Const(i32),
 
@@ -444,101 +417,32 @@ pub enum Instruction {
     F64Ceil,
     F64Nearest,
 
-    I32Load {
-        flags: u32,
-        offset: u32,
-    },
-    I32Store {
-        flags: u32,
-        offset: u32,
-    },
-    I32Load8S {
-        flags: u32,
-        offset: u32,
-    },
-    I32Load8U {
-        flags: u32,
-        offset: u32,
-    },
-    I32Store8 {
-        flags: u32,
-        offset: u32,
-    },
-    I32Load16S {
-        flags: u32,
-        offset: u32,
-    },
-    I32Load16U {
-        flags: u32,
-        offset: u32,
-    },
-    I32Store16 {
-        flags: u32,
-        offset: u32,
-    },
+    I32Load { flags: u32, offset: u32 },
+    I32Store { flags: u32, offset: u32 },
+    I32Load8S { flags: u32, offset: u32 },
+    I32Load8U { flags: u32, offset: u32 },
+    I32Store8 { flags: u32, offset: u32 },
+    I32Load16S { flags: u32, offset: u32 },
+    I32Load16U { flags: u32, offset: u32 },
+    I32Store16 { flags: u32, offset: u32 },
 
-    I64Load {
-        flags: u32,
-        offset: u32,
-    },
-    I64Store {
-        flags: u32,
-        offset: u32,
-    },
-    I64Load8S {
-        flags: u32,
-        offset: u32,
-    },
-    I64Load8U {
-        flags: u32,
-        offset: u32,
-    },
-    I64Store8 {
-        flags: u32,
-        offset: u32,
-    },
-    I64Load16S {
-        flags: u32,
-        offset: u32,
-    },
-    I64Load16U {
-        flags: u32,
-        offset: u32,
-    },
-    I64Store16 {
-        flags: u32,
-        offset: u32,
-    },
-    I64Load32S {
-        flags: u32,
-        offset: u32,
-    },
-    I64Load32U {
-        flags: u32,
-        offset: u32,
-    },
-    I64Store32 {
-        flags: u32,
-        offset: u32,
-    },
+    I64Load { flags: u32, offset: u32 },
+    I64Store { flags: u32, offset: u32 },
+    I64Load8S { flags: u32, offset: u32 },
+    I64Load8U { flags: u32, offset: u32 },
+    I64Store8 { flags: u32, offset: u32 },
+    I64Load16S { flags: u32, offset: u32 },
+    I64Load16U { flags: u32, offset: u32 },
+    I64Store16 { flags: u32, offset: u32 },
+    I64Load32S { flags: u32, offset: u32 },
+    I64Load32U { flags: u32, offset: u32 },
+    I64Store32 { flags: u32, offset: u32 },
 
-    F32Load {
-        flags: u32,
-        offset: u32,
-    },
-    F32Store {
-        flags: u32,
-        offset: u32,
-    },
+    F32Load { flags: u32, offset: u32 },
+    F32Store { flags: u32, offset: u32 },
 
-    F64Load {
-        flags: u32,
-        offset: u32,
-    },
-    F64Store {
-        flags: u32,
-        offset: u32,
-    },
+    F64Load { flags: u32, offset: u32 },
+    F64Store { flags: u32, offset: u32 },
 
     MemorySize,
     MemoryGrow,
