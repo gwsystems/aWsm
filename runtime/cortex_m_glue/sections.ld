@@ -314,7 +314,9 @@ Component   : .ARM.extab - The ARM external tab for unwinding.
     Location    : RAM
     Component   : Padding of size "_Minimum_Stack_Size" - The stack location.
     ******************************************************************************/
-    ._check_stack : ALIGN(4) { .=.+ _Minimum_Stack_Size; }
+    ._check_stack : ALIGN(4) {
+        .=.+ _Minimum_Stack_Size;
+    }
     > RAM
         /* End Section:._check_stack *************************************************/
 
