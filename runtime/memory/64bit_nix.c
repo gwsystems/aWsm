@@ -52,10 +52,13 @@ i32 instruction_memory_grow(i32 count) {
     return prev_size;
 }
 
-INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
-    // Due to how we setup memory for x86, the virtual memory mechanism will catch the error, if bounds <
-    // WASM_PAGE_SIZE
+INLINE void check_bounds(u32 offset, u32 bounds_check) {
+    // Due to how we setup memory for x86, the virtual memory mechanism will catch the error, if bounds < WASM_PAGE_SIZE
     assert(bounds_check < WASM_PAGE_SIZE || (memory_size > bounds_check && offset <= memory_size - bounds_check));
+}
+
+INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
+    check_bounds(offset, bounds_check);
 
     char* mem_as_chars = (char*)memory;
     char* address      = &mem_as_chars[offset];
