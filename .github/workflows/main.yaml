@@ -15,8 +15,15 @@ env:
 
 # job control
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Clang Format
+        run: find runtime/* example_code -type f -print | grep --exclude-dir -i -E '^*.(c|h)$' | grep -v runtime/libuv | grep -v runtime/uvwasi | xargs clang-format -Werror -n -ferror-limit=0
   test:
     runs-on: ubuntu-latest
+    if: always()
 
     strategy:
       matrix:

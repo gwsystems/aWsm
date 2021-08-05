@@ -3,7 +3,7 @@
 
 /**
  * Based on C header generated from wasi_snapshot_preview1.witx
- * See https://github.com/WebAssembly/wasi-libc/blob/main/libc-bottom-half/headers/public/wasi/api.h 
+ * See https://github.com/WebAssembly/wasi-libc/blob/main/libc-bottom-half/headers/public/wasi/api.h
  */
 
 typedef uint8_t wasi_advice_t;
@@ -22,14 +22,14 @@ typedef uint64_t wasi_device_t;
  */
 typedef uint64_t wasi_dircookie_t;
 
-/* 
- * Technically, this is specified as a uint16_t in WASI. However, there is no 
- * native i16 type in WebAssembly, so this is zero extended to an uint32_t to 
+/*
+ * Technically, this is specified as a uint16_t in WASI. However, there is no
+ * native i16 type in WebAssembly, so this is zero extended to an uint32_t to
  * avoid width issues linking AOT compiled WebAssembly code with the native
  * library. This could be enhanced to abstract all mediation between the WASI
  * spec and the WASI libc ABI in a wrapper layer. This would be like wasi-libc,
  * but in reverse.
- * 
+ *
  * https://github.com/WebAssembly/wasi-libc/blob/main/libc-bottom-half/sources/__wasilibc_real.c
  */
 typedef uint32_t wasi_errno_t;
@@ -113,161 +113,159 @@ typedef uint64_t wasi_userdata_t;
 typedef uint8_t wasi_whence_t;
 
 enum wasi_errnos {
-    WASI_ESUCCESS           = 0,
-    WASI_E2BIG              = 1,
-    WASI_EACCES             = 2,
-    WASI_EADDRINUSE         = 3,
-    WASI_EADDRNOTAVAIL      = 4,
-    WASI_EAFNOSUPPORT       = 5,
-    WASI_EAGAIN             = 6,
-    WASI_EALREADY           = 7,
-    WASI_EBADF              = 8,
-    WASI_EBADMSG            = 9,
-    WASI_EBUSY              = 10,
-    WASI_ECANCELED          = 11,
-    WASI_ECHILD             = 12,
-    WASI_ECONNABORTED       = 13,
-    WASI_ECONNREFUSED       = 14,
-    WASI_ECONNRESET         = 15,
-    WASI_EDEADLK            = 16,
-    WASI_EDESTADDRREQ       = 17,
-    WASI_EDOM               = 18,
-    WASI_EDQUOT             = 19,
-    WASI_EEXIST             = 20,
-    WASI_EFAULT             = 21,
-    WASI_EFBIG              = 22,
-    WASI_EHOSTUNREACH       = 23,
-    WASI_EIDRM              = 24,
-    WASI_EILSEQ             = 25,
-    WASI_EINPROGRESS        = 26,
-    WASI_EINTR              = 27,
-    WASI_EINVAL             = 28,
-    WASI_EIO                = 29,
-    WASI_EISCONN            = 30,
-    WASI_EISDIR             = 31,
-    WASI_ELOOP              = 32,
-    WASI_EMFILE             = 33,
-    WASI_EMLINK             = 34,
-    WASI_EMSGSIZE           = 35,
-    WASI_EMULTIHOP          = 36,
-    WASI_ENAMETOOLONG       = 37,
-    WASI_ENETDOWN           = 38,
-    WASI_ENETRESET          = 39,
-    WASI_ENETUNREACH        = 40,
-    WASI_ENFILE             = 41,
-    WASI_ENOBUFS            = 42,
-    WASI_ENODEV             = 43,
-    WASI_ENOENT             = 44,
-    WASI_ENOEXEC            = 45,
-    WASI_ENOLCK             = 46,
-    WASI_ENOLINK            = 47,
-    WASI_ENOMEM             = 48,
-    WASI_ENOMSG             = 49,
-    WASI_ENOPROTOOPT        = 50,
-    WASI_ENOSPC             = 51,
-    WASI_ENOSYS             = 52,
-    WASI_ENOTCONN           = 53,
-    WASI_ENOTDIR            = 54,
-    WASI_ENOTEMPTY          = 55,
-    WASI_ENOTRECOVERABLE    = 56,
-    WASI_ENOTSOCK           = 57,
-    WASI_ENOTSUP            = 58,
-    WASI_ENOTTY             = 59,
-    WASI_ENXIO              = 60,
-    WASI_EOVERFLOW          = 61,
-    WASI_EOWNERDEAD         = 62,
-    WASI_EPERM              = 63,
-    WASI_EPIPE              = 64,
-    WASI_EPROTO             = 65,
-    WASI_EPROTONOSUPPORT    = 66,
-    WASI_EPROTOTYPE         = 67,
-    WASI_ERANGE             = 68,
-    WASI_EROFS              = 69,
-    WASI_ESPIPE             = 70,
-    WASI_ESRCH              = 71,
-    WASI_ESTALE             = 72,
-    WASI_ETIMEDOUT          = 73,
-    WASI_ETXTBSY            = 74,
-    WASI_EXDEV              = 75,
-    WASI_ENOTCAPABLE        = 76,
+    WASI_ESUCCESS        = 0,
+    WASI_E2BIG           = 1,
+    WASI_EACCES          = 2,
+    WASI_EADDRINUSE      = 3,
+    WASI_EADDRNOTAVAIL   = 4,
+    WASI_EAFNOSUPPORT    = 5,
+    WASI_EAGAIN          = 6,
+    WASI_EALREADY        = 7,
+    WASI_EBADF           = 8,
+    WASI_EBADMSG         = 9,
+    WASI_EBUSY           = 10,
+    WASI_ECANCELED       = 11,
+    WASI_ECHILD          = 12,
+    WASI_ECONNABORTED    = 13,
+    WASI_ECONNREFUSED    = 14,
+    WASI_ECONNRESET      = 15,
+    WASI_EDEADLK         = 16,
+    WASI_EDESTADDRREQ    = 17,
+    WASI_EDOM            = 18,
+    WASI_EDQUOT          = 19,
+    WASI_EEXIST          = 20,
+    WASI_EFAULT          = 21,
+    WASI_EFBIG           = 22,
+    WASI_EHOSTUNREACH    = 23,
+    WASI_EIDRM           = 24,
+    WASI_EILSEQ          = 25,
+    WASI_EINPROGRESS     = 26,
+    WASI_EINTR           = 27,
+    WASI_EINVAL          = 28,
+    WASI_EIO             = 29,
+    WASI_EISCONN         = 30,
+    WASI_EISDIR          = 31,
+    WASI_ELOOP           = 32,
+    WASI_EMFILE          = 33,
+    WASI_EMLINK          = 34,
+    WASI_EMSGSIZE        = 35,
+    WASI_EMULTIHOP       = 36,
+    WASI_ENAMETOOLONG    = 37,
+    WASI_ENETDOWN        = 38,
+    WASI_ENETRESET       = 39,
+    WASI_ENETUNREACH     = 40,
+    WASI_ENFILE          = 41,
+    WASI_ENOBUFS         = 42,
+    WASI_ENODEV          = 43,
+    WASI_ENOENT          = 44,
+    WASI_ENOEXEC         = 45,
+    WASI_ENOLCK          = 46,
+    WASI_ENOLINK         = 47,
+    WASI_ENOMEM          = 48,
+    WASI_ENOMSG          = 49,
+    WASI_ENOPROTOOPT     = 50,
+    WASI_ENOSPC          = 51,
+    WASI_ENOSYS          = 52,
+    WASI_ENOTCONN        = 53,
+    WASI_ENOTDIR         = 54,
+    WASI_ENOTEMPTY       = 55,
+    WASI_ENOTRECOVERABLE = 56,
+    WASI_ENOTSOCK        = 57,
+    WASI_ENOTSUP         = 58,
+    WASI_ENOTTY          = 59,
+    WASI_ENXIO           = 60,
+    WASI_EOVERFLOW       = 61,
+    WASI_EOWNERDEAD      = 62,
+    WASI_EPERM           = 63,
+    WASI_EPIPE           = 64,
+    WASI_EPROTO          = 65,
+    WASI_EPROTONOSUPPORT = 66,
+    WASI_EPROTOTYPE      = 67,
+    WASI_ERANGE          = 68,
+    WASI_EROFS           = 69,
+    WASI_ESPIPE          = 70,
+    WASI_ESRCH           = 71,
+    WASI_ESTALE          = 72,
+    WASI_ETIMEDOUT       = 73,
+    WASI_ETXTBSY         = 74,
+    WASI_EXDEV           = 75,
+    WASI_ENOTCAPABLE     = 76,
 };
 
 enum wasi_fdflags {
-    WASI_FDFLAG_APPEND      = 0x0001,
-    WASI_FDFLAG_DSYNC       = 0x0002,
-    WASI_FDFLAG_NONBLOCK    = 0x0004,
-    WASI_FDFLAG_RSYNC       = 0x0008,
-    WASI_FDFLAG_SYNC        = 0x0010,
+    WASI_FDFLAG_APPEND   = 0x0001,
+    WASI_FDFLAG_DSYNC    = 0x0002,
+    WASI_FDFLAG_NONBLOCK = 0x0004,
+    WASI_FDFLAG_RSYNC    = 0x0008,
+    WASI_FDFLAG_SYNC     = 0x0010,
 };
 
 enum wasi_filetype {
-    WASI_FILETYPE_UNKNOWN           = 0,
-    WASI_FILETYPE_BLOCK_DEVICE      = 1,
-    WASI_FILETYPE_CHARACTER_DEVICE  = 2,
-    WASI_FILETYPE_DIRECTORY         = 3,
-    WASI_FILETYPE_REGULAR_FILE      = 4,
-    WASI_FILETYPE_SOCKET_DGRAM      = 5,
-    WASI_FILETYPE_SOCKET_STREAM     = 6,
-    WASI_FILETYPE_SYMBOLIC_LINK     = 7,
+    WASI_FILETYPE_UNKNOWN          = 0,
+    WASI_FILETYPE_BLOCK_DEVICE     = 1,
+    WASI_FILETYPE_CHARACTER_DEVICE = 2,
+    WASI_FILETYPE_DIRECTORY        = 3,
+    WASI_FILETYPE_REGULAR_FILE     = 4,
+    WASI_FILETYPE_SOCKET_DGRAM     = 5,
+    WASI_FILETYPE_SOCKET_STREAM    = 6,
+    WASI_FILETYPE_SYMBOLIC_LINK    = 7,
 };
 
 enum wasi_oflags {
-    WASI_O_CREAT        = 0x0001,
-    WASI_O_DIRECTORY    = 0x0002,
-    WASI_O_EXCL         = 0x0004,
-    WASI_O_TRUNC        = 0x0008,
+    WASI_O_CREAT     = 0x0001,
+    WASI_O_DIRECTORY = 0x0002,
+    WASI_O_EXCL      = 0x0004,
+    WASI_O_TRUNC     = 0x0008,
 };
 
 enum wasi_rights {
-    WASI_RIGHT_FD_DATASYNC              = 0x0000000000000001ULL,
-    WASI_RIGHT_FD_READ                  = 0x0000000000000002ULL,
-    WASI_RIGHT_FD_SEEK                  = 0x0000000000000004ULL,
-    WASI_RIGHT_FD_FDSTAT_SET_FLAGS      = 0x0000000000000008ULL,
-    WASI_RIGHT_FD_SYNC                  = 0x0000000000000010ULL,
-    WASI_RIGHT_FD_TELL                  = 0x0000000000000020ULL,
-    WASI_RIGHT_FD_WRITE                 = 0x0000000000000040ULL,
-    WASI_RIGHT_FD_ADVISE                = 0x0000000000000080ULL,
-    WASI_RIGHT_FD_ALLOCATE              = 0x0000000000000100ULL,
-    WASI_RIGHT_PATH_CREATE_DIRECTORY    = 0x0000000000000200ULL,
-    WASI_RIGHT_PATH_CREATE_FILE         = 0x0000000000000400ULL,
-    WASI_RIGHT_PATH_LINK_SOURCE         = 0x0000000000000800ULL,
-    WASI_RIGHT_PATH_LINK_TARGET         = 0x0000000000001000ULL,
-    WASI_RIGHT_PATH_OPEN                = 0x0000000000002000ULL,
-    WASI_RIGHT_FD_READDIR               = 0x0000000000004000ULL,
-    WASI_RIGHT_PATH_READLINK            = 0x0000000000008000ULL,
-    WASI_RIGHT_PATH_RENAME_SOURCE       = 0x0000000000010000ULL,
-    WASI_RIGHT_PATH_RENAME_TARGET       = 0x0000000000020000ULL,
-    WASI_RIGHT_PATH_FILESTAT_GET        = 0x0000000000040000ULL,
-    WASI_RIGHT_PATH_FILESTAT_SET_SIZE   = 0x0000000000080000ULL,
-    WASI_RIGHT_PATH_FILESTAT_SET_TIMES  = 0x0000000000100000ULL,
-    WASI_RIGHT_FD_FILESTAT_GET          = 0x0000000000200000ULL,
-    WASI_RIGHT_FD_FILESTAT_SET_SIZE     = 0x0000000000400000ULL,
-    WASI_RIGHT_FD_FILESTAT_SET_TIMES    = 0x0000000000800000ULL,
-    WASI_RIGHT_PATH_SYMLINK             = 0x0000000001000000ULL,
-    WASI_RIGHT_PATH_REMOVE_DIRECTORY    = 0x0000000002000000ULL,
-    WASI_RIGHT_PATH_UNLINK_FILE         = 0x0000000004000000ULL,
-    WASI_RIGHT_POLL_FD_READWRITE        = 0x0000000008000000ULL,
-    WASI_RIGHT_SOCK_SHUTDOWN            = 0x0000000010000000ULL,
+    WASI_RIGHT_FD_DATASYNC             = 0x0000000000000001ULL,
+    WASI_RIGHT_FD_READ                 = 0x0000000000000002ULL,
+    WASI_RIGHT_FD_SEEK                 = 0x0000000000000004ULL,
+    WASI_RIGHT_FD_FDSTAT_SET_FLAGS     = 0x0000000000000008ULL,
+    WASI_RIGHT_FD_SYNC                 = 0x0000000000000010ULL,
+    WASI_RIGHT_FD_TELL                 = 0x0000000000000020ULL,
+    WASI_RIGHT_FD_WRITE                = 0x0000000000000040ULL,
+    WASI_RIGHT_FD_ADVISE               = 0x0000000000000080ULL,
+    WASI_RIGHT_FD_ALLOCATE             = 0x0000000000000100ULL,
+    WASI_RIGHT_PATH_CREATE_DIRECTORY   = 0x0000000000000200ULL,
+    WASI_RIGHT_PATH_CREATE_FILE        = 0x0000000000000400ULL,
+    WASI_RIGHT_PATH_LINK_SOURCE        = 0x0000000000000800ULL,
+    WASI_RIGHT_PATH_LINK_TARGET        = 0x0000000000001000ULL,
+    WASI_RIGHT_PATH_OPEN               = 0x0000000000002000ULL,
+    WASI_RIGHT_FD_READDIR              = 0x0000000000004000ULL,
+    WASI_RIGHT_PATH_READLINK           = 0x0000000000008000ULL,
+    WASI_RIGHT_PATH_RENAME_SOURCE      = 0x0000000000010000ULL,
+    WASI_RIGHT_PATH_RENAME_TARGET      = 0x0000000000020000ULL,
+    WASI_RIGHT_PATH_FILESTAT_GET       = 0x0000000000040000ULL,
+    WASI_RIGHT_PATH_FILESTAT_SET_SIZE  = 0x0000000000080000ULL,
+    WASI_RIGHT_PATH_FILESTAT_SET_TIMES = 0x0000000000100000ULL,
+    WASI_RIGHT_FD_FILESTAT_GET         = 0x0000000000200000ULL,
+    WASI_RIGHT_FD_FILESTAT_SET_SIZE    = 0x0000000000400000ULL,
+    WASI_RIGHT_FD_FILESTAT_SET_TIMES   = 0x0000000000800000ULL,
+    WASI_RIGHT_PATH_SYMLINK            = 0x0000000001000000ULL,
+    WASI_RIGHT_PATH_REMOVE_DIRECTORY   = 0x0000000002000000ULL,
+    WASI_RIGHT_PATH_UNLINK_FILE        = 0x0000000004000000ULL,
+    WASI_RIGHT_POLL_FD_READWRITE       = 0x0000000008000000ULL,
+    WASI_RIGHT_SOCK_SHUTDOWN           = 0x0000000010000000ULL,
 };
 
 /**
  * The contents of an `event` when type is `eventtype::fd_read` or
  * `eventtype::fd_write`.
  */
-typedef struct wasi_event_fd_readwrite_t
-{
-    wasi_filesize_t nbytes;    /* bytes available for reading or writing */
-    wasi_eventrwflags_t flags; /* The state of the file descriptor */
+typedef struct wasi_event_fd_readwrite_t {
+    wasi_filesize_t     nbytes; /* bytes available for reading or writing */
+    wasi_eventrwflags_t flags;  /* The state of the file descriptor */
 } wasi_event_fd_readwrite_t;
 
 /**
  * An event that occurred.
  */
-typedef struct wasi_event_t
-{
-    wasi_userdata_t userdata; /* User-provided value */
-    wasi_errno_t error;       /* If non-zero, an error while processing the subscription request */
-    wasi_eventtype_t type;    /* The type of event that occurred */
+typedef struct wasi_event_t {
+    wasi_userdata_t  userdata; /* User-provided value */
+    wasi_errno_t     error;    /* If non-zero, an error while processing the subscription request */
+    wasi_eventtype_t type;     /* The type of event that occurred */
     /**
      * The contents of the event, if it is an `eventtype::fd_read` or
      * `eventtype::fd_write`. `eventtype::clock` events ignore this field.
@@ -276,33 +274,30 @@ typedef struct wasi_event_t
 } wasi_event_t;
 
 
-struct wasi_fdstat
-{
+struct wasi_fdstat {
     wasi_filetype_t fs_filetype;
-    wasi_fdflags_t fs_flags;
-    wasi_rights_t fs_rights_base;
-    wasi_rights_t fs_rights_inheriting;
+    wasi_fdflags_t  fs_flags;
+    wasi_rights_t   fs_rights_base;
+    wasi_rights_t   fs_rights_inheriting;
 };
 
 /* File attributes */
-typedef struct wasi_filestat_t
-{
-    wasi_device_t dev;        /* Device ID of device containing the file */
-    wasi_inode_t ino;         /* File serial number */
-    wasi_filetype_t filetype; /* File type */
-    wasi_linkcount_t nlink;   /* Number of hard links to the file */
-    /* For regular files, the file size in bytes. 
+typedef struct wasi_filestat_t {
+    wasi_device_t    dev;      /* Device ID of device containing the file */
+    wasi_inode_t     ino;      /* File serial number */
+    wasi_filetype_t  filetype; /* File type */
+    wasi_linkcount_t nlink;    /* Number of hard links to the file */
+    /* For regular files, the file size in bytes.
      * For symbolic links, the length in bytes of the pathname contained in the symbolic link.
      */
-    wasi_filesize_t size;
+    wasi_filesize_t  size;
     wasi_timestamp_t atim; /* Last data access timestamp */
     wasi_timestamp_t mtim; /* Last data modification timestamp */
     wasi_timestamp_t ctim; /* Last file status change timestamp */
 
 } wasi_filestat_t;
 
-struct wasi_iovec
-{
+struct wasi_iovec {
     wasi_size_t base_offset;
     wasi_size_t len;
 };
@@ -311,8 +306,7 @@ struct wasi_iovec
  * The contents of a `subscription` when type is `eventtype::clock`.
  */
 typedef struct wasi_subscription_clock_t {
-    
-    wasi_clockid_t id; /* The clock against which to compare the timestamp */
+    wasi_clockid_t   id;      /* The clock against which to compare the timestamp */
     wasi_timestamp_t timeout; /* The absolute or relative timestamp */
     /**
      * The amount of time that the implementation may wait additionally
@@ -320,8 +314,8 @@ typedef struct wasi_subscription_clock_t {
      */
     wasi_timestamp_t precision;
 
-   
-    wasi_subclockflags_t flags;  /* absolute or relative */
+
+    wasi_subclockflags_t flags; /* absolute or relative */
 
 } wasi_subscription_clock_t;
 
@@ -338,14 +332,14 @@ typedef struct wasi_subscription_fd_readwrite_t {
  * The contents of a `subscription`.
  */
 typedef union wasi_subscription_u_u_t {
-    wasi_subscription_clock_t clock;
+    wasi_subscription_clock_t        clock;
     wasi_subscription_fd_readwrite_t fd_read;
     wasi_subscription_fd_readwrite_t fd_write;
 } wasi_subscription_u_u_t;
 
 
 typedef struct __wasi_subscription_u_t {
-    uint8_t tag;
+    uint8_t                 tag;
     wasi_subscription_u_u_t u;
 } wasi_subscription_u_t;
 
