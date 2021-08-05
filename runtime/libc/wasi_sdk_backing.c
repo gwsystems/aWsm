@@ -5,6 +5,7 @@
 #include <printf.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -31,11 +32,27 @@
 /* Code that actually runs the wasm code */
 IMPORT void wasmf__start(void);
 
-/* Globals */
-int runtime_argc = 0;
-char *runtime_argv_buffer = NULL;
-uint32_t runtime_argv_buffer_len = 0;
-wasi_size_t *runtime_argv_buffer_offsets = NULL;
+/** 
+ * Globals 
+ * 
+ * While one likely would expect WASI syscalls to be stateless, the current implementation of
+ * args_get, args_sizes_get, environ_get, and environ_sizes_get are stateful because the WASI
+ * specification requires a module to call the _size_get syscall first to properly size the
+ * buffers that are passed to the associated _get syscall. Additionally, the argc and argv data
+ * passed to main is preprocessed and stored as a global that the args_ syscalls can access.
+ * 
+ * This assumes that these syscalls are only callable by a single WebAssembly module.
+*/
+
+static bool runtime_did_call_args_sizes_get = false;
+static int runtime_argc = 0;
+static char *runtime_argv_buffer = NULL;
+static uint32_t runtime_argv_buffer_len = 0;
+static wasi_size_t *runtime_argv_buffer_offsets = NULL;
+
+static bool runtime_did_call_environ_sizes_get = false;
+static wasi_size_t runtime_environ_len = 0;
+static wasi_size_t runtime_environ_buf_len = 0;
 
 /* Atexit callbacks */
 void runtime_argv_buffer_free() {
@@ -209,36 +226,43 @@ void wasi_unsupported_syscall(const char *syscall) {
 }
 
 /**
- * @brief Writes argument offsets and buffer into linear memory write
+ * @brief Writes argument offsets and buffer into linear memory
+ * Callers of this syscall only provide the base address of the two buffers because the WASI specification
+ * assumes that the caller first called args_sizes_get and sized the buffers appropriately.
  * 
- * @param argv_retptr
- * @param argv_buf_retptr
- * @return WASI_ESUCCESS
+ * @param argv_baseretptr
+ * @param argv_buf_baseretptr
+ * @return WASI_ESUCCESS or WASI_EINVAL
  */
 wasi_errno_t wasi_snapshot_preview1_args_get(
-    wasi_size_t argv_retptr, 
-    wasi_size_t argv_buf_retptr
+    wasi_size_t argv_baseretptr, 
+    wasi_size_t argv_buf_baseretptr
 ){
-    wasi_size_t *argv = (wasi_size_t *)get_memory_ptr_for_runtime(argv_retptr, sizeof(wasi_size_t) * runtime_argc);
-    char *argv_buf = get_memory_ptr_for_runtime(argv_buf_retptr, runtime_argv_buffer_len);
+    if (!runtime_did_call_args_sizes_get) {
+        fprintf(stderr, "The WASI module called args_get without first calling args_sizes_get\n");
+        return WASI_EINVAL;
+    }
+
+    wasi_size_t *argv = (wasi_size_t *)get_memory_ptr_for_runtime(argv_baseretptr, sizeof(wasi_size_t) * runtime_argc);
+    char *argv_buf = get_memory_ptr_for_runtime(argv_buf_baseretptr, runtime_argv_buffer_len);
 
     /* Copy the argument buffer */
     memcpy(argv_buf, runtime_argv_buffer, runtime_argv_buffer_len);
 
     /* Copy argument offsets vector, adjusting for base */
     for (int i = 0; i < runtime_argc; i++){
-        *(argv++) = argv_buf_retptr + runtime_argv_buffer_offsets[i];
+        *(argv++) = argv_buf_baseretptr + runtime_argv_buffer_offsets[i];
     }
 
     return WASI_ESUCCESS;
 }
 
 /**
- * @brief Used by a WASI module to determine the argument count and size of the requried
- * argument buffer
+ * @brief Writes the argument count and size of the requried argument buffer
+ * This is called in order to size buffers that are subsequently passed to the WASI args_get syscall
  * 
- * @param argc linear memory offset where we should write argc
- * @param argv_buf_len linear memory offset where we should write the length of the args buffer
+ * @param argc_retptr linear memory offset where we should write argc
+ * @param argv_buf_len_retptr linear memory offset where we should write the length of the args buffer
  * @return WASI_ESUCCESS
  */
 wasi_errno_t wasi_snapshot_preview1_args_sizes_get(
@@ -248,6 +272,7 @@ wasi_errno_t wasi_snapshot_preview1_args_sizes_get(
     set_i32(argc_retptr, runtime_argc);
     set_i32(argv_buf_len_retptr, runtime_argv_buffer_len);
 
+    runtime_did_call_args_sizes_get = true;
     return WASI_ESUCCESS;
 }
 
@@ -274,7 +299,7 @@ wasi_errno_t wasi_snapshot_preview1_clock_res_get(
  * @param clock_id The clock for which to return the time.
  * @param precision The maximum lag (exclusive) that the returned time value may have, compared to its actual value.
  * @param time_retptr  The time value of the clock.
- * @return status code
+ * @return WASI_ESUCCESS code
  */
 wasi_errno_t wasi_snapshot_preview1_clock_time_get(
     wasi_clockid_t clock_id, 
@@ -294,30 +319,61 @@ wasi_errno_t wasi_snapshot_preview1_clock_time_get(
 
 /**
  * Read environment variable data.
- * The sizes of the buffers should match that returned by `environ_sizes_get`.
+ * Callers of this syscall only provide the base address of the two buffers because the WASI specification
+ * assumes that the caller first called environ_sizes_get and sized the buffers appropriately.
  * 
- * @param environ_retptr
- * @param environ_buf_retptr
+ * @param environ_baseretptr
+ * @param environ_buf_baseretptr
+ * @return WASI_ESUCCESS or WASI_EINVAL
  */
 wasi_errno_t wasi_snapshot_preview1_environ_get(
-    wasi_size_t environ_retptr, 
-    wasi_size_t environ_buf_retptr
+    wasi_size_t environ_baseretptr, 
+    wasi_size_t environ_buf_baseretptr
 ) {
-    wasi_unsupported_syscall(__func__);
+
+    if (!runtime_did_call_environ_sizes_get) {
+        fprintf(stderr, "The WASI module called environ_get without first calling environ_size_get\n");
+        return WASI_EINVAL;
+    }
+
+    wasi_size_t *environ_offset_vector = (wasi_size_t *)get_memory_ptr_for_runtime(environ_baseretptr, sizeof(wasi_size_t) * runtime_environ_len);
+    char *environ_buf = get_memory_ptr_for_runtime(environ_buf_baseretptr, runtime_environ_buf_len);
+    extern char **environ;
+
+    wasi_size_t environ_offset = 0;
+    for (wasi_size_t i = 0; i < runtime_environ_len; i++){
+        environ_offset_vector[i] = environ_buf_baseretptr + environ_offset;
+        strncpy(&environ_buf[environ_offset],environ[i], runtime_environ_buf_len - environ_offset);
+        environ_offset += (strlen(environ[i]) + 1);
+    }
+
+    return WASI_ESUCCESS;
 }
 
 /**
- * Returns the number of environment variable arguments and the size of the environment variable data.
+ * Returns the environment variable count and the buffer size needed to store the environment strings in linear memory.
+ * This is called in order to size buffers that are subsequently passed to the WASI environ_get syscall
  * 
- * @param environc_retptr - the offset where the resulting number of environment variable arguments should be written
- * @param environv_buf_len_retptr - the offset where the resulting size of the environment variable data should be written
+ * @param environ_len_retptr - the offset where the resulting number of environment variable arguments should be written
+ * @param environ_buf_len_retptr - the offset where the resulting size of the environment variable data should be written
  * @return status code
  */
 wasi_errno_t wasi_snapshot_preview1_environ_sizes_get(
-    wasi_size_t environc_retptr, 
-    wasi_size_t environv_buf_len_retptr
+    wasi_size_t environ_len_retptr, 
+    wasi_size_t environ_buf_len_retptr
 ) {
-    wasi_unsupported_syscall(__func__);
+    extern char **environ;
+
+    for (char **cursor = environ; *cursor != NULL; cursor++) {
+        runtime_environ_len++;
+        runtime_environ_buf_len += (strlen(*cursor) + 1);
+    }
+
+    set_i32(environ_len_retptr, runtime_environ_len);
+    set_i32(environ_buf_len_retptr, runtime_environ_buf_len);
+
+    runtime_did_call_environ_sizes_get = true;
+    return WASI_ESUCCESS;
 }
 
 /**
