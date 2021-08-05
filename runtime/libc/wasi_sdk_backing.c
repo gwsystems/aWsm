@@ -607,7 +607,7 @@ wasi_errno_t wasi_snapshot_preview1_fd_prestat_get(
     wasi_fd_t fd,
     wasi_size_t prestat_retptr 
 ) {
-    wasi_unsupported_syscall(__func__);
+    return WASI_EBADF;
 }
 
 /**

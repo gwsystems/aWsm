@@ -2,3 +2,7 @@
 	path = wasmception
 	url = https://github.com/gwsystems/wasmception.git
 	branch = sfbase
+[submodule "example_code/sod_samples/sod"]
+	path = example_code/sod_samples/sod
+	url = git@github.com:gwsystems/sod.git
+	branch = sledge
