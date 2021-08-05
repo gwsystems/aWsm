@@ -22,7 +22,17 @@ typedef uint64_t wasi_device_t;
  */
 typedef uint64_t wasi_dircookie_t;
 
-typedef uint16_t wasi_errno_t;
+/*
+ * Technically, this is specified as a uint16_t in WASI. However, there is no
+ * native i16 type in WebAssembly, so this is zero extended to an uint32_t to
+ * avoid width issues linking AOT compiled WebAssembly code with the native
+ * library. This could be enhanced to abstract all mediation between the WASI
+ * spec and the WASI libc ABI in a wrapper layer. This would be like wasi-libc,
+ * but in reverse.
+ *
+ * https://github.com/WebAssembly/wasi-libc/blob/main/libc-bottom-half/sources/__wasilibc_real.c
+ */
+typedef uint32_t wasi_errno_t;
 
 /* The state of the file descriptor subscribed to with fd_read or fd_write */
 typedef uint16_t wasi_eventrwflags_t;
