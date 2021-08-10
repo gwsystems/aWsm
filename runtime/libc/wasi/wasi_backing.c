@@ -2,76 +2,57 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <uvwasi.h>
 
-#include "../runtime.h"
+#include "../../runtime.h"
+#include "wasi_impl.h"
+#include "wasi_serdes.h"
 
 /* Code that actually runs the wasm code */
 IMPORT void wasmf__start(void);
 
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
-static uvwasi_t uvwasi;
+static void* current_wasi_context;
+
+/* Used to set the current wasi context */
+void current_wasi_context_set(void* wasi_contex) {
+    current_wasi_context = wasi_contex;
+}
+void* current_wasi_context_get() {
+    assert(current_wasi_context != NULL);
+    return current_wasi_context;
+}
+
 
 /**
  * @brief Lifecycle function that runs at end at termination of WebAssembly module. Suitable for logging and cleanup
  */
 void runtime_on_module_exit() {
+    wasi_context_destroy(current_wasi_context);
     return;
 }
 
 int main(int argc, char* argv[]) {
     runtime_init();
 
-    uvwasi_options_t init_options;
-    uvwasi_options_init(&init_options);
-
-    /*
-     * Pass through arguments from host process
-     * The name of the executable is passed as the first arg.
-     * This truncates the relative path from the caller's host pwd
-     */
-    init_options.argc = argc;
-    init_options.argv = calloc(argc, sizeof(char*));
-    int i;
-    for (i = strlen(argv[0]); i > 0; i--) {
-        if (argv[0][i] == '/') {
-            i++;
-            break;
-        }
-    }
-    init_options.argv[0] = &argv[0][i];
-
-    for (int i = 1; i < argc; i++) {
-        init_options.argv[i] = argv[i];
+    /* Copy environ from process */
+    extern char** environ;
+    __wasi_size_t envc = 0;
+    for (char** cursor = environ; *cursor != NULL; cursor++) {
+        envc++;
     }
 
-    /* Pass through environment from host process */
-    extern const char** environ;
-    init_options.envp = environ;
-
-    /* Mount local directory as /home */
-    init_options.preopenc                = 1;
-    init_options.preopens                = calloc(1, sizeof(uvwasi_preopen_t));
-    init_options.preopens[0].mapped_path = "/sandbox";
-    init_options.preopens[0].real_path   = ".";
-
-    /* Initialize the sandbox. */
-    uvwasi_errno_t err = uvwasi_init(&uvwasi, &init_options);
-    assert(err == UVWASI_ESUCCESS);
+    wasi_options_t options;
+    wasi_options_init(&options);
+    options.argc         = argc;
+    options.argv         = (const char**)argv;
+    options.envp         = (const char**)environ;
+    current_wasi_context = wasi_context_init(&options);
 
     atexit(runtime_on_module_exit);
+
     wasmf__start();
-
-    /* Clean up resources. */
-    uvwasi_destroy(&uvwasi);
-
     exit(EXIT_SUCCESS);
-}
-
-__attribute__((noreturn)) void wasi_unsupported_syscall(const char* syscall) {
-    fprintf(stderr, "Syscall %s is not supported\n", syscall);
-    exit(EXIT_FAILURE);
 }
 
 /**
@@ -81,34 +62,44 @@ __attribute__((noreturn)) void wasi_unsupported_syscall(const char* syscall) {
  * @param argv_buf_retptr
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_args_get(uvwasi_size_t argv_retptr, uvwasi_size_t argv_buf_retptr) {
+uint32_t wasi_snapshot_preview1_args_get(__wasi_size_t argv_retptr, __wasi_size_t argv_buf_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_args_get(%u,%u)\n", argv_retptr, argv_buf_retptr);
 #endif
 
+    // TODO: const pointer?
+    const __wasi_size_t argc          = wasi_context_get_argc(current_wasi_context);
+    const __wasi_size_t argv_buf_size = wasi_context_get_argv_buf_size(current_wasi_context);
+    assert(argv_buf_size < 255);
+    char** wasi_context_argv = wasi_context_get_argv(current_wasi_context);
+    assert(wasi_context_argv != NULL);
+
     /* Check Bounds */
-    check_bounds(argv_retptr, sizeof(uvwasi_size_t) * uvwasi.argc);
-    check_bounds(argv_buf_retptr, uvwasi.argv_buf_size);
+    check_bounds(argv_retptr, sizeof(__wasi_size_t) * argc);
+    check_bounds(argv_buf_retptr, argv_buf_size);
 
     /*
      * Write results to temporary buffers argv and argv_buf
-     * Should we write argv_buf directly to memory to make more efficient?
+     * TODO: Should we write argv_buf directly to memory to make more efficient?
      */
-    uvwasi_size_t  argv[uvwasi.argc];
-    char           argv_buf[uvwasi.argv_buf_size];
-    uvwasi_errno_t rc = uvwasi_args_get(&uvwasi, (char**)&argv, argv_buf);
+    char*         argv[argc];
+    char          argv_buf[argv_buf_size];
+    __wasi_size_t argv_offset[argc];
+    __wasi_size_t rc = __wasi_args_get(current_wasi_context, argv, argv_buf);
 
-    if (rc != UVWASI_ESUCCESS)
+    if (rc != __WASI_ERRNO_SUCCESS) {
+        fprintf(stderr, "not good!\n");
         goto done;
+    }
 
     /* Adjust argv to use offsets, not host pointers */
-    for (size_t i = 0; i < uvwasi.argc; i++) {
-        argv[i] = argv_buf_retptr + (uvwasi.argv[i] - uvwasi.argv[0]);
+    for (size_t i = 0; i < argc; i++) {
+        argv_offset[i] = argv_buf_retptr + (wasi_context_argv[i] - wasi_context_argv[0]);
     }
 
     /* Write argv and argv_buf to linear memory */
-    memcpy(&memory[argv_retptr], &argv, uvwasi.argc * sizeof(uvwasi_size_t));
-    memcpy(&memory[argv_buf_retptr], &argv_buf, uvwasi.argv_buf_size);
+    memcpy(&memory[argv_retptr], argv_offset, argc * sizeof(__wasi_size_t));
+    memcpy(&memory[argv_buf_retptr], argv_buf, argv_buf_size);
 
 done:
     return (uint32_t)rc;
@@ -122,7 +113,7 @@ done:
  * @param argv_buf_len linear memory offset where we should write the length of the args buffer
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_args_sizes_get(uvwasi_size_t argc_retptr, uvwasi_size_t argv_buf_len_retptr) {
+uint32_t wasi_snapshot_preview1_args_sizes_get(__wasi_size_t argc_retptr, __wasi_size_t argv_buf_len_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_args_sizes_get(%u,%u)\n", argc_retptr, argv_buf_len_retptr);
 #endif
@@ -132,15 +123,15 @@ uint32_t wasi_snapshot_preview1_args_sizes_get(uvwasi_size_t argc_retptr, uvwasi
     check_bounds(argv_buf_len_retptr, sizeof(uint32_t));
 
     /* Get sizes */
-    uvwasi_size_t  argc;
-    uvwasi_size_t  argv_buf_size;
-    uvwasi_errno_t rc = uvwasi_args_sizes_get(&uvwasi, &argc, &argv_buf_size);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_size_t  argc;
+    __wasi_size_t  argv_buf_size;
+    __wasi_errno_t rc = __wasi_args_sizes_get(current_wasi_context, &argc, &argv_buf_size);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write to linear memory */
-    uvwasi_serdes_write_size_t(memory, argc_retptr, argc);
-    uvwasi_serdes_write_size_t(memory, argv_buf_len_retptr, argv_buf_size);
+    wasi_serdes_write_size_t(memory, argc_retptr, argc);
+    wasi_serdes_write_size_t(memory, argv_buf_len_retptr, argv_buf_size);
 
 done:
     return (uint32_t)rc;
@@ -155,23 +146,23 @@ done:
  * @param res_retptr - The resolution of the clock
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_clock_res_get(uvwasi_clockid_t id, uvwasi_size_t res_retptr) {
+uint32_t wasi_snapshot_preview1_clock_res_get(__wasi_clockid_t id, __wasi_size_t res_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_clock_res_get(%u,%u)\n", id, res_retptr);
 #endif
 
     /* Check Bounds */
-    check_bounds(res_retptr, sizeof(uvwasi_timestamp_t));
+    check_bounds(res_retptr, sizeof(__wasi_timestamp_t));
 
     /* Read resolution into buffer */
-    uvwasi_timestamp_t resolution;
-    uvwasi_errno_t     rc = uvwasi_clock_res_get(&uvwasi, id, &resolution);
+    __wasi_timestamp_t resolution;
+    __wasi_errno_t     rc = __wasi_clock_res_get(current_wasi_context, id, &resolution);
 
     /* write buffer to linear memory */
-    if (rc != UVWASI_ESUCCESS)
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
-    uvwasi_serdes_write_timestamp_t(memory, res_retptr, resolution);
+    wasi_serdes_write_timestamp_t(memory, res_retptr, resolution);
 
 done:
     return (uint32_t)rc;
@@ -185,23 +176,23 @@ done:
  * @param time_retptr  The time value of the clock.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_clock_time_get(uvwasi_clockid_t clock_id, uvwasi_timestamp_t precision,
-                                               uvwasi_size_t time_retptr) {
+uint32_t wasi_snapshot_preview1_clock_time_get(__wasi_clockid_t clock_id, __wasi_timestamp_t precision,
+                                               __wasi_size_t time_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_clock_time_get(%u,%lu,%u)\n", clock_id, precision, time_retptr);
 #endif
 
     /* Check Bounds */
-    check_bounds(time_retptr, sizeof(uvwasi_timestamp_t));
+    check_bounds(time_retptr, sizeof(__wasi_timestamp_t));
 
     /* Make WASI call */
-    uvwasi_timestamp_t time;
-    uvwasi_errno_t     rc = uvwasi_clock_time_get(&uvwasi, clock_id, precision, &time);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_timestamp_t time;
+    __wasi_errno_t     rc = __wasi_clock_time_get(current_wasi_context, clock_id, precision, &time);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write to Linear Memory */
-    uvwasi_serdes_write_timestamp_t(memory, time_retptr, time);
+    wasi_serdes_write_timestamp_t(memory, time_retptr, time);
 
 done:
     return (uint32_t)rc;
@@ -215,27 +206,30 @@ done:
  * @param environ_buf_retptr
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_environ_get(uvwasi_size_t environ_retptr, uvwasi_size_t environ_buf_retptr) {
+uint32_t wasi_snapshot_preview1_environ_get(__wasi_size_t environ_retptr, __wasi_size_t environ_buf_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_environ_get(%u,%u)\n", environ_retptr, environ_buf_retptr);
 #endif
 
+    const __wasi_size_t envc         = wasi_context_get_envc(current_wasi_context);
+    const __wasi_size_t env_buf_size = wasi_context_get_env_buf_size(current_wasi_context);
+
     /* Check Bounds */
-    check_bounds(environ_retptr, uvwasi.envc * UVWASI_SERDES_SIZE_size_t);
-    check_bounds(environ_buf_retptr, uvwasi.env_buf_size);
+    check_bounds(environ_retptr, envc * WASI_SERDES_SIZE_size_t);
+    check_bounds(environ_buf_retptr, env_buf_size);
 
     /* Write environment to temporary buffer and environment_buf directly to linear memory */
-    char*          environment[uvwasi.envc];
-    uvwasi_errno_t rc = uvwasi_environ_get(&uvwasi, environment, &memory[environ_buf_retptr]);
+    char*          environment[envc];
+    __wasi_errno_t rc = __wasi_environ_get(current_wasi_context, environment, (char*)&memory[environ_buf_retptr]);
 
-    if (rc != UVWASI_ESUCCESS)
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Convert environment from pointers to offsets and write to linear memory */
-    for (size_t i = 0; i < uvwasi.envc; i++) {
-        uvwasi_size_t offset = environ_buf_retptr + (environment[i] - environment[0]);
+    for (size_t i = 0; i < envc; i++) {
+        __wasi_size_t offset = environ_buf_retptr + (environment[i] - environment[0]);
 
-        uvwasi_serdes_write_uint32_t(memory, environ_retptr + (i * UVWASI_SERDES_SIZE_uint32_t), offset);
+        wasi_serdes_write_uint32_t(memory, environ_retptr + (i * WASI_SERDES_SIZE_uint32_t), offset);
     }
 
 done:
@@ -251,25 +245,25 @@ done:
  * @return status code
  */
 uint32_t
-wasi_snapshot_preview1_environ_sizes_get(uvwasi_size_t environc_retptr, uvwasi_size_t environv_buf_len_retptr) {
+wasi_snapshot_preview1_environ_sizes_get(__wasi_size_t environc_retptr, __wasi_size_t environv_buf_len_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_environ_sizes_get(%u,%u)\n", environc_retptr, environv_buf_len_retptr);
 #endif
 
     /* Check Bounds */
-    check_bounds(environc_retptr, UVWASI_SERDES_SIZE_size_t);
-    check_bounds(environv_buf_len_retptr, UVWASI_SERDES_SIZE_size_t);
+    check_bounds(environc_retptr, WASI_SERDES_SIZE_size_t);
+    check_bounds(environv_buf_len_retptr, WASI_SERDES_SIZE_size_t);
 
     /* Make WASI Call */
-    uvwasi_size_t  envc;
-    uvwasi_size_t  env_buf_size;
-    uvwasi_errno_t rc = uvwasi_environ_sizes_get(&uvwasi, &envc, &env_buf_size);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_size_t  envc;
+    __wasi_size_t  env_buf_size;
+    __wasi_errno_t rc = __wasi_environ_sizes_get(current_wasi_context, &envc, &env_buf_size);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write results to linear memory */
-    uvwasi_serdes_write_size_t(memory, environc_retptr, envc);
-    uvwasi_serdes_write_size_t(memory, environv_buf_len_retptr, env_buf_size);
+    wasi_serdes_write_size_t(memory, environc_retptr, envc);
+    wasi_serdes_write_size_t(memory, environv_buf_len_retptr, env_buf_size);
 
 done:
     return (uint32_t)rc;
@@ -286,22 +280,22 @@ done:
  * @return status code
  */
 uint32_t
-wasi_snapshot_preview1_fd_advise(uvwasi_fd_t fd, uvwasi_filesize_t offset, uvwasi_filesize_t len, uint32_t advice) {
+wasi_snapshot_preview1_fd_advise(__wasi_fd_t fd, __wasi_filesize_t offset, __wasi_filesize_t len, uint32_t advice) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_advise(%u,%lu,%lu,%u)\n", fd, offset, len, advice);
 #endif
 
-    uvwasi_errno_t rc;
+    __wasi_errno_t rc;
 
     if (unlikely(advice > UINT8_MAX))
         goto err_advice_overflow;
 
-    rc = uvwasi_fd_advise(&uvwasi, fd, offset, len, (uvwasi_advice_t)advice);
+    rc = __wasi_fd_advise(current_wasi_context, fd, offset, len, (__wasi_advice_t)advice);
 
 done:
     return (uint32_t)rc;
 err_advice_overflow:
-    rc = UVWASI_EINVAL;
+    rc = __WASI_ERRNO_INVAL;
     goto done;
 }
 
@@ -313,12 +307,12 @@ err_advice_overflow:
  * @param len The length of the area that is allocated.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_allocate(uvwasi_fd_t fd, uvwasi_filesize_t offset, uvwasi_filesize_t len) {
+uint32_t wasi_snapshot_preview1_fd_allocate(__wasi_fd_t fd, __wasi_filesize_t offset, __wasi_filesize_t len) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_allocate(%u,%lu,%lu)\n", fd, offset, len);
 #endif
 
-    return (uint32_t)uvwasi_fd_allocate(&uvwasi, fd, offset, len);
+    return (uint32_t)__wasi_fd_allocate(current_wasi_context, fd, offset, len);
 };
 
 /**
@@ -327,12 +321,12 @@ uint32_t wasi_snapshot_preview1_fd_allocate(uvwasi_fd_t fd, uvwasi_filesize_t of
  * @param fd
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_close(uvwasi_fd_t fd) {
+uint32_t wasi_snapshot_preview1_fd_close(__wasi_fd_t fd) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_close(%u)\n", fd);
 #endif
 
-    return (uint32_t)uvwasi_fd_close(&uvwasi, fd);
+    return (uint32_t)__wasi_fd_close(current_wasi_context, fd);
 }
 
 /**
@@ -341,12 +335,12 @@ uint32_t wasi_snapshot_preview1_fd_close(uvwasi_fd_t fd) {
  * @param fd
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_datasync(uvwasi_fd_t fd) {
+uint32_t wasi_snapshot_preview1_fd_datasync(__wasi_fd_t fd) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_datasync(%u)\n", fd);
 #endif
 
-    return (uint32_t)uvwasi_fd_datasync(&uvwasi, fd);
+    return (uint32_t)__wasi_fd_datasync(current_wasi_context, fd);
 }
 
 /**
@@ -356,22 +350,22 @@ uint32_t wasi_snapshot_preview1_fd_datasync(uvwasi_fd_t fd) {
  * @param fdstat_retptr the offset where the resulting wasi_fdstat structure should be written
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_fdstat_get(uvwasi_fd_t fd, uvwasi_size_t fdstat_retptr) {
+uint32_t wasi_snapshot_preview1_fd_fdstat_get(__wasi_fd_t fd, __wasi_size_t fdstat_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_fdstat_get(%u,%u)\n", fd, fdstat_retptr);
 #endif
 
     /* Check Bounds */
-    check_bounds(fdstat_retptr, UVWASI_SERDES_SIZE_fdstat_t);
+    check_bounds(fdstat_retptr, WASI_SERDES_SIZE_fdstat_t);
 
     /* Make WASI Call */
-    uvwasi_fdstat_t stats;
-    uvwasi_errno_t  rc = uvwasi_fd_fdstat_get(&uvwasi, (uvwasi_fd_t)fd, &stats);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_fdstat_t stats;
+    __wasi_errno_t  rc = __wasi_fd_fdstat_get(current_wasi_context, fd, &stats);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write result to linear memory */
-    uvwasi_serdes_write_fdstat_t(memory, fdstat_retptr, &stats);
+    wasi_serdes_write_fdstat_t(memory, fdstat_retptr, &stats);
 
 done:
     return (uint32_t)rc;
@@ -384,23 +378,23 @@ done:
  * @param fdflags The desired values of the file descriptor flags.
  * @return WASI_ESUCCESS, WASI_EACCES, WASI_EAGAIN, WASI_EBADF, WASI_EFAULT, WASI_EINVAL, WASI_ENOENT, or WASI_EPERM
  */
-uint32_t wasi_snapshot_preview1_fd_fdstat_set_flags(uvwasi_fd_t fd, uint32_t fdflags) {
+uint32_t wasi_snapshot_preview1_fd_fdstat_set_flags(__wasi_fd_t fd, uint32_t fdflags) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_fdstat_set_flags(%u,%u)\n", fd, fdflags);
 #endif
 
-    uvwasi_errno_t rc;
+    __wasi_errno_t rc;
 
     /* fdflags should be a zero-extended uint16_t */
     if (fdflags > UINT16_MAX)
         goto err_fdflags_overflow;
 
-    rc = uvwasi_fd_fdstat_set_flags(&uvwasi, fd, (uvwasi_fdflags_t)fdflags);
+    rc = __wasi_fd_fdstat_set_flags(current_wasi_context, fd, (__wasi_fdflags_t)fdflags);
 
 done:
     return (uint32_t)rc;
 err_fdflags_overflow:
-    rc = UVWASI_EINVAL;
+    rc = __WASI_ERRNO_INVAL;
     goto done;
 }
 
@@ -414,13 +408,13 @@ err_fdflags_overflow:
  * @param fs_rights_inheriting
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_fdstat_set_rights(uvwasi_fd_t fd, uvwasi_rights_t fs_rights_base,
-                                                     uvwasi_rights_t fs_rights_inheriting) {
+uint32_t wasi_snapshot_preview1_fd_fdstat_set_rights(__wasi_fd_t fd, __wasi_rights_t fs_rights_base,
+                                                     __wasi_rights_t fs_rights_inheriting) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_fdstat_set_rights(%u,%lu,%lu)\n", fd, fs_rights_base,
             fs_rights_inheriting);
 #endif
-    return (uint32_t)uvwasi_fd_fdstat_set_rights(&uvwasi, fd, fs_rights_base, fs_rights_inheriting);
+    return (uint32_t)__wasi_fd_fdstat_set_rights(current_wasi_context, fd, fs_rights_base, fs_rights_inheriting);
 }
 
 /**
@@ -430,22 +424,22 @@ uint32_t wasi_snapshot_preview1_fd_fdstat_set_rights(uvwasi_fd_t fd, uvwasi_righ
  * @param filestat_retptr The buffer where we should store the file's attributes
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_filestat_get(uvwasi_fd_t fd, uvwasi_size_t filestat_retptr) {
+uint32_t wasi_snapshot_preview1_fd_filestat_get(__wasi_fd_t fd, __wasi_size_t filestat_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_filestat_get(%u,%u)\n", fd, filestat_retptr);
 #endif
 
     /* Check Bounds */
-    check_bounds(filestat_retptr, UVWASI_SERDES_SIZE_filestat_t);
+    check_bounds(filestat_retptr, WASI_SERDES_SIZE_filestat_t);
 
     /* Make WASI Call */
-    uvwasi_filestat_t stats;
-    uvwasi_errno_t    rc = uvwasi_fd_filestat_get(&uvwasi, fd, &stats);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_filestat_t stats;
+    __wasi_errno_t    rc = __wasi_fd_filestat_get(current_wasi_context, fd, &stats);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Copy result into linear memory */
-    uvwasi_serdes_write_filestat_t(memory, filestat_retptr, &stats);
+    wasi_serdes_write_filestat_t(memory, filestat_retptr, &stats);
 
 done:
     return (uint32_t)rc;
@@ -458,12 +452,12 @@ done:
  * @param size The desired file size.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_filestat_set_size(uvwasi_fd_t fd, uvwasi_filesize_t size) {
+uint32_t wasi_snapshot_preview1_fd_filestat_set_size(__wasi_fd_t fd, __wasi_filesize_t size) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_filestat_set_size(%u,%lu)\n", fd, size);
 #endif
 
-    return (uint32_t)uvwasi_fd_filestat_set_size(&uvwasi, fd, size);
+    return (uint32_t)__wasi_fd_filestat_set_size(current_wasi_context, fd, size);
 }
 
 /**
@@ -475,22 +469,22 @@ uint32_t wasi_snapshot_preview1_fd_filestat_set_size(uvwasi_fd_t fd, uvwasi_file
  * @param fst_flags A bitmask indicating which timestamps to adjust.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_filestat_set_times(uvwasi_fd_t fd, uvwasi_timestamp_t atim, uvwasi_timestamp_t mtim,
+uint32_t wasi_snapshot_preview1_fd_filestat_set_times(__wasi_fd_t fd, __wasi_timestamp_t atim, __wasi_timestamp_t mtim,
                                                       uint32_t fst_flags) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_filestat_set_times(%u,%lu,%lu,%u)\n", fd, atim, mtim, fst_flags);
 #endif
 
-    uvwasi_errno_t rc;
+    __wasi_errno_t rc;
     if (unlikely(fst_flags > UINT16_MAX))
         goto err_fst_flags_overflow;
 
-    rc = uvwasi_fd_filestat_set_times(&uvwasi, fd, atim, mtim, (uvwasi_fstflags_t)fst_flags);
+    rc = __wasi_fd_filestat_set_times(current_wasi_context, fd, atim, mtim, (__wasi_fstflags_t)fst_flags);
 
 done:
     return (uint32_t)rc;
 err_fst_flags_overflow:
-    rc = UVWASI_EINVAL;
+    rc = __WASI_ERRNO_INVAL;
     goto done;
 }
 
@@ -504,31 +498,31 @@ err_fst_flags_overflow:
  * @param nbytes_retptr The number of bytes read.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_pread(uvwasi_fd_t fd, uvwasi_size_t iovs_baseptr, uvwasi_size_t iovs_len,
-                                         uvwasi_filesize_t offset, uvwasi_size_t nbytes_retptr) {
+uint32_t wasi_snapshot_preview1_fd_pread(__wasi_fd_t fd, __wasi_size_t iovs_baseptr, __wasi_size_t iovs_len,
+                                         __wasi_filesize_t offset, __wasi_size_t nbytes_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_pread(%u,%u,%u,%lu,%u)\n", fd, iovs_baseptr, iovs_len, offset,
             nbytes_retptr);
 #endif
 
     /* Check Bounds */
-    check_bounds(iovs_baseptr, iovs_len * UVWASI_SERDES_SIZE_iovec_t);
-    check_bounds(nbytes_retptr, UVWASI_SERDES_SIZE_size_t);
+    check_bounds(iovs_baseptr, iovs_len * WASI_SERDES_SIZE_iovec_t);
+    check_bounds(nbytes_retptr, WASI_SERDES_SIZE_size_t);
 
     /* Read iovec from linear memory */
-    uvwasi_iovec_t iovs[iovs_len];
-    uvwasi_errno_t rc = uvwasi_serdes_readv_iovec_t(memory, memory_size, iovs_baseptr, iovs, iovs_len);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_iovec_t iovs[iovs_len];
+    __wasi_errno_t rc = wasi_serdes_readv_iovec_t(memory, memory_size, iovs_baseptr, iovs, iovs_len);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Execute WASI call */
-    uvwasi_size_t nread;
-    rc = uvwasi_fd_pread(&uvwasi, fd, iovs, iovs_len, offset, &nread);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_size_t nread;
+    rc = __wasi_fd_pread(current_wasi_context, fd, iovs, iovs_len, offset, &nread);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write Result */
-    uvwasi_serdes_write_size_t(memory, nbytes_retptr, nread);
+    wasi_serdes_write_size_t(memory, nbytes_retptr, nread);
 
 done:
     return (uint32_t)rc;
@@ -541,22 +535,22 @@ done:
  * @param prestat_retptr The buffer where the description is stored.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_prestat_get(uvwasi_fd_t fd, uvwasi_size_t prestat_retptr) {
+uint32_t wasi_snapshot_preview1_fd_prestat_get(__wasi_fd_t fd, __wasi_size_t prestat_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_prestat_get(%u,%u)\n", fd, prestat_retptr);
 #endif
 
     /* Check Bounds */
-    check_bounds(prestat_retptr, UVWASI_SERDES_SIZE_prestat_t);
+    check_bounds(prestat_retptr, WASI_SERDES_SIZE_prestat_t);
 
     /* Execute WASI call */
-    uvwasi_prestat_t prestat;
-    uvwasi_errno_t   rc = uvwasi_fd_prestat_get(&uvwasi, fd, &prestat);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_prestat_t prestat;
+    __wasi_errno_t   rc = __wasi_fd_prestat_get(current_wasi_context, fd, &prestat);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write result to linear memory */
-    uvwasi_serdes_write_prestat_t(memory, prestat_retptr, &prestat);
+    wasi_serdes_write_prestat_t(memory, prestat_retptr, &prestat);
 
 done:
     return (uint32_t)rc;
@@ -570,7 +564,7 @@ done:
  * @param path_len The length of the buffer at path_retptr
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_prestat_dir_name(uvwasi_fd_t fd, uvwasi_size_t path_retptr, uvwasi_size_t path_len) {
+uint32_t wasi_snapshot_preview1_fd_prestat_dir_name(__wasi_fd_t fd, __wasi_size_t path_retptr, __wasi_size_t path_len) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_prestat_dir_name(%u,%u,%u)\n", fd, path_retptr, path_len);
 #endif
@@ -579,7 +573,7 @@ uint32_t wasi_snapshot_preview1_fd_prestat_dir_name(uvwasi_fd_t fd, uvwasi_size_
     check_bounds(path_retptr, path_len);
 
     /* Execute WASI call, writing results directly to linear memory */
-    return (uint32_t)uvwasi_fd_prestat_dir_name(&uvwasi, fd, &memory[path_retptr], path_len);
+    return (uint32_t)__wasi_fd_prestat_dir_name(current_wasi_context, fd, (char*)&memory[path_retptr], path_len);
 }
 
 /**
@@ -593,31 +587,31 @@ uint32_t wasi_snapshot_preview1_fd_prestat_dir_name(uvwasi_fd_t fd, uvwasi_size_
  * @return status code
  *
  */
-uint32_t wasi_snapshot_preview1_fd_pwrite(uvwasi_fd_t fd, uvwasi_size_t iovs_baseptr, uvwasi_size_t iovs_len,
-                                          uvwasi_filesize_t offset, uvwasi_size_t nwritten_retptr) {
+uint32_t wasi_snapshot_preview1_fd_pwrite(__wasi_fd_t fd, __wasi_size_t iovs_baseptr, __wasi_size_t iovs_len,
+                                          __wasi_filesize_t offset, __wasi_size_t nwritten_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_pwrite(%u,%u,%u,%lu,%u)\n", fd, iovs_baseptr, iovs_len, offset,
             nwritten_retptr);
 #endif
 
     /* Check Bounds */
-    check_bounds(iovs_baseptr, iovs_len * UVWASI_SERDES_SIZE_ciovec_t);
-    check_bounds(nwritten_retptr, UVWASI_SERDES_SIZE_size_t);
+    check_bounds(iovs_baseptr, iovs_len * WASI_SERDES_SIZE_ciovec_t);
+    check_bounds(nwritten_retptr, WASI_SERDES_SIZE_size_t);
 
     /* Copy iovs into memory */
-    uvwasi_ciovec_t iovs[iovs_len];
-    uvwasi_errno_t  rc = uvwasi_serdes_readv_ciovec_t(memory, memory_size, iovs_baseptr, iovs, iovs_len);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_ciovec_t iovs[iovs_len];
+    __wasi_errno_t  rc = wasi_serdes_readv_ciovec_t(memory, memory_size, iovs_baseptr, iovs, iovs_len);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Execute WASI call */
-    uvwasi_size_t nwritten;
-    rc = uvwasi_fd_pwrite(&uvwasi, fd, iovs, iovs_len, offset, &nwritten);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_size_t nwritten;
+    rc = __wasi_fd_pwrite(current_wasi_context, fd, iovs, iovs_len, offset, &nwritten);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write result to linear memory */
-    uvwasi_serdes_write_size_t(memory, nwritten_retptr, nwritten);
+    wasi_serdes_write_size_t(memory, nwritten_retptr, nwritten);
 
 done:
     return (uint32_t)rc;
@@ -633,30 +627,30 @@ done:
  * @return WASI_ESUCCESS, WASI_EAGAIN, WASI_EWOULDBLOCK, WASI_EBADF, WASI_EFAULT, WASI_EINTR, WASI_EIO, WASI_EISDIR, or
  * others
  */
-uint32_t wasi_snapshot_preview1_fd_read(uvwasi_fd_t fd, uvwasi_size_t iovs_baseptr, uvwasi_size_t iovs_len,
-                                        uvwasi_size_t nread_retptr) {
+uint32_t wasi_snapshot_preview1_fd_read(__wasi_fd_t fd, __wasi_size_t iovs_baseptr, __wasi_size_t iovs_len,
+                                        __wasi_size_t nread_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_read(%u,%u,%u,%u)\n", fd, iovs_baseptr, iovs_len, nread_retptr);
 #endif
 
     /* Check Bounds */
-    check_bounds(iovs_baseptr, iovs_len * UVWASI_SERDES_SIZE_iovec_t);
-    check_bounds(nread_retptr, UVWASI_SERDES_SIZE_size_t);
+    check_bounds(iovs_baseptr, iovs_len * WASI_SERDES_SIZE_iovec_t);
+    check_bounds(nread_retptr, WASI_SERDES_SIZE_size_t);
 
     /* Copy iovs into memory */
-    uvwasi_iovec_t iovs[iovs_len];
-    uvwasi_errno_t rc = uvwasi_serdes_readv_iovec_t(memory, memory_size, iovs_baseptr, iovs, iovs_len);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_iovec_t iovs[iovs_len];
+    __wasi_errno_t rc = wasi_serdes_readv_iovec_t(memory, memory_size, iovs_baseptr, iovs, iovs_len);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Execute WASI call */
-    uvwasi_size_t nread;
-    rc = uvwasi_fd_read(&uvwasi, fd, iovs, iovs_len, &nread);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_size_t nread;
+    rc = __wasi_fd_read(current_wasi_context, fd, iovs, iovs_len, &nread);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write result to linear memory */
-    uvwasi_serdes_write_size_t(memory, nread_retptr, nread);
+    wasi_serdes_write_size_t(memory, nread_retptr, nread);
 
 done:
     return (uint32_t)rc;
@@ -680,8 +674,8 @@ done:
  * of the directory has been reached.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_readdir(uvwasi_fd_t fd, uvwasi_size_t buf_baseptr, uvwasi_size_t buf_len,
-                                           uvwasi_dircookie_t cookie, uvwasi_size_t nread_retptr) {
+uint32_t wasi_snapshot_preview1_fd_readdir(__wasi_fd_t fd, __wasi_size_t buf_baseptr, __wasi_size_t buf_len,
+                                           __wasi_dircookie_t cookie, __wasi_size_t nread_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_readdir(%u,%u,%u,%lu,%u)\n", fd, buf_baseptr, buf_len, cookie,
             nread_retptr);
@@ -689,16 +683,17 @@ uint32_t wasi_snapshot_preview1_fd_readdir(uvwasi_fd_t fd, uvwasi_size_t buf_bas
 
     /* Check Bounds */
     check_bounds(buf_baseptr, buf_len);
-    check_bounds(nread_retptr, UVWASI_SERDES_SIZE_size_t);
+    check_bounds(nread_retptr, WASI_SERDES_SIZE_size_t);
 
     /* Execute WASI call */
-    uvwasi_size_t  nread;
-    uvwasi_errno_t rc = uvwasi_fd_readdir(&uvwasi, fd, &memory[buf_baseptr], buf_len, cookie, &nread);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_size_t  nread;
+    __wasi_errno_t rc = __wasi_fd_readdir(current_wasi_context, fd, (uint8_t*)&memory[buf_baseptr], buf_len, cookie,
+                                          &nread);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write result to linear memory */
-    uvwasi_serdes_write_size_t(memory, nread_retptr, nread);
+    wasi_serdes_write_size_t(memory, nread_retptr, nread);
 
 done:
     return (uint32_t)rc;
@@ -718,12 +713,12 @@ done:
  * @param to the file descriptor to overwrite
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_renumber(uvwasi_fd_t fd, uvwasi_fd_t to) {
+uint32_t wasi_snapshot_preview1_fd_renumber(__wasi_fd_t fd, __wasi_fd_t to) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_renumber(%u,%u)\n", fd, to);
 #endif
 
-    return (uint32_t)uvwasi_fd_renumber(&uvwasi, fd, to);
+    return (uint32_t)__wasi_fd_renumber(current_wasi_context, fd, to);
 }
 
 /**
@@ -735,31 +730,31 @@ uint32_t wasi_snapshot_preview1_fd_renumber(uvwasi_fd_t fd, uvwasi_fd_t to) {
  * @param newoffset_retptr The new offset of the file descriptor, relative to the start of the file.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_seek(uvwasi_fd_t fd, uvwasi_filedelta_t file_offset, uint32_t whence,
-                                        uvwasi_size_t newoffset_retptr) {
+uint32_t wasi_snapshot_preview1_fd_seek(__wasi_fd_t fd, __wasi_filedelta_t file_offset, uint32_t whence,
+                                        __wasi_size_t newoffset_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_seek(%u,%ld,%u,%u)\n", fd, file_offset, whence, newoffset_retptr);
 #endif
 
-    uvwasi_errno_t rc;
+    __wasi_errno_t rc;
 
     /* Validate types zero-extended by wasm32 ABI */
     if (unlikely(whence > UINT8_MAX)) {
-        rc = UVWASI_EINVAL;
+        rc = __WASI_ERRNO_INVAL;
         goto done;
     }
 
     /* Check Bounds */
-    check_bounds(newoffset_retptr, UVWASI_SERDES_SIZE_filesize_t);
+    check_bounds(newoffset_retptr, WASI_SERDES_SIZE_filesize_t);
 
     /* Execute WASI syscall */
-    uvwasi_filesize_t newoffset;
-    rc = uvwasi_fd_seek(&uvwasi, fd, file_offset, (uvwasi_whence_t)whence, &newoffset);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_filesize_t newoffset;
+    rc = __wasi_fd_seek(current_wasi_context, fd, file_offset, (__wasi_whence_t)whence, &newoffset);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write results to linear memory */
-    uvwasi_serdes_write_filesize_t(memory, newoffset_retptr, newoffset);
+    wasi_serdes_write_filesize_t(memory, newoffset_retptr, newoffset);
 
 done:
     return (uint32_t)rc;
@@ -771,12 +766,12 @@ done:
  * @param fd
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_sync(uvwasi_fd_t fd) {
+uint32_t wasi_snapshot_preview1_fd_sync(__wasi_fd_t fd) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_sync(%u)\n", fd);
 #endif
 
-    return (uint32_t)uvwasi_fd_sync(&uvwasi, fd);
+    return (uint32_t)__wasi_fd_sync(current_wasi_context, fd);
 }
 
 /**
@@ -786,22 +781,22 @@ uint32_t wasi_snapshot_preview1_fd_sync(uvwasi_fd_t fd) {
  * @param fileoffset_retptr The current offset of the file descriptor, relative to the start of the file.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_tell(uvwasi_fd_t fd, uvwasi_size_t fileoffset_retptr) {
+uint32_t wasi_snapshot_preview1_fd_tell(__wasi_fd_t fd, __wasi_size_t fileoffset_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_tell(%u,%u)\n", fd, fileoffset_retptr);
 #endif
 
     /* Check Bounds */
-    check_bounds(fileoffset_retptr, UVWASI_SERDES_SIZE_filesize_t);
+    check_bounds(fileoffset_retptr, WASI_SERDES_SIZE_filesize_t);
 
     /* Execute WASI Call */
-    uvwasi_filesize_t fileoffset;
-    uvwasi_errno_t    rc = uvwasi_fd_tell(&uvwasi, fd, &fileoffset);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_filesize_t fileoffset;
+    __wasi_errno_t    rc = __wasi_fd_tell(current_wasi_context, fd, &fileoffset);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write results to linear memory */
-    uvwasi_serdes_write_filesize_t(memory, fileoffset_retptr, fileoffset);
+    wasi_serdes_write_filesize_t(memory, fileoffset_retptr, fileoffset);
 
 done:
     return (uint32_t)rc;
@@ -817,30 +812,30 @@ done:
  * @return WASI_ESUCCESS, WASI_EAGAIN, WASI_EWOULDBLOCK, WASI_EBADF, WASI_EFAULT,
  * WASI_EFBIG, WASI_EINTR, WASI_EIO, WASI_ENOSPC, WASI_EPERM, WASI_EPIPE, or others
  */
-uint32_t wasi_snapshot_preview1_fd_write(uvwasi_fd_t fd, uvwasi_size_t iovs_baseptr, uvwasi_size_t iovs_len,
-                                         uvwasi_size_t nwritten_retptr) {
+uint32_t wasi_snapshot_preview1_fd_write(__wasi_fd_t fd, __wasi_size_t iovs_baseptr, __wasi_size_t iovs_len,
+                                         __wasi_size_t nwritten_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_fd_write(%u,%u,%u,%u)\n", fd, iovs_baseptr, iovs_len, nwritten_retptr);
 #endif
 
     /* Check bounds */
-    check_bounds(iovs_baseptr, UVWASI_SERDES_SIZE_ciovec_t * iovs_len);
-    check_bounds(nwritten_retptr, UVWASI_SERDES_SIZE_size_t);
+    check_bounds(iovs_baseptr, WASI_SERDES_SIZE_ciovec_t * iovs_len);
+    check_bounds(nwritten_retptr, WASI_SERDES_SIZE_size_t);
 
     /* Read iovec into memory */
-    uvwasi_ciovec_t iovs[iovs_len];
-    uvwasi_errno_t  rc = uvwasi_serdes_readv_ciovec_t(memory, memory_size, iovs_baseptr, iovs, iovs_len);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_ciovec_t iovs[iovs_len];
+    __wasi_errno_t  rc = wasi_serdes_readv_ciovec_t(memory, memory_size, iovs_baseptr, iovs, iovs_len);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Read iovec to target fd */
-    uvwasi_size_t nwritten;
-    rc = uvwasi_fd_write(&uvwasi, fd, iovs, iovs_len, &nwritten);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_size_t nwritten;
+    rc = __wasi_fd_write(current_wasi_context, fd, iovs, iovs_len, &nwritten);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write nwritten back into linear memory */
-    uvwasi_serdes_write_size_t(memory, nwritten_retptr, nwritten);
+    wasi_serdes_write_size_t(memory, nwritten_retptr, nwritten);
 
 done:
     return (uint32_t)rc;
@@ -857,14 +852,15 @@ done:
  * WASI_ENOENT, WASI_ENOMEM, WASI_ENOSPC, WASI_ENOTDIR, WASI_EPERM, or WASI_EROFS
  */
 uint32_t
-wasi_snapshot_preview1_path_create_directory(uvwasi_fd_t fd, uvwasi_size_t path_baseptr, uvwasi_size_t path_len) {
+wasi_snapshot_preview1_path_create_directory(__wasi_fd_t fd, __wasi_size_t path_baseptr, __wasi_size_t path_len) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_path_create_directory(%u,%u,%u)\n", fd, path_baseptr, path_len);
 #endif
 
     check_bounds(path_baseptr, path_len);
 
-    return (uint32_t)uvwasi_path_create_directory(&uvwasi, fd, &memory[path_baseptr], path_len);
+    return (uint32_t)__wasi_path_create_directory(current_wasi_context, fd, (const char*)&memory[path_baseptr],
+                                                  path_len);
 }
 
 /**
@@ -878,22 +874,23 @@ wasi_snapshot_preview1_path_create_directory(uvwasi_fd_t fd, uvwasi_size_t path_
  * WASI_ENAMETOOLON, WASI_ENOENT, WASI_ENOENT, WASI_ENOMEM, WASI_ENOTDI, or WASI_EOVERFLOW
  */
 uint32_t
-wasi_snapshot_preview1_path_filestat_get(uvwasi_fd_t fd, uvwasi_lookupflags_t flags, uvwasi_size_t path_baseptr,
-                                         uvwasi_size_t path_len, uvwasi_size_t filestat_retptr) {
+wasi_snapshot_preview1_path_filestat_get(__wasi_fd_t fd, __wasi_lookupflags_t flags, __wasi_size_t path_baseptr,
+                                         __wasi_size_t path_len, __wasi_size_t filestat_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_path_filestat_get(%u,%u,%u,%u,%u)\n", fd, flags, path_baseptr, path_len,
             filestat_retptr);
 #endif
 
     check_bounds(path_baseptr, path_len);
-    check_bounds(filestat_retptr, UVWASI_SERDES_SIZE_filestat_t);
+    check_bounds(filestat_retptr, WASI_SERDES_SIZE_filestat_t);
 
-    uvwasi_filestat_t stats;
-    uvwasi_errno_t    rc = uvwasi_path_filestat_get(&uvwasi, fd, flags, &memory[path_baseptr], path_len, &stats);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_filestat_t stats;
+    __wasi_errno_t    rc = __wasi_path_filestat_get(current_wasi_context, fd, flags, (const char*)&memory[path_baseptr],
+                                                 path_len, &stats);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
-    uvwasi_serdes_write_filestat_t(memory, filestat_retptr, &stats);
+    wasi_serdes_write_filestat_t(memory, filestat_retptr, &stats);
 
 done:
     return (uint32_t)rc;
@@ -912,28 +909,29 @@ done:
  * @return status code
  */
 uint32_t
-wasi_snapshot_preview1_path_filestat_set_times(uvwasi_fd_t fd, uvwasi_lookupflags_t flags, uvwasi_size_t path_baseptr,
-                                               uvwasi_size_t path_len, uvwasi_timestamp_t atim, uvwasi_timestamp_t mtim,
+wasi_snapshot_preview1_path_filestat_set_times(__wasi_fd_t fd, __wasi_lookupflags_t flags, __wasi_size_t path_baseptr,
+                                               __wasi_size_t path_len, __wasi_timestamp_t atim, __wasi_timestamp_t mtim,
                                                uint32_t fst_flags) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_path_filestat_set_times(%u,%u,%u,%u,%lu,%lu,%u)\n", fd, flags, path_baseptr,
             path_len, atim, mtim, fst_flags);
 #endif
 
-    uvwasi_errno_t rc;
+    __wasi_errno_t rc;
+
 
     if (unlikely(fst_flags > UINT16_MAX))
         goto err_fst_flags_overflow;
 
     check_bounds(path_baseptr, path_len);
 
-    return uvwasi_path_filestat_set_times(&uvwasi, fd, flags, &memory[path_baseptr], path_len, atim, mtim,
-                                          (uvwasi_fstflags_t)fst_flags);
+    return __wasi_path_filestat_set_times(current_wasi_context, fd, flags, (const char*)&memory[path_baseptr], path_len,
+                                          atim, mtim, (__wasi_fstflags_t)fst_flags);
 
 done:
     return (uint32_t)rc;
 err_fst_flags_overflow:
-    rc = UVWASI_EINVAL;
+    rc = __WASI_ERRNO_INVAL;
     goto done;
 }
 
@@ -950,9 +948,9 @@ err_fst_flags_overflow:
  * @return status code
  */
 uint32_t
-wasi_snapshot_preview1_path_link(uvwasi_fd_t old_fd, uvwasi_lookupflags_t old_flags, uvwasi_size_t old_path_baseptr,
-                                 uvwasi_size_t old_path_len, uvwasi_fd_t new_fd, uvwasi_size_t new_path_baseptr,
-                                 uvwasi_size_t new_path_len) {
+wasi_snapshot_preview1_path_link(__wasi_fd_t old_fd, __wasi_lookupflags_t old_flags, __wasi_size_t old_path_baseptr,
+                                 __wasi_size_t old_path_len, __wasi_fd_t new_fd, __wasi_size_t new_path_baseptr,
+                                 __wasi_size_t new_path_len) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_path_link(%u,%u,%u,%u,%u,%u,%u)\n", old_fd, old_flags, old_path_baseptr,
             old_path_len, new_fd, new_path_baseptr, new_path_len);
@@ -961,8 +959,8 @@ wasi_snapshot_preview1_path_link(uvwasi_fd_t old_fd, uvwasi_lookupflags_t old_fl
     check_bounds(old_path_baseptr, old_path_len);
     check_bounds(new_path_baseptr, new_path_len);
 
-    return (uint32_t)uvwasi_path_link(&uvwasi, old_fd, old_flags, &memory[old_path_baseptr], old_path_len, new_fd,
-                                      &memory[new_path_baseptr], new_path_len);
+    return (uint32_t)__wasi_path_link(current_wasi_context, old_fd, old_flags, (const char*)&memory[old_path_baseptr],
+                                      old_path_len, new_fd, (const char*)&memory[new_path_baseptr], new_path_len);
 }
 
 /**
@@ -985,36 +983,36 @@ wasi_snapshot_preview1_path_link(uvwasi_fd_t old_fd, uvwasi_lookupflags_t old_fl
  * @return status code
  */
 uint32_t
-wasi_snapshot_preview1_path_open(uvwasi_fd_t dirfd, uvwasi_lookupflags_t lookupflags, uvwasi_size_t path_baseptr,
-                                 uvwasi_size_t path_len, uint32_t oflags, uvwasi_rights_t fs_rights_base,
-                                 uvwasi_rights_t fs_rights_inheriting, uint32_t fdflags, uvwasi_size_t fd_retptr) {
+wasi_snapshot_preview1_path_open(__wasi_fd_t dirfd, __wasi_lookupflags_t lookupflags, __wasi_size_t path_baseptr,
+                                 __wasi_size_t path_len, uint32_t oflags, __wasi_rights_t fs_rights_base,
+                                 __wasi_rights_t fs_rights_inheriting, uint32_t fdflags, __wasi_size_t fd_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_path_open(%u,%u,%u,%u,%u,%lu,%lu,%u,%u)\n", dirfd, lookupflags,
             path_baseptr, path_len, oflags, fs_rights_base, fs_rights_inheriting, fdflags, fd_retptr);
 #endif
 
     check_bounds(path_baseptr, path_len);
-    check_bounds(fd_retptr, UVWASI_SERDES_SIZE_fd_t);
+    check_bounds(fd_retptr, WASI_SERDES_SIZE_fd_t);
 
     if (unlikely(oflags > UINT16_MAX))
         goto err_oflags_overflow;
     if (unlikely(fdflags > UINT16_MAX))
         goto err_fdflags_overflow;
 
-    uvwasi_fd_t    fd;
-    uvwasi_errno_t rc = uvwasi_path_open(&uvwasi, dirfd, lookupflags, &memory[path_baseptr], path_len,
-                                         (uvwasi_oflags_t)oflags, fs_rights_base, fs_rights_inheriting,
-                                         (uvwasi_fdflags_t)fdflags, &fd);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_fd_t    fd;
+    __wasi_errno_t rc = __wasi_path_open(current_wasi_context, dirfd, lookupflags, (const char*)&memory[path_baseptr],
+                                         path_len, (__wasi_oflags_t)oflags, fs_rights_base, fs_rights_inheriting,
+                                         (__wasi_fdflags_t)fdflags, &fd);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
-    uvwasi_serdes_write_size_t(memory, fd_retptr, fd);
+    wasi_serdes_write_size_t(memory, fd_retptr, fd);
 
 done:
     return (uint32_t)rc;
 err_oflags_overflow:
 err_fdflags_overflow:
-    rc = UVWASI_EINVAL;
+    rc = __WASI_ERRNO_INVAL;
     goto done;
 }
 
@@ -1030,8 +1028,8 @@ err_fdflags_overflow:
  * @return status code
  */
 uint32_t
-wasi_snapshot_preview1_path_readlink(uvwasi_fd_t fd, uvwasi_size_t path_baseptr, uvwasi_size_t path_len,
-                                     uvwasi_size_t buf_baseretptr, uvwasi_size_t buf_len, uvwasi_size_t nread_retptr) {
+wasi_snapshot_preview1_path_readlink(__wasi_fd_t fd, __wasi_size_t path_baseptr, __wasi_size_t path_len,
+                                     __wasi_size_t buf_baseretptr, __wasi_size_t buf_len, __wasi_size_t nread_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_path_open(%u,%u,%u,%u,%u,%u)\n", fd, path_baseptr, path_len, buf_baseretptr,
             buf_len, nread_retptr);
@@ -1039,15 +1037,15 @@ wasi_snapshot_preview1_path_readlink(uvwasi_fd_t fd, uvwasi_size_t path_baseptr,
 
     check_bounds(path_baseptr, path_len);
     check_bounds(buf_baseretptr, buf_len);
-    check_bounds(nread_retptr, UVWASI_SERDES_SIZE_size_t);
+    check_bounds(nread_retptr, WASI_SERDES_SIZE_size_t);
 
-    uvwasi_size_t  nread;
-    uvwasi_errno_t rc = uvwasi_path_readlink(&uvwasi, fd, &memory[path_baseptr], path_len, &memory[buf_baseretptr],
-                                             buf_len, &nread);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_size_t  nread;
+    __wasi_errno_t rc = __wasi_path_readlink(current_wasi_context, fd, (const char*)&memory[path_baseptr], path_len,
+                                             &memory[buf_baseretptr], buf_len, &nread);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
-    uvwasi_serdes_write_size_t(memory, nread_retptr, nread);
+    wasi_serdes_write_size_t(memory, nread_retptr, nread);
 
 done:
     return (uint32_t)rc;
@@ -1063,14 +1061,15 @@ done:
  * @return status code
  */
 uint32_t
-wasi_snapshot_preview1_path_remove_directory(uvwasi_fd_t fd, uvwasi_size_t path_baseptr, uvwasi_size_t path_len) {
+wasi_snapshot_preview1_path_remove_directory(__wasi_fd_t fd, __wasi_size_t path_baseptr, __wasi_size_t path_len) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_path_remove_directory(%u,%u,%u)\n", fd, path_baseptr, path_len);
 #endif
 
     check_bounds(path_baseptr, path_len);
 
-    return (uint32_t)uvwasi_path_remove_directory(&uvwasi, fd, &memory[path_baseptr], path_len);
+    return (uint32_t)__wasi_path_remove_directory(current_wasi_context, fd, (const char*)&memory[path_baseptr],
+                                                  path_len);
 }
 
 /**
@@ -1083,8 +1082,8 @@ wasi_snapshot_preview1_path_remove_directory(uvwasi_fd_t fd, uvwasi_size_t path_
  * @return status code
  */
 uint32_t
-wasi_snapshot_preview1_path_rename(uvwasi_fd_t fd, uvwasi_size_t old_path_baseptr, uvwasi_size_t old_path_len,
-                                   uvwasi_fd_t new_fd, uvwasi_size_t new_path_baseptr, uvwasi_size_t new_path_len) {
+wasi_snapshot_preview1_path_rename(__wasi_fd_t fd, __wasi_size_t old_path_baseptr, __wasi_size_t old_path_len,
+                                   __wasi_fd_t new_fd, __wasi_size_t new_path_baseptr, __wasi_size_t new_path_len) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_path_remove_directory(%u,%u,%u,%u,%u,%u)\n", fd, old_path_baseptr,
             old_path_len, new_fd, new_path_baseptr, new_path_len);
@@ -1093,8 +1092,8 @@ wasi_snapshot_preview1_path_rename(uvwasi_fd_t fd, uvwasi_size_t old_path_basept
     check_bounds(old_path_baseptr, old_path_len);
     check_bounds(new_path_baseptr, new_path_len);
 
-    return (uint32_t)uvwasi_path_rename(&uvwasi, fd, &memory[old_path_baseptr], old_path_len, new_fd,
-                                        &memory[new_path_baseptr], new_path_len);
+    return (uint32_t)__wasi_path_rename(current_wasi_context, fd, (const char*)&memory[old_path_baseptr], old_path_len,
+                                        new_fd, (const char*)&memory[new_path_baseptr], new_path_len);
 }
 
 /**
@@ -1107,8 +1106,8 @@ wasi_snapshot_preview1_path_rename(uvwasi_fd_t fd, uvwasi_size_t old_path_basept
  * @param new_path_len
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_path_symlink(uvwasi_size_t old_path_baseptr, uvwasi_size_t old_path_len, uvwasi_fd_t fd,
-                                             uvwasi_size_t new_path_baseptr, uvwasi_size_t new_path_len) {
+uint32_t wasi_snapshot_preview1_path_symlink(__wasi_size_t old_path_baseptr, __wasi_size_t old_path_len, __wasi_fd_t fd,
+                                             __wasi_size_t new_path_baseptr, __wasi_size_t new_path_len) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_path_symlink(%u,%u,%u,%u,%u)\n", old_path_baseptr, old_path_len, fd,
             new_path_baseptr, new_path_len);
@@ -1117,7 +1116,7 @@ uint32_t wasi_snapshot_preview1_path_symlink(uvwasi_size_t old_path_baseptr, uvw
     check_bounds(old_path_baseptr, old_path_len);
     check_bounds(new_path_baseptr, new_path_len);
 
-    return (uint32_t)uvwasi_path_symlink(&uvwasi, &memory[old_path_baseptr], old_path_len, fd,
+    return (uint32_t)__wasi_path_symlink(current_wasi_context, (const char*)&memory[old_path_baseptr], old_path_len, fd,
                                          &memory[new_path_baseptr], new_path_len);
 }
 
@@ -1130,14 +1129,14 @@ uint32_t wasi_snapshot_preview1_path_symlink(uvwasi_size_t old_path_baseptr, uvw
  * @param path_len
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_path_unlink_file(uvwasi_fd_t fd, uvwasi_size_t path_baseptr, uvwasi_size_t path_len) {
+uint32_t wasi_snapshot_preview1_path_unlink_file(__wasi_fd_t fd, __wasi_size_t path_baseptr, __wasi_size_t path_len) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_path_unlink_file(%u,%u,%u)\n", fd, path_baseptr, path_len);
 #endif
 
     check_bounds(path_baseptr, path_len);
 
-    return (uint32_t)uvwasi_path_unlink_file(&uvwasi, fd, &memory[path_baseptr], path_len);
+    return (uint32_t)__wasi_path_unlink_file(current_wasi_context, fd, (const char*)&memory[path_baseptr], path_len);
 }
 
 /**
@@ -1149,38 +1148,38 @@ uint32_t wasi_snapshot_preview1_path_unlink_file(uvwasi_fd_t fd, uvwasi_size_t p
  * @param retptr The number of events stored.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_poll_oneoff(uvwasi_size_t in_baseptr, uvwasi_size_t out_baseptr,
-                                            uvwasi_size_t nsubscriptions, uvwasi_size_t nevents_retptr) {
+uint32_t wasi_snapshot_preview1_poll_oneoff(__wasi_size_t in_baseptr, __wasi_size_t out_baseptr,
+                                            __wasi_size_t nsubscriptions, __wasi_size_t nevents_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_poll_oneoff(%u,%u,%u,%u)\n", in_baseptr, out_baseptr, nsubscriptions,
             nevents_retptr);
 #endif
 
-    check_bounds(in_baseptr, nsubscriptions * UVWASI_SERDES_SIZE_subscription_t);
-    check_bounds(out_baseptr, nsubscriptions * UVWASI_SERDES_SIZE_event_t);
-    check_bounds(nevents_retptr, UVWASI_SERDES_SIZE_size_t);
+    check_bounds(in_baseptr, nsubscriptions * WASI_SERDES_SIZE_subscription_t);
+    check_bounds(out_baseptr, nsubscriptions * WASI_SERDES_SIZE_event_t);
+    check_bounds(nevents_retptr, WASI_SERDES_SIZE_size_t);
 
-    uvwasi_subscription_t in[nsubscriptions];
-    uvwasi_event_t        out[nsubscriptions];
+    __wasi_subscription_t in[nsubscriptions];
+    __wasi_event_t        out[nsubscriptions];
 
     /* Read in from linear memory */
-    for (uvwasi_size_t i = 0; i < nsubscriptions; i++) {
-        uvwasi_serdes_read_subscription_t(memory, in_baseptr, &in[i]);
-        in_baseptr += UVWASI_SERDES_SIZE_subscription_t;
+    for (__wasi_size_t i = 0; i < nsubscriptions; i++) {
+        wasi_serdes_read_subscription_t(memory, in_baseptr, &in[i]);
+        in_baseptr += WASI_SERDES_SIZE_subscription_t;
     }
 
     /* Call WASI syscall */
-    uvwasi_size_t  nevents;
-    uvwasi_errno_t rc = uvwasi_poll_oneoff(&uvwasi, in, out, nsubscriptions, &nevents);
-    if (rc != UVWASI_ESUCCESS)
+    __wasi_size_t  nevents;
+    __wasi_errno_t rc = __wasi_poll_oneoff(current_wasi_context, in, out, nsubscriptions, &nevents);
+    if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
     /* Write results to linear memory */
-    uvwasi_serdes_write_size_t(memory, nevents_retptr, nevents);
+    wasi_serdes_write_size_t(memory, nevents_retptr, nevents);
 
-    for (uvwasi_size_t i = 0; i < nsubscriptions; i++) {
-        uvwasi_serdes_write_event_t(memory, out_baseptr, &out[i]);
-        out_baseptr += UVWASI_SERDES_SIZE_event_t;
+    for (__wasi_size_t i = 0; i < nsubscriptions; i++) {
+        wasi_serdes_write_event_t(memory, out_baseptr, &out[i]);
+        out_baseptr += WASI_SERDES_SIZE_event_t;
     }
 
 done:
@@ -1194,12 +1193,12 @@ done:
  *
  * @param exitcode
  */
-__attribute__((noreturn)) void wasi_snapshot_preview1_proc_exit(uvwasi_exitcode_t exitcode) {
+__attribute__((noreturn)) void wasi_snapshot_preview1_proc_exit(__wasi_exitcode_t exitcode) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_proc_exit(%u)\n", exitcode);
 #endif
 
-    uvwasi_proc_exit(&uvwasi, exitcode);
+    __wasi_proc_exit(current_wasi_context, exitcode);
     assert(0);
 }
 
@@ -1214,17 +1213,17 @@ uint32_t wasi_snapshot_preview1_proc_raise(uint32_t sig) {
     fprintf(stderr, "wasi_snapshot_preview1_proc_raise(%u)\n", sig);
 #endif
 
-    uvwasi_errno_t rc;
+    __wasi_errno_t rc;
 
     if (sig > UINT8_MAX)
         goto err_sig_overflow;
 
-    rc = uvwasi_proc_raise(&uvwasi, (uvwasi_signal_t)sig);
+    rc = __wasi_proc_raise(current_wasi_context, (__wasi_signal_t)sig);
 
 done:
     return (uint32_t)rc;
 err_sig_overflow:
-    rc = UVWASI_EINVAL;
+    rc = __WASI_ERRNO_INVAL;
     goto done;
 }
 
@@ -1240,7 +1239,7 @@ err_sig_overflow:
  * @param buf_len The length of the buffer
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_random_get(uvwasi_size_t buf_baseretptr, uvwasi_size_t buf_len) {
+uint32_t wasi_snapshot_preview1_random_get(__wasi_size_t buf_baseretptr, __wasi_size_t buf_len) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_random_get(%u,%u)\n", buf_baseretptr, buf_len);
 #endif
@@ -1249,7 +1248,7 @@ uint32_t wasi_snapshot_preview1_random_get(uvwasi_size_t buf_baseretptr, uvwasi_
     check_bounds(buf_baseretptr, buf_len);
 
     /* Write random bytes directly to linear memory */
-    return (uint32_t)uvwasi_random_get(&uvwasi, &memory[buf_baseretptr], buf_len);
+    return (uint32_t)__wasi_random_get(current_wasi_context, &memory[buf_baseretptr], buf_len);
 }
 
 /**
@@ -1263,7 +1262,7 @@ uint32_t wasi_snapshot_preview1_sched_yield(void) {
     fprintf(stderr, "wasi_snapshot_preview1_sched_yield()\n");
 #endif
 
-    return (uint32_t)uvwasi_sched_yield(&uvwasi);
+    return (uint32_t)__wasi_sched_yield(current_wasi_context);
 }
 
 /**
@@ -1282,9 +1281,9 @@ uint32_t wasi_snapshot_preview1_sched_yield(void) {
  * @param message_nbytes_retptr Number of bytes stored in message flags.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_sock_recv(uvwasi_fd_t fd, uvwasi_size_t ri_data_baseretptr, uvwasi_size_t ri_data_len,
-                                          uint32_t ri_flags, uvwasi_size_t ri_data_nbytes_retptr,
-                                          uvwasi_size_t message_nbytes_retptr) {
+uint32_t wasi_snapshot_preview1_sock_recv(__wasi_fd_t fd, __wasi_size_t ri_data_baseretptr, __wasi_size_t ri_data_len,
+                                          uint32_t ri_flags, __wasi_size_t ri_data_nbytes_retptr,
+                                          __wasi_size_t message_nbytes_retptr) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_sock_recv(%u,%u,%u,%u,%u,%u)\n", fd, ri_data_baseretptr, ri_data_len,
             ri_flags, ri_data_nbytes_retptr, message_nbytes_retptr);
@@ -1292,7 +1291,7 @@ uint32_t wasi_snapshot_preview1_sock_recv(uvwasi_fd_t fd, uvwasi_size_t ri_data_
 
     wasi_unsupported_syscall(__func__);
 
-    /* ri_flags is type uvwasi_riflags_t, which is uint16_t and zero extended to an wasm i32 */
+    /* ri_flags is type __wasi_riflags_t, which is uint16_t and zero extended to an wasm i32 */
 }
 
 /**
@@ -1310,15 +1309,15 @@ uint32_t wasi_snapshot_preview1_sock_recv(uvwasi_fd_t fd, uvwasi_size_t ri_data_
  * @param nbytes_retptr Number of bytes transmitted.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_sock_send(uvwasi_fd_t fd, uvwasi_size_t si_data_baseptr, uvwasi_size_t si_data_len,
-                                          uint32_t si_flags, uvwasi_size_t retptr0) {
+uint32_t wasi_snapshot_preview1_sock_send(__wasi_fd_t fd, __wasi_size_t si_data_baseptr, __wasi_size_t si_data_len,
+                                          uint32_t si_flags, __wasi_size_t retptr0) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_sock_send(%u,%u,%u,%u,%u)\n", fd, si_data_baseptr, si_data_len, si_flags,
             retptr0);
 #endif
     wasi_unsupported_syscall(__func__);
 
-    /* si_flags is type uvwasi_siflags_t, which is uint16_t and zero extended to an wasm i32 */
+    /* TODO: si_flags is type __wasi_siflags_t, which is uint16_t and zero extended to an wasm i32 */
 }
 
 /**
@@ -1331,12 +1330,12 @@ uint32_t wasi_snapshot_preview1_sock_send(uvwasi_fd_t fd, uvwasi_size_t si_data_
  * @param how Which channels on the socket to shut down.
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_sock_shutdown(uvwasi_fd_t fd, uint32_t how) {
+uint32_t wasi_snapshot_preview1_sock_shutdown(__wasi_fd_t fd, uint32_t how) {
 #ifdef LOG_WASI
     fprintf(stderr, "wasi_snapshot_preview1_sock_shutdown(%u,%u)\n", fd, how);
 #endif
 
     wasi_unsupported_syscall(__func__);
 
-    /* how is type uvwasi_sdflags_t, which is uint8_t and zero extended to an wasm i32 */
+    /* TODO: how is type __wasi_sdflags_t, which is uint8_t and zero extended to an wasm i32 */
 }
