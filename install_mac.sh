@@ -3,9 +3,9 @@ git submodule update --init --recursive
 
 # Install brew
 if [[ -x "$(command -v brew)" ]]; then
-  echo "Brew install detected"
+	echo "Brew install detected"
 else
-  curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash -s -- -y
+	curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash -s -- -y
 fi
 
 # Install required tools
@@ -16,17 +16,17 @@ brew install cmake
 # Install LLVM and clang stuff
 xcode-select install
 if [[ -x "$(command -v rustup)" ]]; then
-  echo "LLVM detected"
+	echo "LLVM detected"
 else
-  brew install llvm
-  echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >>~/.zshrc
+	brew install llvm
+	echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.zshrc
 fi
 
 # Install Rust
 if [[ -x "$(command -v rustup)" ]]; then
-  rustup update
+	rustup update
 else
-  curl https://sh.rustup.rs -sSf | bash -s -- -y
+	curl https://sh.rustup.rs -sSf | bash -s -- -y
 fi
 source "$HOME/.cargo/env"
 export PATH="$HOME/.cargo/bin:$PATH"
@@ -34,11 +34,18 @@ export PATH="$HOME/.cargo/bin:$PATH"
 # Build project
 cargo build --release
 
+# Install WASI-SDK 12
+wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk-12.0-macos.tar.gz
+tar -xvf wasi-sdk-12.0-macos.tar.gz
+mv wasi-sdk-12.0 wasi-sdk
+rm wasi-sdk-12.0-macos.tar.gz
+
 # Install libuv
 pushd runtime || exit
 wget https://github.com/libuv/libuv/archive/refs/tags/v1.42.0.tar.gz
 tar -xvf v1.42.0.tar.gz
 mv libuv-1.42.0/ libuv
+rm v1.42.0.tar.gz
 pushd libuv || exit
 mkdir -p build
 pushd build || exit
