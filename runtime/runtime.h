@@ -1,3 +1,5 @@
+#pragma once
+
 #define EXPORT __attribute__((visibility("default")))
 #define IMPORT __attribute__((visibility("default")))
 
