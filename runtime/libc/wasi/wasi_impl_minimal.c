@@ -17,7 +17,7 @@
 #include <sys/stat.h>
 #include <sys/uio.h>
 
-#include "./wasi_impl.h"
+#include "wasi_impl.h"
 
 /*
  * Essentially based off the uvwasi_t
