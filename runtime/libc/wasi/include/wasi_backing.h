@@ -4,7 +4,6 @@
 
 #include "wasi_impl.h"
 #include "wasi_serdes.h"
-#include "../../runtime.h"
 
 #ifndef unlikely
 #define unlikely(x) __builtin_expect(!!(x), 0)
@@ -26,10 +25,6 @@ extern void* CURRENT_MEMORY_BASE;
 extern uint32_t CURRENT_MEMORY_SIZE;
 extern void* CURRENT_WASI_CONTEXT;
 
-// static inline void check_bounds(uint32_t offset, uint32_t bounds_check) {
-//     // Due to how we setup memory for x86, the virtual memory mechanism will catch the error, if bounds < WASM_PAGE_SIZE
-//     assert(bounds_check < WASM_PAGE_SIZE || (CURRENT_MEMORY_SIZE > bounds_check && offset <= CURRENT_MEMORY_SIZE - bounds_check));
-// }
 
 /**
  * @brief Writes argument offsets and buffer into linear memory write
@@ -51,8 +46,8 @@ uint32_t wasi_snapshot_preview1_args_get(__wasi_size_t argv_retptr, __wasi_size_
     assert(wasi_context_argv != NULL);
 
     /* Check Bounds */
-    check_bounds(argv_retptr, sizeof(__wasi_size_t) * argc);
-    check_bounds(argv_buf_retptr, argv_buf_size);
+    wasi_serdes_check_bounds(argv_retptr, CURRENT_MEMORY_SIZE, sizeof(__wasi_size_t) * argc);
+    wasi_serdes_check_bounds(argv_buf_retptr, CURRENT_MEMORY_SIZE, argv_buf_size);
 
     /*
      * Write results to temporary buffers argv and argv_buf
@@ -95,8 +90,8 @@ uint32_t wasi_snapshot_preview1_args_sizes_get(__wasi_size_t argc_retptr, __wasi
 #endif
 
     /* Check Bounds */
-    check_bounds(argc_retptr, sizeof(uint32_t));
-    check_bounds(argv_buf_len_retptr, sizeof(uint32_t));
+    wasi_serdes_check_bounds(argc_retptr, CURRENT_MEMORY_SIZE, sizeof(uint32_t));
+    wasi_serdes_check_bounds(argv_buf_len_retptr, CURRENT_MEMORY_SIZE, sizeof(uint32_t));
 
     /* Get sizes */
     __wasi_size_t  argc;
@@ -128,7 +123,7 @@ uint32_t wasi_snapshot_preview1_clock_res_get(__wasi_clockid_t id, __wasi_size_t
 #endif
 
     /* Check Bounds */
-    check_bounds(res_retptr, sizeof(__wasi_timestamp_t));
+    wasi_serdes_check_bounds(res_retptr, CURRENT_MEMORY_SIZE, sizeof(__wasi_timestamp_t));
 
     /* Read resolution into buffer */
     __wasi_timestamp_t resolution;
@@ -159,7 +154,7 @@ uint32_t wasi_snapshot_preview1_clock_time_get(__wasi_clockid_t clock_id, __wasi
 #endif
 
     /* Check Bounds */
-    check_bounds(time_retptr, sizeof(__wasi_timestamp_t));
+    wasi_serdes_check_bounds(time_retptr, CURRENT_MEMORY_SIZE, sizeof(__wasi_timestamp_t));
 
     /* Make WASI call */
     __wasi_timestamp_t time;
@@ -191,8 +186,8 @@ uint32_t wasi_snapshot_preview1_environ_get(__wasi_size_t environ_retptr, __wasi
     const __wasi_size_t env_buf_size = wasi_context_get_env_buf_size(CURRENT_WASI_CONTEXT);
 
     /* Check Bounds */
-    check_bounds(environ_retptr, envc * WASI_SERDES_SIZE_size_t);
-    check_bounds(environ_buf_retptr, env_buf_size);
+    wasi_serdes_check_bounds(environ_retptr, CURRENT_MEMORY_SIZE, envc * WASI_SERDES_SIZE_size_t);
+    wasi_serdes_check_bounds(environ_buf_retptr, CURRENT_MEMORY_SIZE, env_buf_size);
 
     /* Write environment to temporary buffer and environment_buf directly to linear memory */
     char*          environment[envc];
@@ -227,8 +222,8 @@ wasi_snapshot_preview1_environ_sizes_get(__wasi_size_t environc_retptr, __wasi_s
 #endif
 
     /* Check Bounds */
-    check_bounds(environc_retptr, WASI_SERDES_SIZE_size_t);
-    check_bounds(environv_buf_len_retptr, WASI_SERDES_SIZE_size_t);
+    wasi_serdes_check_bounds(environc_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t);
+    wasi_serdes_check_bounds(environv_buf_len_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t);
 
     /* Make WASI Call */
     __wasi_size_t  envc;
@@ -332,7 +327,7 @@ uint32_t wasi_snapshot_preview1_fd_fdstat_get(__wasi_fd_t fd, __wasi_size_t fdst
 #endif
 
     /* Check Bounds */
-    check_bounds(fdstat_retptr, WASI_SERDES_SIZE_fdstat_t);
+    wasi_serdes_check_bounds(fdstat_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_fdstat_t);
 
     /* Make WASI Call */
     __wasi_fdstat_t stats;
@@ -406,7 +401,7 @@ uint32_t wasi_snapshot_preview1_fd_filestat_get(__wasi_fd_t fd, __wasi_size_t fi
 #endif
 
     /* Check Bounds */
-    check_bounds(filestat_retptr, WASI_SERDES_SIZE_filestat_t);
+    wasi_serdes_check_bounds(filestat_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_filestat_t);
 
     /* Make WASI Call */
     __wasi_filestat_t stats;
@@ -482,8 +477,8 @@ uint32_t wasi_snapshot_preview1_fd_pread(__wasi_fd_t fd, __wasi_size_t iovs_base
 #endif
 
     /* Check Bounds */
-    check_bounds(iovs_baseptr, iovs_len * WASI_SERDES_SIZE_iovec_t);
-    check_bounds(nbytes_retptr, WASI_SERDES_SIZE_size_t);
+    wasi_serdes_check_bounds(iovs_baseptr, CURRENT_MEMORY_SIZE, iovs_len * WASI_SERDES_SIZE_iovec_t);
+    wasi_serdes_check_bounds(nbytes_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t);
 
     /* Read iovec from linear memory */
     __wasi_iovec_t iovs[iovs_len];
@@ -517,7 +512,7 @@ uint32_t wasi_snapshot_preview1_fd_prestat_get(__wasi_fd_t fd, __wasi_size_t pre
 #endif
 
     /* Check Bounds */
-    check_bounds(prestat_retptr, WASI_SERDES_SIZE_prestat_t);
+    wasi_serdes_check_bounds(prestat_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_prestat_t);
 
     /* Execute WASI call */
     __wasi_prestat_t prestat;
@@ -546,7 +541,7 @@ uint32_t wasi_snapshot_preview1_fd_prestat_dir_name(__wasi_fd_t fd, __wasi_size_
 #endif
 
     /* Check Bounds */
-    check_bounds(path_retptr, path_len);
+    wasi_serdes_check_bounds(path_retptr, CURRENT_MEMORY_SIZE, path_len);
 
     /* Execute WASI call, writing results directly to linear memory */
     return (uint32_t)__wasi_fd_prestat_dir_name(CURRENT_WASI_CONTEXT, fd, (char*)&CURRENT_MEMORY_BASE[path_retptr], path_len);
@@ -571,8 +566,8 @@ uint32_t wasi_snapshot_preview1_fd_pwrite(__wasi_fd_t fd, __wasi_size_t iovs_bas
 #endif
 
     /* Check Bounds */
-    check_bounds(iovs_baseptr, iovs_len * WASI_SERDES_SIZE_ciovec_t);
-    check_bounds(nwritten_retptr, WASI_SERDES_SIZE_size_t);
+    wasi_serdes_check_bounds(iovs_baseptr, CURRENT_MEMORY_SIZE, iovs_len * WASI_SERDES_SIZE_ciovec_t);
+    wasi_serdes_check_bounds(nwritten_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t);
 
     /* Copy iovs into memory */
     __wasi_ciovec_t iovs[iovs_len];
@@ -610,8 +605,8 @@ uint32_t wasi_snapshot_preview1_fd_read(__wasi_fd_t fd, __wasi_size_t iovs_basep
 #endif
 
     /* Check Bounds */
-    check_bounds(iovs_baseptr, iovs_len * WASI_SERDES_SIZE_iovec_t);
-    check_bounds(nread_retptr, WASI_SERDES_SIZE_size_t);
+    wasi_serdes_check_bounds(iovs_baseptr, CURRENT_MEMORY_SIZE, iovs_len * WASI_SERDES_SIZE_iovec_t);
+    wasi_serdes_check_bounds(nread_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t);
 
     /* Copy iovs into memory */
     __wasi_iovec_t iovs[iovs_len];
@@ -658,8 +653,8 @@ uint32_t wasi_snapshot_preview1_fd_readdir(__wasi_fd_t fd, __wasi_size_t buf_bas
 #endif
 
     /* Check Bounds */
-    check_bounds(buf_baseptr, buf_len);
-    check_bounds(nread_retptr, WASI_SERDES_SIZE_size_t);
+    wasi_serdes_check_bounds(buf_baseptr, CURRENT_MEMORY_SIZE, buf_len);
+    wasi_serdes_check_bounds(nread_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t);
 
     /* Execute WASI call */
     __wasi_size_t  nread;
@@ -721,7 +716,7 @@ uint32_t wasi_snapshot_preview1_fd_seek(__wasi_fd_t fd, __wasi_filedelta_t file_
     }
 
     /* Check Bounds */
-    check_bounds(newoffset_retptr, WASI_SERDES_SIZE_filesize_t);
+    wasi_serdes_check_bounds(newoffset_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_filesize_t);
 
     /* Execute WASI syscall */
     __wasi_filesize_t newoffset;
@@ -763,7 +758,7 @@ uint32_t wasi_snapshot_preview1_fd_tell(__wasi_fd_t fd, __wasi_size_t fileoffset
 #endif
 
     /* Check Bounds */
-    check_bounds(fileoffset_retptr, WASI_SERDES_SIZE_filesize_t);
+    wasi_serdes_check_bounds(fileoffset_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_filesize_t);
 
     /* Execute WASI Call */
     __wasi_filesize_t fileoffset;
@@ -795,8 +790,8 @@ uint32_t wasi_snapshot_preview1_fd_write(__wasi_fd_t fd, __wasi_size_t iovs_base
 #endif
 
     /* Check bounds */
-    check_bounds(iovs_baseptr, WASI_SERDES_SIZE_ciovec_t * iovs_len);
-    check_bounds(nwritten_retptr, WASI_SERDES_SIZE_size_t);
+    wasi_serdes_check_bounds(iovs_baseptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_ciovec_t * iovs_len);
+    wasi_serdes_check_bounds(nwritten_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t);
 
     /* Read iovec into memory */
     __wasi_ciovec_t iovs[iovs_len];
@@ -833,7 +828,7 @@ wasi_snapshot_preview1_path_create_directory(__wasi_fd_t fd, __wasi_size_t path_
     fprintf(stderr, "wasi_snapshot_preview1_path_create_directory(%u,%u,%u)\n", fd, path_baseptr, path_len);
 #endif
 
-    check_bounds(path_baseptr, path_len);
+    wasi_serdes_check_bounds(path_baseptr, CURRENT_MEMORY_SIZE, path_len);
 
     return (uint32_t)__wasi_path_create_directory(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[path_baseptr],
                                                   path_len);
@@ -857,8 +852,8 @@ wasi_snapshot_preview1_path_filestat_get(__wasi_fd_t fd, __wasi_lookupflags_t fl
             filestat_retptr);
 #endif
 
-    check_bounds(path_baseptr, path_len);
-    check_bounds(filestat_retptr, WASI_SERDES_SIZE_filestat_t);
+    wasi_serdes_check_bounds(path_baseptr, CURRENT_MEMORY_SIZE, path_len);
+    wasi_serdes_check_bounds(filestat_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_filestat_t);
 
     __wasi_filestat_t stats;
     __wasi_errno_t    rc = __wasi_path_filestat_get(CURRENT_WASI_CONTEXT, fd, flags, (const char*)&CURRENT_MEMORY_BASE[path_baseptr],
@@ -899,7 +894,7 @@ wasi_snapshot_preview1_path_filestat_set_times(__wasi_fd_t fd, __wasi_lookupflag
     if (unlikely(fst_flags > UINT16_MAX))
         goto err_fst_flags_overflow;
 
-    check_bounds(path_baseptr, path_len);
+    wasi_serdes_check_bounds(path_baseptr, CURRENT_MEMORY_SIZE, path_len);
 
     return __wasi_path_filestat_set_times(CURRENT_WASI_CONTEXT, fd, flags, (const char*)&CURRENT_MEMORY_BASE[path_baseptr], path_len,
                                           atim, mtim, (__wasi_fstflags_t)fst_flags);
@@ -932,8 +927,8 @@ wasi_snapshot_preview1_path_link(__wasi_fd_t old_fd, __wasi_lookupflags_t old_fl
             old_path_len, new_fd, new_path_baseptr, new_path_len);
 #endif
 
-    check_bounds(old_path_baseptr, old_path_len);
-    check_bounds(new_path_baseptr, new_path_len);
+    wasi_serdes_check_bounds(old_path_baseptr, CURRENT_MEMORY_SIZE, old_path_len);
+    wasi_serdes_check_bounds(new_path_baseptr, CURRENT_MEMORY_SIZE, new_path_len);
 
     return (uint32_t)__wasi_path_link(CURRENT_WASI_CONTEXT, old_fd, old_flags, (const char*)&CURRENT_MEMORY_BASE[old_path_baseptr],
                                       old_path_len, new_fd, (const char*)&CURRENT_MEMORY_BASE[new_path_baseptr], new_path_len);
@@ -967,8 +962,8 @@ wasi_snapshot_preview1_path_open(__wasi_fd_t dirfd, __wasi_lookupflags_t lookupf
             path_baseptr, path_len, oflags, fs_rights_base, fs_rights_inheriting, fdflags, fd_retptr);
 #endif
 
-    check_bounds(path_baseptr, path_len);
-    check_bounds(fd_retptr, WASI_SERDES_SIZE_fd_t);
+    wasi_serdes_check_bounds(path_baseptr, CURRENT_MEMORY_SIZE, path_len);
+    wasi_serdes_check_bounds(fd_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_fd_t);
 
     if (unlikely(oflags > UINT16_MAX))
         goto err_oflags_overflow;
@@ -1011,9 +1006,9 @@ wasi_snapshot_preview1_path_readlink(__wasi_fd_t fd, __wasi_size_t path_baseptr,
             buf_len, nread_retptr);
 #endif
 
-    check_bounds(path_baseptr, path_len);
-    check_bounds(buf_baseretptr, buf_len);
-    check_bounds(nread_retptr, WASI_SERDES_SIZE_size_t);
+    wasi_serdes_check_bounds(path_baseptr, CURRENT_MEMORY_SIZE, path_len);
+    wasi_serdes_check_bounds(buf_baseretptr, CURRENT_MEMORY_SIZE, buf_len);
+    wasi_serdes_check_bounds(nread_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t);
 
     __wasi_size_t  nread;
     __wasi_errno_t rc = __wasi_path_readlink(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[path_baseptr], path_len,
@@ -1042,7 +1037,7 @@ wasi_snapshot_preview1_path_remove_directory(__wasi_fd_t fd, __wasi_size_t path_
     fprintf(stderr, "wasi_snapshot_preview1_path_remove_directory(%u,%u,%u)\n", fd, path_baseptr, path_len);
 #endif
 
-    check_bounds(path_baseptr, path_len);
+    wasi_serdes_check_bounds(path_baseptr, CURRENT_MEMORY_SIZE, path_len);
 
     return (uint32_t)__wasi_path_remove_directory(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[path_baseptr],
                                                   path_len);
@@ -1065,8 +1060,8 @@ wasi_snapshot_preview1_path_rename(__wasi_fd_t fd, __wasi_size_t old_path_basept
             old_path_len, new_fd, new_path_baseptr, new_path_len);
 #endif
 
-    check_bounds(old_path_baseptr, old_path_len);
-    check_bounds(new_path_baseptr, new_path_len);
+    wasi_serdes_check_bounds(old_path_baseptr, CURRENT_MEMORY_SIZE, old_path_len);
+    wasi_serdes_check_bounds(new_path_baseptr, CURRENT_MEMORY_SIZE, new_path_len);
 
     return (uint32_t)__wasi_path_rename(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[old_path_baseptr], old_path_len,
                                         new_fd, (const char*)&CURRENT_MEMORY_BASE[new_path_baseptr], new_path_len);
@@ -1089,8 +1084,8 @@ uint32_t wasi_snapshot_preview1_path_symlink(__wasi_size_t old_path_baseptr, __w
             new_path_baseptr, new_path_len);
 #endif
 
-    check_bounds(old_path_baseptr, old_path_len);
-    check_bounds(new_path_baseptr, new_path_len);
+    wasi_serdes_check_bounds(old_path_baseptr, CURRENT_MEMORY_SIZE, old_path_len);
+    wasi_serdes_check_bounds(new_path_baseptr, CURRENT_MEMORY_SIZE, new_path_len);
 
     return (uint32_t)__wasi_path_symlink(CURRENT_WASI_CONTEXT, (const char*)&CURRENT_MEMORY_BASE[old_path_baseptr], old_path_len, fd,
                                          &CURRENT_MEMORY_BASE[new_path_baseptr], new_path_len);
@@ -1110,7 +1105,7 @@ uint32_t wasi_snapshot_preview1_path_unlink_file(__wasi_fd_t fd, __wasi_size_t p
     fprintf(stderr, "wasi_snapshot_preview1_path_unlink_file(%u,%u,%u)\n", fd, path_baseptr, path_len);
 #endif
 
-    check_bounds(path_baseptr, path_len);
+    wasi_serdes_check_bounds(path_baseptr, CURRENT_MEMORY_SIZE, path_len);
 
     return (uint32_t)__wasi_path_unlink_file(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[path_baseptr], path_len);
 }
@@ -1131,9 +1126,9 @@ uint32_t wasi_snapshot_preview1_poll_oneoff(__wasi_size_t in_baseptr, __wasi_siz
             nevents_retptr);
 #endif
 
-    check_bounds(in_baseptr, nsubscriptions * WASI_SERDES_SIZE_subscription_t);
-    check_bounds(out_baseptr, nsubscriptions * WASI_SERDES_SIZE_event_t);
-    check_bounds(nevents_retptr, WASI_SERDES_SIZE_size_t);
+    wasi_serdes_check_bounds(in_baseptr, CURRENT_MEMORY_SIZE, nsubscriptions * WASI_SERDES_SIZE_subscription_t);
+    wasi_serdes_check_bounds(out_baseptr, CURRENT_MEMORY_SIZE, nsubscriptions * WASI_SERDES_SIZE_event_t);
+    wasi_serdes_check_bounds(nevents_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t);
 
     __wasi_subscription_t in[nsubscriptions];
     __wasi_event_t        out[nsubscriptions];
@@ -1221,7 +1216,7 @@ uint32_t wasi_snapshot_preview1_random_get(__wasi_size_t buf_baseretptr, __wasi_
 #endif
 
     /* Check Bounds */
-    check_bounds(buf_baseretptr, buf_len);
+    wasi_serdes_check_bounds(buf_baseretptr, CURRENT_MEMORY_SIZE, buf_len);
 
     /* Write random bytes directly to linear memory */
     return (uint32_t)__wasi_random_get(CURRENT_WASI_CONTEXT, &CURRENT_MEMORY_BASE[buf_baseretptr], buf_len);
