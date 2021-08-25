@@ -313,7 +313,7 @@ __wasi_args_sizes_get(void* wasi_context_raw, __wasi_size_t* argc_retptr, __wasi
  */
 __wasi_errno_t __wasi_clock_res_get(void* wasi_context, __wasi_clockid_t id, __wasi_timestamp_t* res_retptr) {
     /* similar to `clock_getres` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -394,7 +394,7 @@ __wasi_environ_sizes_get(void* wasi_context_raw, __wasi_size_t* environ_len, __w
 __wasi_errno_t __wasi_fd_advise(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t offset, __wasi_filesize_t len,
                                 __wasi_advice_t advice) {
     /* similar to `posix_fadvise` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -407,7 +407,7 @@ __wasi_errno_t __wasi_fd_advise(void* wasi_context, __wasi_fd_t fd, __wasi_files
  */
 __wasi_errno_t __wasi_fd_allocate(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t offset, __wasi_filesize_t len) {
     /* similar to `posix_fallocate` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 };
 
 /**
@@ -511,7 +511,7 @@ __wasi_errno_t __wasi_fd_fdstat_set_flags(void* wasi_context, __wasi_fd_t fd, __
  */
 __wasi_errno_t __wasi_fd_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd, __wasi_rights_t fs_rights_base,
                                            __wasi_rights_t fs_rights_inheriting) {
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -523,7 +523,7 @@ __wasi_errno_t __wasi_fd_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd, _
  */
 
 __wasi_errno_t __wasi_fd_filestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_filestat_t* filestat) {
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -535,7 +535,7 @@ __wasi_errno_t __wasi_fd_filestat_get(void* wasi_context, __wasi_fd_t fd, __wasi
  */
 __wasi_errno_t __wasi_fd_filestat_set_size(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t size) {
     /* similar to `ftruncate` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -550,7 +550,7 @@ __wasi_errno_t __wasi_fd_filestat_set_size(void* wasi_context, __wasi_fd_t fd, _
 __wasi_errno_t __wasi_fd_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_timestamp_t atim,
                                             __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags) {
     /* similar to `futimens` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -566,7 +566,7 @@ __wasi_errno_t __wasi_fd_filestat_set_times(void* wasi_context, __wasi_fd_t fd, 
 __wasi_errno_t __wasi_fd_pread(void* wasi_context, __wasi_fd_t fd, const __wasi_iovec_t* iovs, size_t iovs_len,
                                __wasi_filesize_t offset, __wasi_size_t* nread_retptr) {
     /* similar to `preadv` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -577,7 +577,7 @@ __wasi_errno_t __wasi_fd_pread(void* wasi_context, __wasi_fd_t fd, const __wasi_
  * @return status code
  */
 __wasi_errno_t __wasi_fd_prestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_prestat_t* prestat_retptr) {
-    return __WASI_ERRNO_BADF;
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -589,7 +589,7 @@ __wasi_errno_t __wasi_fd_prestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_
  * @return status code
  */
 __wasi_errno_t __wasi_fd_prestat_dir_name(void* wasi_context, __wasi_fd_t fd, char* path, __wasi_size_t path_len) {
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -606,7 +606,7 @@ __wasi_errno_t __wasi_fd_prestat_dir_name(void* wasi_context, __wasi_fd_t fd, ch
 __wasi_errno_t __wasi_fd_pwrite(void* wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t* iovs, size_t iovs_len,
                                 __wasi_filesize_t offset, __wasi_size_t* nwritten_retptr) {
     /* similar to `pwritev` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -657,7 +657,7 @@ __wasi_errno_t __wasi_fd_read(void* wasi_context, __wasi_fd_t fd, const __wasi_i
  */
 __wasi_errno_t __wasi_fd_readdir(void* wasi_context, __wasi_fd_t fd, uint8_t* buf, __wasi_size_t buf_len,
                                  __wasi_dircookie_t cookie, __wasi_size_t* nwritten_retptr) {
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -675,7 +675,7 @@ __wasi_errno_t __wasi_fd_readdir(void* wasi_context, __wasi_fd_t fd, uint8_t* bu
  * @return status code
  */
 __wasi_errno_t __wasi_fd_renumber(void* wasi_context, __wasi_fd_t fd, __wasi_fd_t to) {
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -708,7 +708,7 @@ __wasi_errno_t __wasi_fd_seek(void* wasi_context, __wasi_fd_t fd, __wasi_filedel
  */
 __wasi_errno_t __wasi_fd_sync(void* wasi_context, __wasi_fd_t fd) {
     /* similar to `fsync` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -720,7 +720,7 @@ __wasi_errno_t __wasi_fd_sync(void* wasi_context, __wasi_fd_t fd) {
  */
 __wasi_errno_t __wasi_fd_tell(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t* fileoffset_retptr) {
     /* similar to `lseek(fd, 0, SEEK_CUR)` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -818,7 +818,7 @@ __wasi_errno_t __wasi_path_filestat_set_times(void* wasi_context, __wasi_fd_t fd
                                               const char* path, __wasi_size_t path_len, __wasi_timestamp_t atim,
                                               __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags) {
     /* similar to `utimensat` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -837,7 +837,7 @@ __wasi_errno_t
 __wasi_path_link(void* wasi_context, __wasi_fd_t old_fd, __wasi_lookupflags_t old_flags, const char* old_path,
                  __wasi_size_t old_path_len, __wasi_fd_t new_fd, const char* new_path, __wasi_size_t new_path_len) {
     /* similar to `linkat` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -913,7 +913,7 @@ __wasi_errno_t __wasi_path_open(void* wasi_context, __wasi_fd_t dirfd, __wasi_lo
 __wasi_errno_t __wasi_path_readlink(void* wasi_context, __wasi_fd_t fd, const char* path, __wasi_size_t path_len,
                                     uint8_t* buf, __wasi_size_t buf_len, __wasi_size_t* nread_retptr) {
     /* similar to `readlinkat` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -928,7 +928,7 @@ __wasi_errno_t __wasi_path_readlink(void* wasi_context, __wasi_fd_t fd, const ch
 __wasi_errno_t
 __wasi_path_remove_directory(void* wasi_context, __wasi_fd_t fd, const char* path, __wasi_size_t path_len) {
     /* similar to `unlinkat(fd, path, AT_REMOVEDIR)` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -943,7 +943,7 @@ __wasi_path_remove_directory(void* wasi_context, __wasi_fd_t fd, const char* pat
 __wasi_errno_t __wasi_path_rename(void* wasi_context, __wasi_fd_t fd, const char* old_path, __wasi_size_t old_path_len,
                                   __wasi_fd_t new_fd, const char* new_path, __wasi_size_t new_path_len) {
     /* similar to `renameat` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -959,7 +959,7 @@ __wasi_errno_t __wasi_path_rename(void* wasi_context, __wasi_fd_t fd, const char
 __wasi_errno_t __wasi_path_symlink(void* wasi_context, const char* old_path, __wasi_size_t old_path_len, __wasi_fd_t fd,
                                    const char* new_path, __wasi_size_t new_path_len) {
     /* similar to `symlinkat` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -992,7 +992,7 @@ __wasi_errno_t __wasi_path_unlink_file(void* wasi_context, __wasi_fd_t fd, const
  */
 __wasi_errno_t __wasi_poll_oneoff(void* wasi_context, const __wasi_subscription_t* in, __wasi_event_t* out,
                                   __wasi_size_t nsubscriptions, __wasi_size_t* retptr0) {
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -1014,7 +1014,7 @@ __attribute__((noreturn)) void __wasi_proc_exit(void* wasi_context, __wasi_exitc
  */
 __wasi_errno_t __wasi_proc_raise(void* wasi_context, __wasi_signal_t sig) {
     /* similar to `raise` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -1096,7 +1096,7 @@ __wasi_errno_t __wasi_sched_yield(void* wasi_context) {
 __wasi_errno_t __wasi_sock_recv(void* wasi_context, __wasi_fd_t fd, const __wasi_iovec_t* ri_data, size_t ri_data_len,
                                 __wasi_riflags_t ri_flags, __wasi_size_t* ri_data_nbytes_retptr,
                                 __wasi_roflags_t* message_nbytes_retptr) {
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -1113,7 +1113,7 @@ __wasi_errno_t __wasi_sock_recv(void* wasi_context, __wasi_fd_t fd, const __wasi
  */
 __wasi_errno_t __wasi_sock_send(void* wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t* si_data, size_t si_data_len,
                                 __wasi_siflags_t si_flags, __wasi_size_t* nsent_retptr) {
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -1125,5 +1125,5 @@ __wasi_errno_t __wasi_sock_send(void* wasi_context, __wasi_fd_t fd, const __wasi
  */
 __wasi_errno_t __wasi_sock_shutdown(void* wasi_context, __wasi_fd_t fd, __wasi_sdflags_t how) {
     /* similar to `shutdown` in POSIX. */
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 }
