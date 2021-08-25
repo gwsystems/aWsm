@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -19,12 +21,7 @@
 
 #ifndef CURRENT_WASI_CONTEXT
 #error CURRENT_WASI_CONTEXT symbol not defined
-#endif 
-
-extern void* CURRENT_MEMORY_BASE;
-extern uint32_t CURRENT_MEMORY_SIZE;
-extern void* CURRENT_WASI_CONTEXT;
-
+#endif
 
 /**
  * @brief Writes argument offsets and buffer into linear memory write
@@ -191,7 +188,8 @@ uint32_t wasi_snapshot_preview1_environ_get(__wasi_size_t environ_retptr, __wasi
 
     /* Write environment to temporary buffer and environment_buf directly to linear memory */
     char*          environment[envc];
-    __wasi_errno_t rc = __wasi_environ_get(CURRENT_WASI_CONTEXT, environment, (char*)&CURRENT_MEMORY_BASE[environ_buf_retptr]);
+    __wasi_errno_t rc = __wasi_environ_get(CURRENT_WASI_CONTEXT, environment,
+                                           (char*)&CURRENT_MEMORY_BASE[environ_buf_retptr]);
 
     if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
@@ -482,7 +480,8 @@ uint32_t wasi_snapshot_preview1_fd_pread(__wasi_fd_t fd, __wasi_size_t iovs_base
 
     /* Read iovec from linear memory */
     __wasi_iovec_t iovs[iovs_len];
-    __wasi_errno_t rc = wasi_serdes_readv_iovec_t(CURRENT_MEMORY_BASE, CURRENT_MEMORY_SIZE, iovs_baseptr, iovs, iovs_len);
+    __wasi_errno_t rc = wasi_serdes_readv_iovec_t(CURRENT_MEMORY_BASE, CURRENT_MEMORY_SIZE, iovs_baseptr, iovs,
+                                                  iovs_len);
     if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
@@ -544,7 +543,8 @@ uint32_t wasi_snapshot_preview1_fd_prestat_dir_name(__wasi_fd_t fd, __wasi_size_
     wasi_serdes_check_bounds(path_retptr, CURRENT_MEMORY_SIZE, path_len);
 
     /* Execute WASI call, writing results directly to linear memory */
-    return (uint32_t)__wasi_fd_prestat_dir_name(CURRENT_WASI_CONTEXT, fd, (char*)&CURRENT_MEMORY_BASE[path_retptr], path_len);
+    return (uint32_t)__wasi_fd_prestat_dir_name(CURRENT_WASI_CONTEXT, fd, (char*)&CURRENT_MEMORY_BASE[path_retptr],
+                                                path_len);
 }
 
 /**
@@ -571,7 +571,8 @@ uint32_t wasi_snapshot_preview1_fd_pwrite(__wasi_fd_t fd, __wasi_size_t iovs_bas
 
     /* Copy iovs into memory */
     __wasi_ciovec_t iovs[iovs_len];
-    __wasi_errno_t  rc = wasi_serdes_readv_ciovec_t(CURRENT_MEMORY_BASE, CURRENT_MEMORY_SIZE, iovs_baseptr, iovs, iovs_len);
+    __wasi_errno_t  rc = wasi_serdes_readv_ciovec_t(CURRENT_MEMORY_BASE, CURRENT_MEMORY_SIZE, iovs_baseptr, iovs,
+                                                   iovs_len);
     if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
@@ -610,7 +611,8 @@ uint32_t wasi_snapshot_preview1_fd_read(__wasi_fd_t fd, __wasi_size_t iovs_basep
 
     /* Copy iovs into memory */
     __wasi_iovec_t iovs[iovs_len];
-    __wasi_errno_t rc = wasi_serdes_readv_iovec_t(CURRENT_MEMORY_BASE, CURRENT_MEMORY_SIZE, iovs_baseptr, iovs, iovs_len);
+    __wasi_errno_t rc = wasi_serdes_readv_iovec_t(CURRENT_MEMORY_BASE, CURRENT_MEMORY_SIZE, iovs_baseptr, iovs,
+                                                  iovs_len);
     if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
@@ -658,8 +660,8 @@ uint32_t wasi_snapshot_preview1_fd_readdir(__wasi_fd_t fd, __wasi_size_t buf_bas
 
     /* Execute WASI call */
     __wasi_size_t  nread;
-    __wasi_errno_t rc = __wasi_fd_readdir(CURRENT_WASI_CONTEXT, fd, (uint8_t*)&CURRENT_MEMORY_BASE[buf_baseptr], buf_len, cookie,
-                                          &nread);
+    __wasi_errno_t rc = __wasi_fd_readdir(CURRENT_WASI_CONTEXT, fd, (uint8_t*)&CURRENT_MEMORY_BASE[buf_baseptr],
+                                          buf_len, cookie, &nread);
     if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
@@ -795,7 +797,8 @@ uint32_t wasi_snapshot_preview1_fd_write(__wasi_fd_t fd, __wasi_size_t iovs_base
 
     /* Read iovec into memory */
     __wasi_ciovec_t iovs[iovs_len];
-    __wasi_errno_t  rc = wasi_serdes_readv_ciovec_t(CURRENT_MEMORY_BASE, CURRENT_MEMORY_SIZE, iovs_baseptr, iovs, iovs_len);
+    __wasi_errno_t  rc = wasi_serdes_readv_ciovec_t(CURRENT_MEMORY_BASE, CURRENT_MEMORY_SIZE, iovs_baseptr, iovs,
+                                                   iovs_len);
     if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
@@ -830,8 +833,8 @@ wasi_snapshot_preview1_path_create_directory(__wasi_fd_t fd, __wasi_size_t path_
 
     wasi_serdes_check_bounds(path_baseptr, CURRENT_MEMORY_SIZE, path_len);
 
-    return (uint32_t)__wasi_path_create_directory(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[path_baseptr],
-                                                  path_len);
+    return (uint32_t)__wasi_path_create_directory(CURRENT_WASI_CONTEXT, fd,
+                                                  (const char*)&CURRENT_MEMORY_BASE[path_baseptr], path_len);
 }
 
 /**
@@ -856,8 +859,8 @@ wasi_snapshot_preview1_path_filestat_get(__wasi_fd_t fd, __wasi_lookupflags_t fl
     wasi_serdes_check_bounds(filestat_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_filestat_t);
 
     __wasi_filestat_t stats;
-    __wasi_errno_t    rc = __wasi_path_filestat_get(CURRENT_WASI_CONTEXT, fd, flags, (const char*)&CURRENT_MEMORY_BASE[path_baseptr],
-                                                 path_len, &stats);
+    __wasi_errno_t    rc = __wasi_path_filestat_get(CURRENT_WASI_CONTEXT, fd, flags,
+                                                 (const char*)&CURRENT_MEMORY_BASE[path_baseptr], path_len, &stats);
     if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
@@ -896,8 +899,9 @@ wasi_snapshot_preview1_path_filestat_set_times(__wasi_fd_t fd, __wasi_lookupflag
 
     wasi_serdes_check_bounds(path_baseptr, CURRENT_MEMORY_SIZE, path_len);
 
-    return __wasi_path_filestat_set_times(CURRENT_WASI_CONTEXT, fd, flags, (const char*)&CURRENT_MEMORY_BASE[path_baseptr], path_len,
-                                          atim, mtim, (__wasi_fstflags_t)fst_flags);
+    return __wasi_path_filestat_set_times(CURRENT_WASI_CONTEXT, fd, flags,
+                                          (const char*)&CURRENT_MEMORY_BASE[path_baseptr], path_len, atim, mtim,
+                                          (__wasi_fstflags_t)fst_flags);
 
 done:
     return (uint32_t)rc;
@@ -930,8 +934,9 @@ wasi_snapshot_preview1_path_link(__wasi_fd_t old_fd, __wasi_lookupflags_t old_fl
     wasi_serdes_check_bounds(old_path_baseptr, CURRENT_MEMORY_SIZE, old_path_len);
     wasi_serdes_check_bounds(new_path_baseptr, CURRENT_MEMORY_SIZE, new_path_len);
 
-    return (uint32_t)__wasi_path_link(CURRENT_WASI_CONTEXT, old_fd, old_flags, (const char*)&CURRENT_MEMORY_BASE[old_path_baseptr],
-                                      old_path_len, new_fd, (const char*)&CURRENT_MEMORY_BASE[new_path_baseptr], new_path_len);
+    return (uint32_t)__wasi_path_link(CURRENT_WASI_CONTEXT, old_fd, old_flags,
+                                      (const char*)&CURRENT_MEMORY_BASE[old_path_baseptr], old_path_len, new_fd,
+                                      (const char*)&CURRENT_MEMORY_BASE[new_path_baseptr], new_path_len);
 }
 
 /**
@@ -971,8 +976,9 @@ wasi_snapshot_preview1_path_open(__wasi_fd_t dirfd, __wasi_lookupflags_t lookupf
         goto err_fdflags_overflow;
 
     __wasi_fd_t    fd;
-    __wasi_errno_t rc = __wasi_path_open(CURRENT_WASI_CONTEXT, dirfd, lookupflags, (const char*)&CURRENT_MEMORY_BASE[path_baseptr],
-                                         path_len, (__wasi_oflags_t)oflags, fs_rights_base, fs_rights_inheriting,
+    __wasi_errno_t rc = __wasi_path_open(CURRENT_WASI_CONTEXT, dirfd, lookupflags,
+                                         (const char*)&CURRENT_MEMORY_BASE[path_baseptr], path_len,
+                                         (__wasi_oflags_t)oflags, fs_rights_base, fs_rights_inheriting,
                                          (__wasi_fdflags_t)fdflags, &fd);
     if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
@@ -1011,8 +1017,8 @@ wasi_snapshot_preview1_path_readlink(__wasi_fd_t fd, __wasi_size_t path_baseptr,
     wasi_serdes_check_bounds(nread_retptr, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t);
 
     __wasi_size_t  nread;
-    __wasi_errno_t rc = __wasi_path_readlink(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[path_baseptr], path_len,
-                                             &CURRENT_MEMORY_BASE[buf_baseretptr], buf_len, &nread);
+    __wasi_errno_t rc = __wasi_path_readlink(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[path_baseptr],
+                                             path_len, &CURRENT_MEMORY_BASE[buf_baseretptr], buf_len, &nread);
     if (rc != __WASI_ERRNO_SUCCESS)
         goto done;
 
@@ -1039,8 +1045,8 @@ wasi_snapshot_preview1_path_remove_directory(__wasi_fd_t fd, __wasi_size_t path_
 
     wasi_serdes_check_bounds(path_baseptr, CURRENT_MEMORY_SIZE, path_len);
 
-    return (uint32_t)__wasi_path_remove_directory(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[path_baseptr],
-                                                  path_len);
+    return (uint32_t)__wasi_path_remove_directory(CURRENT_WASI_CONTEXT, fd,
+                                                  (const char*)&CURRENT_MEMORY_BASE[path_baseptr], path_len);
 }
 
 /**
@@ -1063,8 +1069,9 @@ wasi_snapshot_preview1_path_rename(__wasi_fd_t fd, __wasi_size_t old_path_basept
     wasi_serdes_check_bounds(old_path_baseptr, CURRENT_MEMORY_SIZE, old_path_len);
     wasi_serdes_check_bounds(new_path_baseptr, CURRENT_MEMORY_SIZE, new_path_len);
 
-    return (uint32_t)__wasi_path_rename(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[old_path_baseptr], old_path_len,
-                                        new_fd, (const char*)&CURRENT_MEMORY_BASE[new_path_baseptr], new_path_len);
+    return (uint32_t)__wasi_path_rename(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[old_path_baseptr],
+                                        old_path_len, new_fd, (const char*)&CURRENT_MEMORY_BASE[new_path_baseptr],
+                                        new_path_len);
 }
 
 /**
@@ -1087,8 +1094,8 @@ uint32_t wasi_snapshot_preview1_path_symlink(__wasi_size_t old_path_baseptr, __w
     wasi_serdes_check_bounds(old_path_baseptr, CURRENT_MEMORY_SIZE, old_path_len);
     wasi_serdes_check_bounds(new_path_baseptr, CURRENT_MEMORY_SIZE, new_path_len);
 
-    return (uint32_t)__wasi_path_symlink(CURRENT_WASI_CONTEXT, (const char*)&CURRENT_MEMORY_BASE[old_path_baseptr], old_path_len, fd,
-                                         &CURRENT_MEMORY_BASE[new_path_baseptr], new_path_len);
+    return (uint32_t)__wasi_path_symlink(CURRENT_WASI_CONTEXT, (const char*)&CURRENT_MEMORY_BASE[old_path_baseptr],
+                                         old_path_len, fd, &CURRENT_MEMORY_BASE[new_path_baseptr], new_path_len);
 }
 
 /**
@@ -1107,7 +1114,8 @@ uint32_t wasi_snapshot_preview1_path_unlink_file(__wasi_fd_t fd, __wasi_size_t p
 
     wasi_serdes_check_bounds(path_baseptr, CURRENT_MEMORY_SIZE, path_len);
 
-    return (uint32_t)__wasi_path_unlink_file(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[path_baseptr], path_len);
+    return (uint32_t)__wasi_path_unlink_file(CURRENT_WASI_CONTEXT, fd, (const char*)&CURRENT_MEMORY_BASE[path_baseptr],
+                                             path_len);
 }
 
 /**
@@ -1260,7 +1268,7 @@ uint32_t wasi_snapshot_preview1_sock_recv(__wasi_fd_t fd, __wasi_size_t ri_data_
             ri_flags, ri_data_nbytes_retptr, message_nbytes_retptr);
 #endif
 
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 
     /* ri_flags is type __wasi_riflags_t, which is uint16_t and zero extended to an wasm i32 */
 }
@@ -1286,7 +1294,7 @@ uint32_t wasi_snapshot_preview1_sock_send(__wasi_fd_t fd, __wasi_size_t si_data_
     fprintf(stderr, "wasi_snapshot_preview1_sock_send(%u,%u,%u,%u,%u)\n", fd, si_data_baseptr, si_data_len, si_flags,
             retptr0);
 #endif
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 
     /* TODO: si_flags is type __wasi_siflags_t, which is uint16_t and zero extended to an wasm i32 */
 }
@@ -1306,7 +1314,7 @@ uint32_t wasi_snapshot_preview1_sock_shutdown(__wasi_fd_t fd, uint32_t how) {
     fprintf(stderr, "wasi_snapshot_preview1_sock_shutdown(%u,%u)\n", fd, how);
 #endif
 
-    wasi_unsupported_syscall(__func__);
+    return wasi_unsupported_syscall(__func__);
 
     /* TODO: how is type __wasi_sdflags_t, which is uint8_t and zero extended to an wasm i32 */
 }
