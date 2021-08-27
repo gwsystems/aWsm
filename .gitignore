@@ -23,5 +23,4 @@ awsm.iml
 Vagrantfile
 *-cloudimg-console.log
 
-wasi-sdk
 .vscode
