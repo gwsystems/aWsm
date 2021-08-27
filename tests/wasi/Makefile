@@ -1,6 +1,6 @@
-CC = ../../wasi-sdk/bin/clang
-TARGET = wasm32-unknown-wasi
-SYSROOT =
+WASMCC=/opt/wasi-sdk/bin/clang
+WASMLINKFLAGS=-Wl,--allow-undefined,-z,stack-size=32768,--threads=1
+OPTFLAGS=-O3 -flto
 
 # Log all WASI syscalls and arguments to stderr
 # RUNTIME_CFLAGS += -DLOG_WASI
@@ -10,7 +10,7 @@ all: $(OBJ)
 
 wasm/%.wasm: c/%.c
 	@mkdir -p wasm
-	$(CC) -Wl,--allow-undefined,-z,stack-size=32768,--threads=1 --target=wasm32-wasi -mcpu=mvp -O3 -flto  --sysroot=../../wasi-sdk/share/wasi-sysroot $< -o $@
+	$(WASMCC) ${WASMLINKFLAGS} ${OPTFLAGS} $< -o $@
 
 bc/%.bc: wasm/%.wasm
 	@mkdir -p bc
@@ -18,7 +18,7 @@ bc/%.bc: wasm/%.wasm
 
 # Using uvwasi backend
 vm/%_vm: bc/%.bc ../../runtime/runtime.c ../../runtime/libc/wasi/wasi_backing.c ../../runtime/libc/wasi/wasi_main.c ../../runtime/libc/wasi/wasi_impl_uvwasi.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c
-	clang -pthread -ldl -lm -O3 $(RUNTIME_CFLAGS) -I../../runtime/libc/wasi/include -I../../runtime/uvwasi/include $< ../../runtime/runtime.c ../../runtime/libc/wasi/wasi_main.c ../../runtime/libc/wasi/wasi_backing.c ../../runtime/libc/wasi/wasi_impl_uvwasi.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c ../../runtime/uvwasi/out/cmake/libuvwasi_a.a ../../runtime/libuv/build/libuv_a.a -o $@
+	clang -pthread -ldl -lm -O3 $(RUNTIME_CFLAGS) -I../../runtime/libc/wasi/include -I../../runtime/thirdparty/dist/include $< ../../runtime/runtime.c ../../runtime/libc/wasi/wasi_main.c ../../runtime/libc/wasi/wasi_backing.c ../../runtime/libc/wasi/wasi_impl_uvwasi.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c ../../runtime/thirdparty/dist/lib/libuvwasi_a.a ../../runtime/thirdparty/dist/lib/libuv_a.a -o $@
 
 # Using minimal backend
 # vm/%_vm: bc/%.bc ../../runtime/runtime.c ../../runtime/libc/wasi/wasi_backing.c ../../runtime/libc/wasi/wasi_main.c ../../runtime/libc/wasi/wasi_impl_minimal.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c
