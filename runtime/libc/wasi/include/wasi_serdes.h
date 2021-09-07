@@ -7,7 +7,7 @@
 
 /* Basic uint{8,16,32,64}_t read/write functions. */
 
-#define BASIC_TYPE(name, type)                                           \
+#define BASIC_TYPE(name, type)                                                         \
     static inline void wasi_serdes_write_##name(void* ptr, size_t offset, type value); \
     static inline type wasi_serdes_read_##name(const void* ptr, size_t offset);
 
@@ -89,8 +89,9 @@ BASIC_TYPE_WASI(whence_t)
     void wasi_serdes_read_##name(const void* ptr, size_t offset, __wasi_##name* value);
 
 /* iovs currently only need to be read from WASM memory. */
-#define IOVS_STRUCT(name) \
-    static inline __wasi_errno_t wasi_serdes_read_##name(const void* ptr, size_t end, size_t offset, __wasi_##name* value);
+#define IOVS_STRUCT(name)                                                                            \
+    static inline __wasi_errno_t wasi_serdes_read_##name(const void* ptr, size_t end, size_t offset, \
+                                                         __wasi_##name* value);
 
 #define WASI_SERDES_SIZE_ciovec_t 8
 IOVS_STRUCT(ciovec_t)
@@ -294,7 +295,8 @@ ALL_TYPES(WRITE_STRUCT, WRITE_FIELD, WRITE_ALIAS)
 ALL_TYPES(READ_STRUCT, READ_FIELD, READ_ALIAS)
 
 
-static inline __wasi_errno_t wasi_serdes_read_ciovec_t(const void* ptr, size_t end, size_t offset, __wasi_ciovec_t* value) {
+static inline __wasi_errno_t
+wasi_serdes_read_ciovec_t(const void* ptr, size_t end, size_t offset, __wasi_ciovec_t* value) {
     uint32_t buf_ptr;
 
     buf_ptr        = wasi_serdes_read_uint32_t(ptr, offset);
@@ -308,7 +310,8 @@ static inline __wasi_errno_t wasi_serdes_read_ciovec_t(const void* ptr, size_t e
 }
 
 
-static inline __wasi_errno_t wasi_serdes_read_iovec_t(const void* ptr, size_t end, size_t offset, __wasi_iovec_t* value) {
+static inline __wasi_errno_t
+wasi_serdes_read_iovec_t(const void* ptr, size_t end, size_t offset, __wasi_iovec_t* value) {
     uint32_t buf_ptr;
 
     buf_ptr        = wasi_serdes_read_uint32_t(ptr, offset);
