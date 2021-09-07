@@ -85,14 +85,14 @@ WASMCEPTION_PATH = ROOT_PATH + "/wasmception"
 WASMCEPTION_CLANG = WASMCEPTION_PATH + "/dist/bin/clang"
 WASMCEPTION_SYSROOT = WASMCEPTION_PATH + "/sysroot"
 WASMCEPTION_FLAGS = "--target=wasm32-unknown-unknown-wasm -nostartfiles -O3 -flto"
-WASMCEPTION_BACKING = "wasmception_backing.c"
+WASMCEPTION_BACKING = "{RUNTIME_PATH}/libc/wasmception_backing.c".format(RUNTIME_PATH=RUNTIME_PATH)
 WASMCEPTION_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--no-threads,--stack-first,--no-entry,--export-all,--export=main,--export=dummy"
 
-WASI_SDK_PATH = ROOT_PATH + "/wasi-sdk"
+WASI_SDK_PATH = "/opt/wasi-sdk"
 WASI_SDK_CLANG = WASI_SDK_PATH + "/bin/clang"
 WASI_SDK_SYSROOT = WASI_SDK_PATH + "/share/wasi-sysroot"
 WASI_SDK_FLAGS = "--target=wasm32-wasi -mcpu=mvp -O3 -flto"
-WASI_SDK_BACKING = "wasi_sdk_backing.c"
+WASI_SDK_BACKING = "-ldl -pthread -I{RUNTIME_PATH}/libc/wasi/include -I{RUNTIME_PATH}/thirdparty/dist/include {RUNTIME_PATH}/libc/wasi/wasi_main.c {RUNTIME_PATH}/libc/wasi/wasi_backing.c {RUNTIME_PATH}/libc/wasi/wasi_impl_uvwasi.c {RUNTIME_PATH}/thirdparty/dist/lib/libuvwasi_a.a {RUNTIME_PATH}/thirdparty/dist/lib/libuv_a.a".format(RUNTIME_PATH=RUNTIME_PATH)
 WASI_SDK_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--threads=1,--stack-first"
 
 # download WASI-SDK if it is not in the expected path
@@ -322,7 +322,7 @@ def compile_wasm_to_executable(program, exe_postfix, memory_impl, unsafe_impls=F
     else:
         target_flag = "-target " + AWSM_TARGET
 
-    command = "clang -lm {target} {opt} {bc_file} {runtime}/runtime.c {runtime}/libc/{backing} {runtime}/libc/env.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
+    command = "clang -lm {target} {opt} {bc_file} {runtime}/runtime.c {backing} {runtime}/libc/env.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
         .format(target=target_flag, opt=opt, bc_file=bc_file, pname=program.name, runtime=RUNTIME_PATH, backing=WASM_BACKING, mem_impl=memory_impl, postfix=exe_postfix)
     print(command)
     sp.check_call(command, shell=True, cwd=program.name)
