@@ -2,3 +2,6 @@
 *.wasm
 *.ll
 *_vm
+*_wasmception
+*_minimal
+*_uvwasi
