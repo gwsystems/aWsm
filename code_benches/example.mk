@@ -23,7 +23,7 @@ RUNTIME_CPATH+=${RUNTIME_PATH}/thirdparty/dist/lib/libuvwasi_a.a
 
 RUNTIME_INCLUDES=-I../runtime/libc/wasi/include -I../runtime/thirdparty/dist/include
 
-WASMCC=/opt/wasi-sdk/bin/clang
+WASMCC=${WASI_SDK_PATH}/bin/clang --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot
 
 AWSM_CC:=${ROOT_PATH}/target/release/awsm
 
