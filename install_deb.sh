@@ -49,16 +49,22 @@ $sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" bash $LLVM_VERSION
 $sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
 $sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-$LLVM_VERSION 100
 $sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
-sudo apt install libc++-11-dev libc++abi-11-dev --yes
+$sudo apt install libc++-11-dev libc++abi-11-dev --yes
 
 # Build and install aWsm
 cargo build --release
 $sudo cp -t /usr/bin ./target/release/awsm
 
-# Install WASI-SDK 12 to /opt/wasi-sdk, the path wasi-sdk assumed by default
-wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk_12.0_amd64.deb
-dpkg -i wasi-sdk_12.0_amd64.deb
-rm -f wasi-sdk_12.0_amd64.deb
+if [[ -n "${WASI_SDK_PATH}" ]]; then
+	echo "wasi-sdk detected"
+else
+	wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk_12.0_amd64.deb
+	# The Debian package installs WASI-SDK 12 to /opt/wasi-sdk
+	$sudo dpkg -i wasi-sdk_12.0_amd64.deb
+	rm -f wasi-sdk_12.0_amd64.deb
+	echo 'export WASI_SDK_PATH="/opt/wasi-sdk/"' >> ~/.bashrc
+	source ~/.bashrc
+fi
 
 # Install libuv and uvwasi
 make -C ./runtime/thirdparty install

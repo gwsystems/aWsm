@@ -34,15 +34,22 @@ export PATH="$HOME/.cargo/bin:$PATH"
 # Build project
 cargo build --release
 
-# Install WASI-SDK 1 2to /opt/wasi-sdk, the path wasi-sdk assumed by default
-mkdir /opt/wasi-sdk
-pushd /opt/wasi-sdk || exit
-wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk-12.0-macos.tar.gz
-tar -xvf wasi-sdk-12.0-macos.tar.gz
-mv wasi-sdk-12.0/* .
-rm -rf wasi-sdk-12.0
-rm wasi-sdk-12.0-macos.tar.gz
-popd || exit
+if [[ -n "${WASI_SDK_PATH}" ]]; then
+	echo "wasi-sdk detected"
+else
+	# Install WASI-SDK 12 to /usr/local/opt/wasi-sdk
+	# This uses the same Mac OS idioms as the LLVM brew installation above
+	mkdir /usr/local/opt/wasi-sdk
+	pushd /usr/local/opt/wasi-sdk || exit
+	wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk-12.0-macos.tar.gz
+	tar -xvf wasi-sdk-12.0-macos.tar.gz
+	mv wasi-sdk-12.0/* .
+	rm -rf wasi-sdk-12.0
+	rm wasi-sdk-12.0-macos.tar.gz
+	popd || exit
+	echo 'export WASI_SDK_PATH="/usr/local/opt/wasi-sdk/"' >> ~/.zshrc
+	source ~/.zshrc
+fi
 
 # Install libuv and uvwasi
 make -C ./runtime/thirdparty install
