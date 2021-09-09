@@ -24,3 +24,5 @@ Vagrantfile
 *-cloudimg-console.log
 
 .vscode
+
+wasi-sdk
