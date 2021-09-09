@@ -20,7 +20,7 @@
 #include "wasi_impl.h"
 
 
-/* 
+/*
  * This intention of this minimal backing is to demonstrate a simple standalone
  * backing of the WASI syscalls that delegates most logic to the underlying host's
  * POSIX layer. It is currently incomplete and only has implemented the bare minimum
