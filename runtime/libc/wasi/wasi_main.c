@@ -3,6 +3,12 @@
 #include "../../runtime.h"
 #include "wasi_impl.h"
 
+/* This is simple startup code that initializes a single sandbox, runs it to completion, and then exits
+ * It assumes a Unix environment and has a 1:1 relationship between a Unix process and a WebAssembly sandbox.
+ * This likely may not fit for your requirements. Look at README.md in this directory for guidance on
+ * writing custom startup logic for other host environments and execution models.
+ */
+
 void* current_wasi_context;
 
 
