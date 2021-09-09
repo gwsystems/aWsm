@@ -19,6 +19,15 @@
 
 #include "wasi_impl.h"
 
+
+/* 
+ * This intention of this minimal backing is to demonstrate a simple standalone
+ * backing of the WASI syscalls that delegates most logic to the underlying host's
+ * POSIX layer. It is currently incomplete and only has implemented the bare minimum
+ * needed to run simple echo and fibonacci type programs. As such, it only passes
+ * a subset of the WASI unit tests.
+ */
+
 /*
  * Essentially based off the uvwasi_t
  * TODO: Add file descriptors in support of preopens
