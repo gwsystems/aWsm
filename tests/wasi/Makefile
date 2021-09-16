@@ -1,15 +1,22 @@
 WASMCC=${WASI_SDK_PATH}/bin/clang --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot
 WASMLINKFLAGS=-Wl,--allow-undefined,-z,stack-size=32768,--threads=1
-OPTFLAGS=-O3 -flto
+OPTFLAGS=-O3 -g -flto
 
-# Log all WASI syscalls and arguments to stderr
-# RUNTIME_CFLAGS += -DLOG_WASI
-
-
-# program.c => wasi-sdk-12 => program.wasm => aWsm => program.bc => clang => program (runtime baked in)
+# Select a runtime
+RUNTIME=../../runtime/dist/rt_uvwasi.a
+# RUNTIME=../../runtime/dist/rt_minimal.a
 
 OBJ = $(patsubst c/%.c, vm/%_vm, $(wildcard c/*.c))
 all: ${OBJ}
+
+../../target/release/awsm:
+	cd ../../ && cargo build --release
+
+../../runtime/dist/rt_minimal.a:
+	make -C ../../runtime/ dist/rt_minimal.a
+
+../../runtime/dist/rt_uvwasi.a:
+	make -C ../../runtime/ dist/rt_uvwasi.a
 
 wasm/%.wasm: c/%.c
 	@mkdir -p wasm
@@ -19,13 +26,8 @@ bc/%.bc: wasm/%.wasm
 	@mkdir -p bc
 	../../target/release/awsm  $< -o $@
 
-# Using uvwasi backend
-vm/%_vm: bc/%.bc ../../runtime/runtime.c ../../runtime/libc/wasi/wasi_backing.c ../../runtime/libc/wasi/wasi_main.c ../../runtime/libc/wasi/wasi_impl_uvwasi.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c
-	clang -pthread -ldl -lm ${OPTFLAGS} ${RUNTIME_CFLAGS} -I../../runtime/libc/wasi/include -I../../runtime/thirdparty/dist/include $< ../../runtime/runtime.c ../../runtime/libc/wasi/wasi_main.c ../../runtime/libc/wasi/wasi_backing.c ../../runtime/libc/wasi/wasi_impl_uvwasi.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c ../../runtime/thirdparty/dist/lib/libuvwasi_a.a ../../runtime/thirdparty/dist/lib/libuv_a.a -o $@
-
-# Using minimal backend
-# vm/%_vm: bc/%.bc ../../runtime/runtime.c ../../runtime/libc/wasi/wasi_backing.c ../../runtime/libc/wasi/wasi_main.c ../../runtime/libc/wasi/wasi_impl_minimal.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c
-# 	clang -pthread -ldl -lm ${OPTFLAGS} ${RUNTIME_CFLAGS} -I../../runtime/libc/wasi/include -I../../runtime/uvwasi/include $< ../../runtime/runtime.c ../../runtime/libc/wasi/wasi_main.c ../../runtime/libc/wasi/wasi_backing.c ../../runtime/libc/wasi/wasi_impl_minimal.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c -o $@
+vm/%_vm: bc/%.bc ${RUNTIME}
+	clang -pthread ${OPTFLAGS} ${RUNTIME} $^ -ldl -lc -lm -o $@
 
 .PHONY clean:
 	rm -f ./wasm/* ./bc/* ./vm/*_vm
