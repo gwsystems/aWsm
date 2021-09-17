@@ -1,6 +1,6 @@
 WASMCC=${WASI_SDK_PATH}/bin/clang --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot
 WASMLINKFLAGS=-Wl,--allow-undefined,-z,stack-size=32768,--threads=1
-OPTFLAGS=-O3 -flto
+OPTFLAGS=-O0 -flto
 
 # Log all WASI syscalls and arguments to stderr
 # RUNTIME_CFLAGS += -DLOG_WASI
