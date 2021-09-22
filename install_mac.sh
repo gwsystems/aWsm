@@ -34,7 +34,7 @@ export PATH="$HOME/.cargo/bin:$PATH"
 # Build project
 cargo build --release
 
-if [[ -n "${WASI_SDK_PATH}" ]]; then
+if [[ -n "${WASI_SDK_PATH}" ]] && [[ -x "${WASI_SDK_PATH}/bin/clang" ]];; then
 	echo "wasi-sdk detected"
 else
 	# Install WASI-SDK 12 to /usr/local/opt/wasi-sdk
