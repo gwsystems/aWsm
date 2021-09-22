@@ -55,7 +55,7 @@ $sudo apt install libc++-11-dev libc++abi-11-dev --yes
 cargo build --release
 $sudo cp -t /usr/bin ./target/release/awsm
 
-if [[ -n "${WASI_SDK_PATH}" ]]; then
+if [[ -n "${WASI_SDK_PATH}" ]] && [[ -x "${WASI_SDK_PATH}/bin/clang" ]]; then
 	echo "wasi-sdk detected"
 else
 	wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk_12.0_amd64.deb
