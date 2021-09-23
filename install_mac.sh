@@ -12,6 +12,7 @@ fi
 brew install svn
 brew install wget
 brew install cmake
+brew install wabt
 
 # Install LLVM and clang stuff
 xcode-select install
