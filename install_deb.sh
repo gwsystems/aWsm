@@ -21,6 +21,7 @@ shopt -u nocasematch
 $sudo apt install build-essential --yes
 $sudo apt install cmake --yes
 $sudo apt install lsb-release wget software-properties-common --yes
+$sudo apt install wabt --yes
 
 # Initialize Wasmception submodule
 # Check to see if ./wasmception directory exists and is not empty.
