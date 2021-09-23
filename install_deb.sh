@@ -45,8 +45,12 @@ source "$HOME/.cargo/env"
 export PATH="$HOME/.cargo/bin:$PATH"
 
 # Install LLVM build dependencies
-LLVM_VERSION=11
+LLVM_VERSION=12
 $sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" bash $LLVM_VERSION
+
+$sudo update-alternatives --remove-all clang
+$sudo update-alternatives --remove-all clang++
+$sudo update-alternatives --remove-all llvm-config
 $sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
 $sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-$LLVM_VERSION 100
 $sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
