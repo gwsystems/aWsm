@@ -42,8 +42,9 @@ int runtime_main(int argc, char** argv) {
 }
 
 int main(int argc, char* argv[]) {
-    runtime_main(argc, argv);
+    int rc = runtime_main(argc, argv);
     printf("mem use = %d\n", (int)memory_size);
+    return rc;
 }
 
 // What should we tell the child program its UID and GID are?
@@ -72,7 +73,9 @@ int main(int argc, char* argv[]) {
 #define AT_RANDOM        25
 
 // The symbol the binary gives us to init libc
-void wasmf___init_libc(i32 envp, i32 pn);
+WEAK void wasmf___init_libc(i32 envp, i32 pn) {
+    return;
+};
 
 void stub_init() {
     // What program name will we put in the auxiliary vectors
@@ -471,7 +474,7 @@ i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
             i32   len = iov[i].len;
             void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
 
-            printf("%.*s", len, ptr);
+            printf("%.*s", len, (char*)ptr);
             sum += len;
         }
         return sum;

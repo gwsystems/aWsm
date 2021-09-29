@@ -1,5 +1,5 @@
 CC=clang
-OPTFLAGS=-O3 -flto
+OPTFLAGS=-O0 -g
 
 # Assuming to be called from ./tests/wat directory
 ROOT_PATH:=$(shell cd ../.. && realpath .)
@@ -7,20 +7,14 @@ RUNTIME_PATH:=${ROOT_PATH}/runtime
 
 AWSM_CC:=${ROOT_PATH}/target/release/awsm
 
-WASI_SDK_PATH:=${ROOT_PATH}/wasi-sdk
-WASI_SDK_CLANG:=${WASI_SDK_PATH}/bin/clang
-WASI_SDK_SYSROOT:=${WASI_SDK_PATH}/share/wasi-sysroot
-WASI_SDK_FLAGS:=--target=wasm32-wasi -mcpu=mvp -nostartfiles ${OPTFLAGS} --sysroot=${WASI_SDK_SYSROOT}
-WASI_SDK_BACKING:=wasi_sdk_backing.c
+WASM_BACKING:=wasmception_backing.c
 
-WASM_CC:=${WASI_SDK_CLANG}
-WASM_FLAGS:=${WASI_SDK_FLAGS}
-WASM_BACKING:=${WASI_SDK_BACKING}
+RUNTIME_CFILES+=${RUNTIME_PATH}/runtime.c
+RUNTIME_CFILES+=${RUNTIME_PATH}/libc/${WASM_BACKING}
+RUNTIME_CFILES+=${RUNTIME_PATH}/libc/env.c
+RUNTIME_CFILES+=${RUNTIME_PATH}/memory/64bit_nix.c
 
-# Excludes stack-size, as this may vary between apps
-WASM_LINKER_FLAGS:=-Wl,--allow-undefined,--no-threads,--stack-first,--no-entry,--export-all,--export=main,--export=dummy
-
-clean: if_clean args_clean
+clean: if_clean args_clean funcs_clean
 
 # Should work for Linux. Alternate installation options at https://wasmtime.dev/
 .PHONY: install_wasmtime
@@ -76,3 +70,20 @@ args_vm: args.bc
 .PHONY: args_clean
 args_clean:
 	@rm -f args.wasm args.bc args_vm
+
+funcs.wasm: funcs.wat
+	wat2wasm --debug-names $^ -o $@
+	# wat2wasm $^ -o $@
+
+funcs.bc: funcs.wasm
+	${AWSM_CC} $^ -o $@
+
+funcs.ll: funcs.bc
+	llvm-dis-12 $^ -o $@
+
+funcs_vm: ${RUNTIME_CFILES} ./funcs.bc
+	@${CC} -lm ${OPTFLAGS} $^ -o $@
+
+.PHONY: funcs_clean
+funcs_clean:
+	rm -f funcs.bc funcs.ll funcs.wasm funcs_vm

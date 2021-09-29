@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::str;
 
 use wasmparser::ExternalKind;
@@ -11,7 +12,7 @@ use wasmparser::SectionCode;
 use wasmparser::TableType;
 use wasmparser::Type;
 use wasmparser::WasmDecoder;
-use wasmparser::{CustomSectionKind, TypeOrFuncType};
+use wasmparser::{CustomSectionKind, Name, NameSectionReader, TypeOrFuncType};
 
 #[derive(Debug)]
 pub struct WasmModule {
@@ -29,6 +30,7 @@ pub struct WasmModule {
     pub table_initializers: Vec<TableInitializer>,
 
     pub exports: Vec<Export>,
+    pub function_names: HashMap<u32, String>,
 }
 
 #[derive(Clone, Debug)]
@@ -848,12 +850,23 @@ impl WasmModule {
             memories: Vec::new(),
             data_initializers: Vec::new(),
             exports: Vec::new(),
+            function_names: HashMap::new(),
         }
     }
 
     pub fn from_wasm_parser(input_filename: &str, p: &mut Parser) -> WasmModule {
         let mut m = WasmModule::new(input_filename);
         m.process_wasm(p);
+        // Fix Up Names if Optional Names section is present
+        if m.function_names.len() > 0 {
+            for (i, func) in m.functions.iter_mut().enumerate() {
+                if let Function::Implemented { f: _ } = func {
+                    if let Some(name) = m.function_names.get(&(i as u32)) {
+                        func.set_name("wasmf_internal_".to_string() + name);
+                    }
+                }
+            }
+        }
         m
     }
 
@@ -940,11 +953,27 @@ impl WasmModule {
         &mut self,
         p: &mut Parser,
         _: Vec<u8>,
-        _: CustomSectionKind,
+        kind: CustomSectionKind,
     ) -> ProcessState {
         loop {
             match p.read() {
-                &ParserState::SectionRawData(_) => {}
+                &ParserState::SectionRawData(data) => {
+                    if kind == CustomSectionKind::Name {
+                        let res = NameSectionReader::new(data, 0).unwrap();
+                        for name in res {
+                            // Currently limit to function function_names.
+                            // It is not clear how indices for locals work
+                            if let Name::Function(nm) = name.unwrap() {
+                                let mut map = nm.get_map().unwrap();
+                                for _ in 0..map.get_count() {
+                                    let naming = map.read().unwrap();
+                                    self.function_names
+                                        .insert(naming.index, String::from(naming.name));
+                                }
+                            }
+                        }
+                    }
+                }
                 &ParserState::EndSection => return ProcessState::Outer,
                 e => panic!("Have not implemented custom section state {:?}", e),
             }
