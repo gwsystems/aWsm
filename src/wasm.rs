@@ -15,13 +15,23 @@ use wasmparser::WasmDecoder;
 use wasmparser::{CustomSectionKind, Name, NameSectionReader, TypeOrFuncType};
 
 #[derive(Debug)]
+pub struct FunctionNameMap {
+    idx: u32,
+    name: String,
+    locals: HashMap<u32, String>,
+}
+
+#[derive(Debug)]
 pub struct WasmModule {
     pub source_name: String,
     name_counter: u64,
 
     pub types: Vec<FuncType>,
     pub globals: Vec<Global>,
+
+    // The indices of the elements in functions are used as the keys in function_name_maps
     pub functions: Vec<Function>,
+    pub function_name_maps: HashMap<u32, FunctionNameMap>,
 
     pub memories: Vec<MemoryType>,
     pub data_initializers: Vec<DataInitializer>,
@@ -30,7 +40,6 @@ pub struct WasmModule {
     pub table_initializers: Vec<TableInitializer>,
 
     pub exports: Vec<Export>,
-    pub function_names: HashMap<u32, String>,
 }
 
 #[derive(Clone, Debug)]
@@ -850,7 +859,7 @@ impl WasmModule {
             memories: Vec::new(),
             data_initializers: Vec::new(),
             exports: Vec::new(),
-            function_names: HashMap::new(),
+            function_name_maps: HashMap::new(),
         }
     }
 
@@ -858,11 +867,18 @@ impl WasmModule {
         let mut m = WasmModule::new(input_filename);
         m.process_wasm(p);
         // Fix Up Names if Optional Names section is present
-        if m.function_names.len() > 0 {
+        // This assumes that the functions are ordered exactly as in WebAssembly, as
+        // the namespace maps from an integral index to a string.
+        if m.function_name_maps.len() > 0 {
             for (i, func) in m.functions.iter_mut().enumerate() {
                 if let Function::Implemented { f: _ } = func {
-                    if let Some(name) = m.function_names.get(&(i as u32)) {
-                        func.set_name("wasmf_internal_".to_string() + name);
+                    if let Some(function_name_map) = m.function_name_maps.get(&(i as u32)) {
+                        func.set_name("wasmf_internal_".to_string() + &function_name_map.name);
+
+                        // Log Locals
+                        // for (key, value) in &function_name_map.locals {
+                        //     println!("fn idx: {} local idx: {} name: {}", i, key, value);
+                        // }
                     }
                 }
             }
@@ -949,6 +965,51 @@ impl WasmModule {
         }
     }
 
+    /**
+     * Parses the optional name section, which provides human-friendly names
+     * of functions and locals as a debugging aid, and saves to an in-memory
+     * HashMap.
+     */
+    fn process_name_section(&mut self, data: &[u8]) {
+        let res = NameSectionReader::new(data, 0).unwrap();
+        for name in res {
+            match name.unwrap() {
+                Name::Function(nm) => {
+                    let mut map = nm.get_map().unwrap();
+                    for _ in 0..map.get_count() {
+                        let naming = map.read().unwrap();
+                        self.function_name_maps.insert(
+                            naming.index,
+                            FunctionNameMap {
+                                idx: naming.index,
+                                name: String::from(naming.name),
+                                locals: HashMap::new(),
+                            },
+                        );
+                    }
+                }
+                Name::Local(nm) => {
+                    let mut fn_reader = nm.get_function_local_reader().unwrap();
+                    for _ in 0..fn_reader.get_count() {
+                        let fn_locals = fn_reader.read().unwrap();
+                        let mut fn_locals_map = fn_locals.get_map().unwrap();
+                        for _ in 0..fn_locals_map.get_count() {
+                            let local = fn_locals_map.read().unwrap();
+                            let function_name_map = self
+                                .function_name_maps
+                                .get_mut(&fn_locals.func_index)
+                                .unwrap();
+                            function_name_map
+                                .locals
+                                .insert(local.index, String::from(local.name));
+                        }
+                    }
+                }
+                Name::Module(_module_name) => {}
+            }
+        }
+    }
+
     fn process_custom_section(
         &mut self,
         p: &mut Parser,
@@ -959,19 +1020,7 @@ impl WasmModule {
             match p.read() {
                 &ParserState::SectionRawData(data) => {
                     if kind == CustomSectionKind::Name {
-                        let res = NameSectionReader::new(data, 0).unwrap();
-                        for name in res {
-                            // Currently limit to function function_names.
-                            // It is not clear how indices for locals work
-                            if let Name::Function(nm) = name.unwrap() {
-                                let mut map = nm.get_map().unwrap();
-                                for _ in 0..map.get_count() {
-                                    let naming = map.read().unwrap();
-                                    self.function_names
-                                        .insert(naming.index, String::from(naming.name));
-                                }
-                            }
-                        }
+                        self.process_name_section(data);
                     }
                 }
                 &ParserState::EndSection => return ProcessState::Outer,
@@ -1047,6 +1096,12 @@ impl WasmModule {
         }
     }
 
+    /**
+     * Adds the function declarations from the WebAssembly module to the functions
+     * vector. This maintains the same ordering at the source WebAssembly module,
+     * which ensures that the indices of the vector match the indices used in the
+     * name map of the custom Names section.
+     **/
     fn process_function_section(&mut self, p: &mut Parser) -> ProcessState {
         match p.read() {
             &ParserState::FunctionSectionEntry(i) => {
