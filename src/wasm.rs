@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::str;
 
 use wasmparser::ExternalKind;
@@ -32,6 +32,7 @@ pub struct WasmModule {
     // The indices of the elements in functions are used as the keys in function_name_maps
     pub functions: Vec<Function>,
     pub function_name_maps: HashMap<u32, FunctionNameMap>,
+    pub function_names: HashSet<String>,
 
     pub memories: Vec<MemoryType>,
     pub data_initializers: Vec<DataInitializer>,
@@ -860,6 +861,7 @@ impl WasmModule {
             data_initializers: Vec::new(),
             exports: Vec::new(),
             function_name_maps: HashMap::new(),
+            function_names: HashSet::new(),
         }
     }
 
@@ -927,13 +929,13 @@ impl WasmModule {
     }
 
     fn generate_function_name(&mut self) -> String {
-        let result = format!("f_{}", self.name_counter);
+        let result = format!("wasmf_internal_{}", self.name_counter);
         self.name_counter += 1;
         result
     }
 
     fn generate_global_name(&mut self) -> String {
-        let result = format!("g_{}", self.name_counter);
+        let result = format!("wasmg_internal_{}", self.name_counter);
         self.name_counter += 1;
         result
     }
@@ -978,11 +980,19 @@ impl WasmModule {
                     let mut map = nm.get_map().unwrap();
                     for _ in 0..map.get_count() {
                         let naming = map.read().unwrap();
+                        let mut name = String::from(naming.name);
+                        let mut suffix = 0;
+                        while self.function_names.contains(&name) {
+                            suffix = suffix + 1;
+                            name = String::from(naming.name) + "_" + &suffix.to_string();
+                        }
+
+                        self.function_names.insert(name.clone());
                         self.function_name_maps.insert(
                             naming.index,
                             FunctionNameMap {
                                 idx: naming.index,
-                                name: String::from(naming.name),
+                                name: String::from(name),
                                 locals: HashMap::new(),
                             },
                         );
