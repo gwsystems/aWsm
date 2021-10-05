@@ -43,8 +43,8 @@ install_wabt:
 	@./install_wabt.sh
 
 .PHONY: clean
-clean: 
-	@rm -f *.wasm *.bc *_wasmception *_uvwasi *.minimal.out *.ll *.log
+clean:
+	@rm -f *.wasm *.bc *_wasmception *_uvwasi *_minimal *.ll
 
 %.wasm: %.wat
 	@wat2wasm --debug-names $< -o $@

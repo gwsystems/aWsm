@@ -26,19 +26,21 @@ uvwasi-0.0.11/include/wasi_serdes.h: uvwasi-0.0.11
 uvwasi-0.0.11/include/wasi_types.h: uvwasi-0.0.11
 
 # Install Headers from uvwasi. All backings use serdes and types from this library.
-.PHONY: dist/include/wasi
-dist/include/wasi: uvwasi-0.0.11/include/uvwasi.h uvwasi-0.0.11/include/wasi_serdes.h uvwasi-0.0.11/include/wasi_types.h
-	cp -u -t dist/include/ $^
+dist/include/uvwasi.h: uvwasi-0.0.11/include/uvwasi.h
+	cp -u $^ $@
+dist/include/wasi_serdes.h: uvwasi-0.0.11/include/wasi_serdes.h
+	cp -u $^ $@
+dist/include/wasi_types.h: uvwasi-0.0.11/include/wasi_types.h
+	cp -u $^ $@
 
 dist/lib/libuvwasi_a.a: uvwasi-0.0.11
 	mkdir -p dist/lib/
 	mkdir -p dist/include/
-	mv uvwasi-0.0.11 uvwasi
 	cd uvwasi-0.0.11 && mkdir -p out/cmake && cd out/cmake  && cmake ../.. -DBUILD_TESTING=ON && cmake --build . && ctest -C Debug --output-on-failure
 	cp ./uvwasi-0.0.11/out/cmake/libuvwasi_a.a dist/lib/libuvwasi_a.a
 
-.PHONY: libuv.install
-libuv.install: dist/lib/libuvwasi_a.a
+.PHONY: uvwasi.install
+uvwasi.install: dist/lib/libuvwasi_a.a dist/include/uvwasi.h dist/include/wasi_serdes.h dist/include/wasi_types.h
 
 .PHONY: uvwasi.uninstall
 uvwasi.uninstall:
