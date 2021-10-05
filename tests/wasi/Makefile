@@ -1,6 +1,6 @@
 WASMCC=${WASI_SDK_PATH}/bin/clang --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot
 WASMLINKFLAGS=-Wl,--allow-undefined,-z,stack-size=32768,--threads=1
-OPTFLAGS=-O3 -flto
+OPTFLAGS=-O0 -g
 
 # Log all WASI syscalls and arguments to stderr
 # RUNTIME_CFLAGS += -DLOG_WASI
@@ -15,9 +15,12 @@ wasm/%.wasm: c/%.c
 	@mkdir -p wasm
 	${WASMCC} ${WASMLINKFLAGS} ${OPTFLAGS} $< -o $@
 
+%.wasi: %.wasm
+	wasm2wat $^ -o $@
+
 bc/%.bc: wasm/%.wasm
 	@mkdir -p bc
-	../../target/release/awsm  $< -o $@
+	../../target/debug/awsm  $< -o $@
 
 # Using uvwasi backend
 vm/%_vm: bc/%.bc ../../runtime/runtime.c ../../runtime/libc/wasi/wasi_backing.c ../../runtime/libc/wasi/wasi_main.c ../../runtime/libc/wasi/wasi_impl_uvwasi.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c
