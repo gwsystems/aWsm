@@ -157,6 +157,21 @@ impl Function {
         }
     }
 
+    pub fn set_locals_name_map(&mut self, locals_name_map: HashMap<u32, String>) {
+        *self = match *self {
+            Function::Imported { .. } => {
+                panic!("Cannot set the local name of an imported function")
+            }
+            Function::Declared { .. } => {
+                panic!("Malformed wasm, a function was declared but not implemented")
+            }
+            Function::Implemented { ref mut f } => {
+                f.locals_name_map = locals_name_map;
+                Function::Implemented { f: f.clone() }
+            }
+        }
+    }
+
     pub fn get_type(&self) -> &FuncType {
         match self {
             Function::Imported { ty, .. } => &ty,
@@ -201,6 +216,7 @@ pub struct ImplementedFunction {
     pub ty: Option<FuncType>,
     pub ty_index: Option<u32>,
     pub locals: Vec<Type>,
+    pub locals_name_map: HashMap<u32, String>,
     pub code: Vec<Instruction>,
 }
 
@@ -877,10 +893,7 @@ impl WasmModule {
                     if let Some(function_name_map) = m.function_name_maps.get(&(i as u32)) {
                         func.set_name("wasmf_internal_".to_string() + &function_name_map.name);
 
-                        // Log Locals
-                        // for (key, value) in &function_name_map.locals {
-                        //     println!("fn idx: {} local idx: {} name: {}", i, key, value);
-                        // }
+                        func.set_locals_name_map(function_name_map.locals.clone());
                     }
                 }
             }
@@ -1173,6 +1186,7 @@ impl WasmModule {
                     ty: None,
                     ty_index: None,
                     locals: Vec::new(),
+                    locals_name_map: HashMap::new(),
                     code: Vec::new(),
                 })
             }
