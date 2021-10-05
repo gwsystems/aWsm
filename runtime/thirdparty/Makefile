@@ -3,7 +3,7 @@ libuv-1.42.0:
 	tar -xvf v1.42.0.tar.gz
 	rm v1.42.0.tar.gz*
 
-dist/lib/libuv_a.a: 
+dist/lib/libuv_a.a: libuv-1.42.0
 	mkdir -p dist/lib/
 	cd libuv-1.42.0 && mkdir -p build && cd build && cmake .. && cmake --build .
 	cp ./libuv-1.42.0/build/libuv_a.a dist/lib/libuv_a.a
