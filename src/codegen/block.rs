@@ -252,9 +252,12 @@ pub fn compile_block<'a, 'b, 'c>(
             Instruction::Else => {
                 // First terminate the `if` part of the equation, by adding a jump to the termination point
                 // (which will always be the end of the `if`)
-                let mut tt = termination_target.borrow_mut();
-                tt.add_jump(basic_block, &locals, &stack);
-                b.build_br(tt.bb);
+                if !block_terminated {
+                    let mut tt = termination_target.borrow_mut();
+                    tt.add_jump(basic_block, &locals, &stack);
+                    b.build_br(tt.bb);
+                }
+
                 // Fetch the ctx
                 let if_ctx_resolved = if_ctx.as_ref().expect("malformed wasm -- else with no if");
                 // Ensure we don't build a duplicate else
@@ -268,6 +271,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 // Now move us on to the `else` part
                 basic_block = if_ctx_resolved.else_block;
                 b.position_at_end(basic_block);
+                block_terminated = false;
             }
             Instruction::End => {
                 if !block_terminated {
