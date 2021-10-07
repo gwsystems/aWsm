@@ -1,22 +1,27 @@
-CC=clang
-OPTFLAGS=-O0 -g
-
-# Assuming to be called from ./tests/wat directory
 ROOT_PATH:=$(shell cd ../.. && realpath .)
 RUNTIME_PATH:=${ROOT_PATH}/runtime
 
-AWSM_CC:=${ROOT_PATH}/target/release/awsm
-
-WASM_BACKING:=wasmception_backing.c
+CC=clang
+OPTFLAGS=-O3 -flto
+AWSM_CC:=${ROOT_PATH}/target/debug/awsm
 
 RUNTIME_CFILES+=${RUNTIME_PATH}/runtime.c
-RUNTIME_CFILES+=${RUNTIME_PATH}/libc/${WASM_BACKING}
 RUNTIME_CFILES+=${RUNTIME_PATH}/libc/env.c
 RUNTIME_CFILES+=${RUNTIME_PATH}/memory/64bit_nix.c
 
-clean: if_clean args_clean funcs_clean
+WASMCEPTION_RUNTIME_CFILES=${RUNTIME_CFILES} ${RUNTIME_PATH}/libc/wasmception_backing.c
+MINIMAL_CFILES=${RUNTIME_CFILES} ${RUNTIME_PATH}/libc/wasi_sdk_backing.c
+MINIMAL_INCLUDES=-I../../runtime/libc/
 
-# Should work for Linux. Alternate installation options at https://wasmtime.dev/
+.PHONY: wasm
+wasm: $(patsubst %.wat, %.wasm, $(wildcard *.wat))
+
+.PHONY: bc
+bc: $(patsubst %.wat, %.bc, $(wildcard *.wat))
+
+.PHONY: ll
+ll: $(patsubst %.wat, %.ll, $(wildcard *.wat))
+
 .PHONY: install_wasmtime
 install_wasmtime:
 	@curl https://wasmtime.dev/install.sh -sSf | bash
@@ -25,65 +30,28 @@ install_wasmtime:
 install_wabt:
 	@./install_wabt.sh
 
-if.wasm:
-	@wat2wasm if.wat -o if.wasm
+.PHONY: clean
+clean: 
+	@rm -f *.wasm *.bc *_wasmception *_uvwasi *_minimal *.ll
 
-if.bc: if.wasm
-	@RUST_BACKTRACE=1 ${AWSM_CC} ./if.wasm -o ./if.bc
+%.wasm: %.wat
+	# @wat2wasm --debug-names $< -o $@
+	@wat2wasm $< -o $@
 
-.PHONY: if_wasmtime
-if_wasmtime: if.wasm
-	@wasmtime if.wasm
+%.bc: %.wasm
+	${AWSM_CC} $< -o $@
 
-if_vm: if.bc
-	@${CC} -lm ${OPTFLAGS} \
-	./if.bc \
-	${RUNTIME_PATH}/runtime.c \
-	${RUNTIME_PATH}/libc/${WASM_BACKING} \
-	${RUNTIME_PATH}/libc/env.c \
-	${RUNTIME_PATH}/memory/64bit_nix.c \
-	-o ./if_vm
+%.ll: %.bc
+	llvm-dis-12 $< -o $@
 
-.PHONY: if_clean
-if_clean:
-	@rm -f if.wasm if.bc if_vm
+.PHONY: %_wasmtime
+%_wasmtime: %.wasm
+	wasmtime $^
 
-args.wasm: args.wat
-	@wat2wasm args.wat -o args.wasm
+# Using wasmception backend
+%_wasmception: %.bc ${WASMCEPTION_RUNTIME_CFILES}
+	${CC} -lm ${OPTFLAGS} $^ -o $@
 
-.PHONY: args_wasmtime
-args_wasmtime: args.wasm
-	@wasmtime args.wasm arg1 arg2 arg3
-
-args.bc: args.wasm
-	@RUST_BACKTRACE=1 ${AWSM_CC} ./args.wasm -o ./args.bc
-
-args_vm: args.bc
-	@${CC} -lm ${OPTFLAGS} \
-	./args.bc \
-	${RUNTIME_PATH}/runtime.c \
-	${RUNTIME_PATH}/libc/${WASM_BACKING} \
-	${RUNTIME_PATH}/libc/env.c \
-	${RUNTIME_PATH}/memory/64bit_nix.c \
-	-o ./args_vm
-
-.PHONY: args_clean
-args_clean:
-	@rm -f args.wasm args.bc args_vm
-
-funcs.wasm: funcs.wat
-	wat2wasm --debug-names $^ -o $@
-	# wat2wasm $^ -o $@
-
-funcs.bc: funcs.wasm
-	${AWSM_CC} $^ -o $@
-
-funcs.ll: funcs.bc
-	llvm-dis-12 $^ -o $@
-
-funcs_vm: ${RUNTIME_CFILES} ./funcs.bc
-	@${CC} -lm ${OPTFLAGS} $^ -o $@
-
-.PHONY: funcs_clean
-funcs_clean:
-	rm -f funcs.bc funcs.ll funcs.wasm funcs_vm
+# Using minimal WASI-SDK backend
+%_minimal: %.bc ${MINIMAL_CFILES} ../../runtime/thirdparty/dist/include
+	clang -lm ${OPTFLAGS} ${RUNTIME_CFLAGS} ${MINIMAL_INCLUDES} ${MINIMAL_CFILES} $< -o $@
