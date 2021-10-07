@@ -35,8 +35,7 @@ clean:
 	@rm -f *.wasm *.bc *_wasmception *_uvwasi *_minimal *.ll
 
 %.wasm: %.wat
-	# @wat2wasm --debug-names $< -o $@
-	@wat2wasm $< -o $@
+	@wat2wasm --debug-names $< -o $@
 
 %.bc: %.wasm
 	${AWSM_CC} $< -o $@
