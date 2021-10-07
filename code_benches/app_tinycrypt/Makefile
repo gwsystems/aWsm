@@ -66,7 +66,7 @@ else
 	@echo "Building with Wasmception"
 endif
 	@mkdir -p bin
-	${WASM_CC} ${WASM_FLAGS} ${WASM_LINKER_FLAGS} -Wl,-z,stack-size=256 -I. -Wall ../dummy.c *.c -o ./bin/app_tinycrypt.wasm
+	${WASM_CC} ${WASM_FLAGS} ${WASM_LINKER_FLAGS} -I. -Wall ../dummy.c *.c -o ./bin/app_tinycrypt.wasm
 
 # Generate LLVM bitcode with "fast unsafe implementations" disabled
 bin/app_tinycrypt.bc: bin/app_tinycrypt.wasm
