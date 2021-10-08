@@ -137,7 +137,8 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_advise(void* wasi_context, __wa
     return uvwasi_fd_advise((uvwasi_t*)wasi_context, fd, offset, len, advice);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_allocate(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t offset, __wasi_filesize_t len) {
+__wasi_errno_t wasi_snapshot_preview1_backing_fd_allocate(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t offset,
+                                                          __wasi_filesize_t len) {
     return uvwasi_fd_allocate((uvwasi_t*)wasi_context, fd, offset, len);
 }
 
@@ -149,57 +150,68 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_datasync(void* wasi_context, __
     return uvwasi_fd_datasync((uvwasi_t*)wasi_context, fd);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_fdstat_get(void* wasi_context, __wasi_fd_t fd, __wasi_fdstat_t* retptr0) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_fdstat_get(void* wasi_context, __wasi_fd_t fd, __wasi_fdstat_t* retptr0) {
     return uvwasi_fd_fdstat_get((uvwasi_t*)wasi_context, fd, (uvwasi_fdstat_t*)retptr0);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fdstat_set_flags(void* wasi_context, __wasi_fd_t fd, __wasi_fdflags_t flags) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fdstat_set_flags(void* wasi_context, __wasi_fd_t fd, __wasi_fdflags_t flags) {
     return uvwasi_fd_fdstat_set_flags((uvwasi_t*)wasi_context, fd, flags);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd, __wasi_rights_t fs_rights_base,
-                                           __wasi_rights_t fs_rights_inheriting) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd, __wasi_rights_t fs_rights_base,
+                                                 __wasi_rights_t fs_rights_inheriting) {
     return uvwasi_fd_fdstat_set_rights((uvwasi_t*)wasi_context, fd, fs_rights_base, fs_rights_inheriting);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_filestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_filestat_t* retptr0) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_filestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_filestat_t* retptr0) {
     return uvwasi_fd_filestat_get((uvwasi_t*)wasi_context, fd, (uvwasi_filestat_t*)retptr0);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_filestat_set_size(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t size) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_filestat_set_size(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t size) {
     return uvwasi_fd_filestat_set_size((uvwasi_t*)wasi_context, fd, size);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_timestamp_t atim,
-                                            __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_timestamp_t atim,
+                                                  __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags) {
     return uvwasi_fd_filestat_set_times((uvwasi_t*)wasi_context, fd, atim, mtim, fst_flags);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_pread(void* wasi_context, __wasi_fd_t fd, const __wasi_iovec_t* iovs, size_t iovs_len,
-                               __wasi_filesize_t offset, __wasi_size_t* retptr0) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_pread(void* wasi_context, __wasi_fd_t fd, const __wasi_iovec_t* iovs, size_t iovs_len,
+                                        __wasi_filesize_t offset, __wasi_size_t* retptr0) {
     return uvwasi_fd_pread((uvwasi_t*)wasi_context, fd, (uvwasi_iovec_t*)iovs, iovs_len, offset, retptr0);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_prestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_prestat_t* retptr0) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_prestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_prestat_t* retptr0) {
     return uvwasi_fd_prestat_get((uvwasi_t*)wasi_context, fd, (uvwasi_prestat_t*)retptr0);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_prestat_dir_name(void* wasi_context, __wasi_fd_t fd, char* path, __wasi_size_t path_len) {
+__wasi_errno_t wasi_snapshot_preview1_backing_fd_prestat_dir_name(void* wasi_context, __wasi_fd_t fd, char* path,
+                                                                  __wasi_size_t path_len) {
     return uvwasi_fd_prestat_dir_name((uvwasi_t*)wasi_context, fd, path, path_len);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_pwrite(void* wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t* iovs, size_t iovs_len,
-                                __wasi_filesize_t offset, __wasi_size_t* retptr0) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_pwrite(void* wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t* iovs,
+                                         size_t iovs_len, __wasi_filesize_t offset, __wasi_size_t* retptr0) {
     return uvwasi_fd_pwrite((uvwasi_t*)wasi_context, fd, (const uvwasi_ciovec_t*)iovs, iovs_len, offset, retptr0);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_read(void* wasi_context, __wasi_fd_t fd, const __wasi_iovec_t* iovs, size_t iovs_len,
-                              __wasi_size_t* retptr0) {
+__wasi_errno_t wasi_snapshot_preview1_backing_fd_read(void* wasi_context, __wasi_fd_t fd, const __wasi_iovec_t* iovs,
+                                                      size_t iovs_len, __wasi_size_t* retptr0) {
     return uvwasi_fd_read((uvwasi_t*)wasi_context, fd, (const uvwasi_iovec_t*)iovs, iovs_len, retptr0);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_readdir(void* wasi_context, __wasi_fd_t fd, uint8_t* buf, __wasi_size_t buf_len,
-                                 __wasi_dircookie_t cookie, __wasi_size_t* retptr0) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_readdir(void* wasi_context, __wasi_fd_t fd, uint8_t* buf, __wasi_size_t buf_len,
+                                          __wasi_dircookie_t cookie, __wasi_size_t* retptr0) {
     return uvwasi_fd_readdir((uvwasi_t*)wasi_context, fd, buf, buf_len, cookie, retptr0);
 }
 
@@ -207,8 +219,8 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_renumber(void* wasi_context, __
     return uvwasi_fd_renumber((uvwasi_t*)wasi_context, fd, to);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_seek(void* wasi_context, __wasi_fd_t fd, __wasi_filedelta_t offset, __wasi_whence_t whence,
-                              __wasi_filesize_t* retptr0) {
+__wasi_errno_t wasi_snapshot_preview1_backing_fd_seek(void* wasi_context, __wasi_fd_t fd, __wasi_filedelta_t offset,
+                                                      __wasi_whence_t whence, __wasi_filesize_t* retptr0) {
     return uvwasi_fd_seek((uvwasi_t*)wasi_context, fd, offset, whence, retptr0);
 }
 
@@ -220,67 +232,79 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_tell(void* wasi_context, __wasi
     return uvwasi_fd_tell((uvwasi_t*)wasi_context, fd, retptr0);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_write(void* wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t* iovs, size_t iovs_len,
-                               __wasi_size_t* retptr0) {
+__wasi_errno_t wasi_snapshot_preview1_backing_fd_write(void* wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t* iovs,
+                                                       size_t iovs_len, __wasi_size_t* retptr0) {
     return uvwasi_fd_write((uvwasi_t*)wasi_context, fd, (const uvwasi_ciovec_t*)iovs, iovs_len, retptr0);
 }
 
-__wasi_errno_t
-wasi_snapshot_preview1_backing_path_create_directory(void* wasi_context, __wasi_fd_t fd, const char* path, __wasi_size_t path_len) {
+__wasi_errno_t wasi_snapshot_preview1_backing_path_create_directory(void* wasi_context, __wasi_fd_t fd,
+                                                                    const char* path, __wasi_size_t path_len) {
     return uvwasi_path_create_directory((uvwasi_t*)wasi_context, fd, path, path_len);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_path_filestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_lookupflags_t flags,
-                                        const char* path, __wasi_size_t path_len, __wasi_filestat_t* retptr0) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_filestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_lookupflags_t flags,
+                                                 const char* path, __wasi_size_t path_len, __wasi_filestat_t* retptr0) {
     return uvwasi_path_filestat_get((uvwasi_t*)wasi_context, fd, flags, path, path_len, (uvwasi_filestat_t*)retptr0);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_path_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_lookupflags_t flags,
-                                              const char* path, __wasi_size_t path_len, __wasi_timestamp_t atim,
-                                              __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags) {
-    return wasi_snapshot_preview1_backing_path_filestat_set_times((uvwasi_t*)wasi_context, fd, flags, path, path_len, atim, mtim, fst_flags);
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_lookupflags_t flags,
+                                                       const char* path, __wasi_size_t path_len,
+                                                       __wasi_timestamp_t atim, __wasi_timestamp_t mtim,
+                                                       __wasi_fstflags_t fst_flags) {
+    return wasi_snapshot_preview1_backing_path_filestat_set_times((uvwasi_t*)wasi_context, fd, flags, path, path_len,
+                                                                  atim, mtim, fst_flags);
 }
 
 __wasi_errno_t
-wasi_snapshot_preview1_backing_path_link(void* wasi_context, __wasi_fd_t old_fd, __wasi_lookupflags_t old_flags, const char* old_path,
-                 __wasi_size_t old_path_len, __wasi_fd_t new_fd, const char* new_path, __wasi_size_t new_path_len) {
+wasi_snapshot_preview1_backing_path_link(void* wasi_context, __wasi_fd_t old_fd, __wasi_lookupflags_t old_flags,
+                                         const char* old_path, __wasi_size_t old_path_len, __wasi_fd_t new_fd,
+                                         const char* new_path, __wasi_size_t new_path_len) {
     return uvwasi_path_link((uvwasi_t*)wasi_context, old_fd, old_flags, old_path, old_path_len, new_fd, new_path,
                             new_path_len);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_path_open(void* wasi_context, __wasi_fd_t fd, __wasi_lookupflags_t dirflags, const char* path,
-                                __wasi_size_t path_len, __wasi_oflags_t oflags, __wasi_rights_t fs_rights_base,
-                                __wasi_rights_t fs_rights_inheriting, __wasi_fdflags_t fdflags, __wasi_fd_t* retptr0) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_open(void* wasi_context, __wasi_fd_t fd, __wasi_lookupflags_t dirflags,
+                                         const char* path, __wasi_size_t path_len, __wasi_oflags_t oflags,
+                                         __wasi_rights_t fs_rights_base, __wasi_rights_t fs_rights_inheriting,
+                                         __wasi_fdflags_t fdflags, __wasi_fd_t* retptr0) {
     return uvwasi_path_open((uvwasi_t*)wasi_context, fd, dirflags, path, path_len, oflags, fs_rights_base,
                             fs_rights_inheriting, fdflags, (uvwasi_fd_t*)retptr0);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_path_readlink(void* wasi_context, __wasi_fd_t fd, const char* path, __wasi_size_t path_len,
-                                    uint8_t* buf, __wasi_size_t buf_len, __wasi_size_t* retptr0) {
+__wasi_errno_t wasi_snapshot_preview1_backing_path_readlink(void* wasi_context, __wasi_fd_t fd, const char* path,
+                                                            __wasi_size_t path_len, uint8_t* buf, __wasi_size_t buf_len,
+                                                            __wasi_size_t* retptr0) {
     return uvwasi_path_readlink((uvwasi_t*)wasi_context, fd, path, path_len, (char*)buf, buf_len, retptr0);
 }
 
-__wasi_errno_t
-wasi_snapshot_preview1_backing_path_remove_directory(void* wasi_context, __wasi_fd_t fd, const char* path, __wasi_size_t path_len) {
+__wasi_errno_t wasi_snapshot_preview1_backing_path_remove_directory(void* wasi_context, __wasi_fd_t fd,
+                                                                    const char* path, __wasi_size_t path_len) {
     return uvwasi_path_remove_directory((uvwasi_t*)wasi_context, fd, path, path_len);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_path_rename(void* wasi_context, __wasi_fd_t fd, const char* old_path, __wasi_size_t old_path_len,
-                                  __wasi_fd_t new_fd, const char* new_path, __wasi_size_t new_path_len) {
+__wasi_errno_t wasi_snapshot_preview1_backing_path_rename(void* wasi_context, __wasi_fd_t fd, const char* old_path,
+                                                          __wasi_size_t old_path_len, __wasi_fd_t new_fd,
+                                                          const char* new_path, __wasi_size_t new_path_len) {
     return uvwasi_path_rename((uvwasi_t*)wasi_context, fd, old_path, old_path_len, new_fd, new_path, new_path_len);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_path_symlink(void* wasi_context, const char* old_path, __wasi_size_t old_path_len, __wasi_fd_t fd,
-                                   const char* new_path, __wasi_size_t new_path_len) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_symlink(void* wasi_context, const char* old_path, __wasi_size_t old_path_len,
+                                            __wasi_fd_t fd, const char* new_path, __wasi_size_t new_path_len) {
     return uvwasi_path_symlink((uvwasi_t*)wasi_context, old_path, old_path_len, fd, new_path, new_path_len);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_path_unlink_file(void* wasi_context, __wasi_fd_t fd, const char* path, __wasi_size_t path_len) {
+__wasi_errno_t wasi_snapshot_preview1_backing_path_unlink_file(void* wasi_context, __wasi_fd_t fd, const char* path,
+                                                               __wasi_size_t path_len) {
     return uvwasi_path_unlink_file((uvwasi_t*)wasi_context, fd, path, path_len);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_poll_oneoff(void* wasi_context, const __wasi_subscription_t* in, __wasi_event_t* out,
-                                  __wasi_size_t nsubscriptions, __wasi_size_t* retptr0) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_poll_oneoff(void* wasi_context, const __wasi_subscription_t* in, __wasi_event_t* out,
+                                           __wasi_size_t nsubscriptions, __wasi_size_t* retptr0) {
     return uvwasi_poll_oneoff((uvwasi_t*)wasi_context, (uvwasi_subscription_t*)in, (uvwasi_event_t*)out, nsubscriptions,
                               retptr0);
 }
@@ -302,14 +326,17 @@ __wasi_errno_t wasi_snapshot_preview1_backing_random_get(void* wasi_context, uin
     return uvwasi_random_get((uvwasi_t*)wasi_context, buf, buf_len);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_sock_recv(void* wasi_context, __wasi_fd_t fd, const __wasi_iovec_t* ri_data, size_t ri_data_len,
-                                __wasi_riflags_t ri_flags, __wasi_size_t* retptr0, __wasi_roflags_t* retptr1) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_sock_recv(void* wasi_context, __wasi_fd_t fd, const __wasi_iovec_t* ri_data,
+                                         size_t ri_data_len, __wasi_riflags_t ri_flags, __wasi_size_t* retptr0,
+                                         __wasi_roflags_t* retptr1) {
     return uvwasi_sock_recv((uvwasi_t*)wasi_context, fd, (uvwasi_iovec_t*)ri_data, ri_data_len, ri_flags, retptr0,
                             retptr1);
 }
 
-__wasi_errno_t wasi_snapshot_preview1_backing_sock_send(void* wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t* si_data, size_t si_data_len,
-                                __wasi_siflags_t si_flags, __wasi_size_t* retptr0) {
+__wasi_errno_t
+wasi_snapshot_preview1_backing_sock_send(void* wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t* si_data,
+                                         size_t si_data_len, __wasi_siflags_t si_flags, __wasi_size_t* retptr0) {
     return uvwasi_sock_send((uvwasi_t*)wasi_context, fd, (const uvwasi_ciovec_t*)si_data, si_data_len, si_flags,
                             retptr0);
 }
