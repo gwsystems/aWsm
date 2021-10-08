@@ -1671,156 +1671,169 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_advise(void* wasi_context, __wa
  * Force the allocation of space in a file.
  * Note: This is similar to `posix_fallocate` in POSIX.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_allocate(void* wasi_context, __wasi_fd_t fd,
-                                  /**
-                                   * The offset at which to start the allocation.
-                                   */
-                                  __wasi_filesize_t offset,
-                                  /**
-                                   * The length of the area that is allocated.
-                                   */
-                                  __wasi_filesize_t len) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_allocate(void* wasi_context, __wasi_fd_t fd,
+                                           /**
+                                            * The offset at which to start the allocation.
+                                            */
+                                           __wasi_filesize_t offset,
+                                           /**
+                                            * The length of the area that is allocated.
+                                            */
+                                           __wasi_filesize_t len) __attribute__((__warn_unused_result__));
 /**
  * Close a file descriptor.
  * Note: This is similar to `close` in POSIX.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_close(void* wasi_context, __wasi_fd_t fd) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_close(void* wasi_context, __wasi_fd_t fd) __attribute__((__warn_unused_result__));
 /**
  * Synchronize the data of a file to disk.
  * Note: This is similar to `fdatasync` in POSIX.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_datasync(void* wasi_context, __wasi_fd_t fd) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_datasync(void* wasi_context, __wasi_fd_t fd) __attribute__((__warn_unused_result__));
 /**
  * Get the attributes of a file descriptor.
  * Note: This returns similar flags to `fsync(fd, F_GETFL)` in POSIX, as well as additional fields.
  * @return
  * The buffer where the file descriptor's attributes are stored.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_fdstat_get(void* wasi_context, __wasi_fd_t fd, __wasi_fdstat_t* retptr0)
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_fdstat_get(void* wasi_context, __wasi_fd_t fd, __wasi_fdstat_t* retptr0)
   __attribute__((__warn_unused_result__));
 /**
  * Adjust the flags associated with a file descriptor.
  * Note: This is similar to `fcntl(fd, F_SETFL, flags)` in POSIX.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fdstat_set_flags(void* wasi_context, __wasi_fd_t fd,
-                                          /**
-                                           * The desired values of the file descriptor flags.
-                                           */
-                                          __wasi_fdflags_t flags) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fdstat_set_flags(void* wasi_context, __wasi_fd_t fd,
+                                                /**
+                                                 * The desired values of the file descriptor flags.
+                                                 */
+                                                __wasi_fdflags_t flags) __attribute__((__warn_unused_result__));
 /**
  * Adjust the rights associated with a file descriptor.
  * This can only be used to remove rights, and returns `errno::notcapable` if called in a way that would attempt to add
  * rights
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd,
-                                           /**
-                                            * The desired rights of the file descriptor.
-                                            */
-                                           __wasi_rights_t fs_rights_base, __wasi_rights_t fs_rights_inheriting)
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd,
+                                                 /**
+                                                  * The desired rights of the file descriptor.
+                                                  */
+                                                 __wasi_rights_t fs_rights_base, __wasi_rights_t fs_rights_inheriting)
   __attribute__((__warn_unused_result__));
 /**
  * Return the attributes of an open file.
  * @return
  * The buffer where the file's attributes are stored.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_filestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_filestat_t* retptr0)
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_filestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_filestat_t* retptr0)
   __attribute__((__warn_unused_result__));
 /**
  * Adjust the size of an open file. If this increases the file's size, the extra bytes are filled with zeros.
  * Note: This is similar to `ftruncate` in POSIX.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_filestat_set_size(void* wasi_context, __wasi_fd_t fd,
-                                           /**
-                                            * The desired file size.
-                                            */
-                                           __wasi_filesize_t size) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_filestat_set_size(void* wasi_context, __wasi_fd_t fd,
+                                                    /**
+                                                     * The desired file size.
+                                                     */
+                                                    __wasi_filesize_t size) __attribute__((__warn_unused_result__));
 /**
  * Adjust the timestamps of an open file or directory.
  * Note: This is similar to `futimens` in POSIX.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_filestat_set_times(void* wasi_context, __wasi_fd_t fd,
-                                            /**
-                                             * The desired values of the data access timestamp.
-                                             */
-                                            __wasi_timestamp_t atim,
-                                            /**
-                                             * The desired values of the data modification timestamp.
-                                             */
-                                            __wasi_timestamp_t mtim,
-                                            /**
-                                             * A bitmask indicating which timestamps to adjust.
-                                             */
-                                            __wasi_fstflags_t fst_flags) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_filestat_set_times(void* wasi_context, __wasi_fd_t fd,
+                                                  /**
+                                                   * The desired values of the data access timestamp.
+                                                   */
+                                                  __wasi_timestamp_t atim,
+                                                  /**
+                                                   * The desired values of the data modification timestamp.
+                                                   */
+                                                  __wasi_timestamp_t mtim,
+                                                  /**
+                                                   * A bitmask indicating which timestamps to adjust.
+                                                   */
+                                                  __wasi_fstflags_t fst_flags) __attribute__((__warn_unused_result__));
 /**
  * Read from a file descriptor, without using and updating the file descriptor's offset.
  * Note: This is similar to `preadv` in POSIX.
  * @return
  * The number of bytes read.
  */
-__wasi_errno_t
-wasi_snapshot_preview1_backing_fd_pread(void* wasi_context, __wasi_fd_t fd,
-                /**
-                 * List of scatter/gather vectors in which to store data.
-                 */
-                const __wasi_iovec_t* iovs,
-                /**
-                 * The length of the array pointed to by `iovs`.
-                 */
-                size_t iovs_len,
-                /**
-                 * The offset within the file at which to read.
-                 */
-                __wasi_filesize_t offset, __wasi_size_t* retptr0) __attribute__((__warn_unused_result__));
+__wasi_errno_t wasi_snapshot_preview1_backing_fd_pread(void* wasi_context, __wasi_fd_t fd,
+                                                       /**
+                                                        * List of scatter/gather vectors in which to store data.
+                                                        */
+                                                       const __wasi_iovec_t* iovs,
+                                                       /**
+                                                        * The length of the array pointed to by `iovs`.
+                                                        */
+                                                       size_t iovs_len,
+                                                       /**
+                                                        * The offset within the file at which to read.
+                                                        */
+                                                       __wasi_filesize_t offset, __wasi_size_t* retptr0)
+  __attribute__((__warn_unused_result__));
 /**
  * Return a description of the given preopened file descriptor.
  * @return
  * The buffer where the description is stored.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_prestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_prestat_t* retptr0)
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_prestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_prestat_t* retptr0)
   __attribute__((__warn_unused_result__));
 /**
  * Return a description of the given preopened file descriptor.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_prestat_dir_name(void* wasi_context, __wasi_fd_t fd,
-                                          /**
-                                           * A buffer into which to write the preopened directory name.
-                                           */
-                                          char* path, __wasi_size_t path_len) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_prestat_dir_name(void* wasi_context, __wasi_fd_t fd,
+                                                   /**
+                                                    * A buffer into which to write the preopened directory name.
+                                                    */
+                                                   char* path, __wasi_size_t path_len)
+  __attribute__((__warn_unused_result__));
 /**
  * Write to a file descriptor, without using and updating the file descriptor's offset.
  * Note: This is similar to `pwritev` in POSIX.
  * @return
  * The number of bytes written.
  */
-__wasi_errno_t
-wasi_snapshot_preview1_backing_fd_pwrite(void* wasi_context, __wasi_fd_t fd,
-                 /**
-                  * List of scatter/gather vectors from which to retrieve data.
-                  */
-                 const __wasi_ciovec_t* iovs,
-                 /**
-                  * The length of the array pointed to by `iovs`.
-                  */
-                 size_t iovs_len,
-                 /**
-                  * The offset within the file at which to write.
-                  */
-                 __wasi_filesize_t offset, __wasi_size_t* retptr0) __attribute__((__warn_unused_result__));
+__wasi_errno_t wasi_snapshot_preview1_backing_fd_pwrite(void* wasi_context, __wasi_fd_t fd,
+                                                        /**
+                                                         * List of scatter/gather vectors from which to retrieve data.
+                                                         */
+                                                        const __wasi_ciovec_t* iovs,
+                                                        /**
+                                                         * The length of the array pointed to by `iovs`.
+                                                         */
+                                                        size_t iovs_len,
+                                                        /**
+                                                         * The offset within the file at which to write.
+                                                         */
+                                                        __wasi_filesize_t offset, __wasi_size_t* retptr0)
+  __attribute__((__warn_unused_result__));
 /**
  * Read from a file descriptor.
  * Note: This is similar to `readv` in POSIX.
  * @return
  * The number of bytes read.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_read(void* wasi_context, __wasi_fd_t fd,
-                              /**
-                               * List of scatter/gather vectors to which to store data.
-                               */
-                              const __wasi_iovec_t* iovs,
-                              /**
-                               * The length of the array pointed to by `iovs`.
-                               */
-                              size_t iovs_len, __wasi_size_t* retptr0) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_read(void* wasi_context, __wasi_fd_t fd,
+                                       /**
+                                        * List of scatter/gather vectors to which to store data.
+                                        */
+                                       const __wasi_iovec_t* iovs,
+                                       /**
+                                        * The length of the array pointed to by `iovs`.
+                                        */
+                                       size_t iovs_len, __wasi_size_t* retptr0) __attribute__((__warn_unused_result__));
 /**
  * Read directory entries from a directory.
  * When successful, the contents of the output buffer consist of a sequence of
@@ -1835,16 +1848,16 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_read(void* wasi_context, __wasi
  * The number of bytes stored in the read buffer. If less than the size of the read buffer, the end of the directory has
  * been reached.
  */
-__wasi_errno_t
-wasi_snapshot_preview1_backing_fd_readdir(void* wasi_context, __wasi_fd_t fd,
-                  /**
-                   * The buffer where directory entries are stored
-                   */
-                  uint8_t* buf, __wasi_size_t buf_len,
-                  /**
-                   * The location within the directory to start reading
-                   */
-                  __wasi_dircookie_t cookie, __wasi_size_t* retptr0) __attribute__((__warn_unused_result__));
+__wasi_errno_t wasi_snapshot_preview1_backing_fd_readdir(void* wasi_context, __wasi_fd_t fd,
+                                                         /**
+                                                          * The buffer where directory entries are stored
+                                                          */
+                                                         uint8_t* buf, __wasi_size_t buf_len,
+                                                         /**
+                                                          * The location within the directory to start reading
+                                                          */
+                                                         __wasi_dircookie_t cookie, __wasi_size_t* retptr0)
+  __attribute__((__warn_unused_result__));
 /**
  * Atomically replace a file descriptor by renumbering another file descriptor.
  * Due to the strong focus on thread safety, this environment does not provide
@@ -1856,125 +1869,131 @@ wasi_snapshot_preview1_backing_fd_readdir(void* wasi_context, __wasi_fd_t fd,
  * would disappear if `dup2()` were to be removed entirely.
  */
 __wasi_errno_t wasi_snapshot_preview1_backing_fd_renumber(void* wasi_context, __wasi_fd_t fd,
-                                  /**
-                                   * The file descriptor to overwrite.
-                                   */
-                                  __wasi_fd_t to) __attribute__((__warn_unused_result__));
+                                                          /**
+                                                           * The file descriptor to overwrite.
+                                                           */
+                                                          __wasi_fd_t to) __attribute__((__warn_unused_result__));
 /**
  * Move the offset of a file descriptor.
  * Note: This is similar to `lseek` in POSIX.
  * @return
  * The new offset of the file descriptor, relative to the start of the file.
  */
-__wasi_errno_t
-wasi_snapshot_preview1_backing_fd_seek(void* wasi_context, __wasi_fd_t fd,
-               /**
-                * The number of bytes to move.
-                */
-               __wasi_filedelta_t offset,
-               /**
-                * The base from which the offset is relative.
-                */
-               __wasi_whence_t whence, __wasi_filesize_t* retptr0) __attribute__((__warn_unused_result__));
+__wasi_errno_t wasi_snapshot_preview1_backing_fd_seek(void* wasi_context, __wasi_fd_t fd,
+                                                      /**
+                                                       * The number of bytes to move.
+                                                       */
+                                                      __wasi_filedelta_t offset,
+                                                      /**
+                                                       * The base from which the offset is relative.
+                                                       */
+                                                      __wasi_whence_t whence, __wasi_filesize_t* retptr0)
+  __attribute__((__warn_unused_result__));
 /**
  * Synchronize the data and metadata of a file to disk.
  * Note: This is similar to `fsync` in POSIX.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_sync(void* wasi_context, __wasi_fd_t fd) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_sync(void* wasi_context, __wasi_fd_t fd) __attribute__((__warn_unused_result__));
 /**
  * Return the current offset of a file descriptor.
  * Note: This is similar to `lseek(fd, 0, SEEK_CUR)` in POSIX.
  * @return
  * The current offset of the file descriptor, relative to the start of the file.
  */
-__wasi_errno_t
-wasi_snapshot_preview1_backing_fd_tell(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t* retptr0) __attribute__((__warn_unused_result__));
+__wasi_errno_t wasi_snapshot_preview1_backing_fd_tell(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t* retptr0)
+  __attribute__((__warn_unused_result__));
 /**
  * Write to a file descriptor.
  * Note: This is similar to `writev` in POSIX.
  */
 __wasi_errno_t wasi_snapshot_preview1_backing_fd_write(void* wasi_context, __wasi_fd_t fd,
-                               /**
-                                * List of scatter/gather vectors from which to retrieve data.
-                                */
-                               const __wasi_ciovec_t* iovs,
-                               /**
-                                * The length of the array pointed to by `iovs`.
-                                */
-                               size_t iovs_len, __wasi_size_t* retptr0) __attribute__((__warn_unused_result__));
+                                                       /**
+                                                        * List of scatter/gather vectors from which to retrieve data.
+                                                        */
+                                                       const __wasi_ciovec_t* iovs,
+                                                       /**
+                                                        * The length of the array pointed to by `iovs`.
+                                                        */
+                                                       size_t iovs_len, __wasi_size_t* retptr0)
+  __attribute__((__warn_unused_result__));
 /**
  * Create a directory.
  * Note: This is similar to `mkdirat` in POSIX.
  */
-__wasi_errno_t
-wasi_snapshot_preview1_backing_path_create_directory(void* wasi_context, __wasi_fd_t fd,
-                             /**
-                              * The path at which to create the directory.
-                              */
-                             const char* path, __wasi_size_t path_len) __attribute__((__warn_unused_result__));
+__wasi_errno_t wasi_snapshot_preview1_backing_path_create_directory(void* wasi_context, __wasi_fd_t fd,
+                                                                    /**
+                                                                     * The path at which to create the directory.
+                                                                     */
+                                                                    const char* path, __wasi_size_t path_len)
+  __attribute__((__warn_unused_result__));
 /**
  * Return the attributes of a file or directory.
  * Note: This is similar to `stat` in POSIX.
  * @return
  * The buffer where the file's attributes are stored.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_path_filestat_get(void* wasi_context, __wasi_fd_t fd,
-                                        /**
-                                         * Flags determining the method of how the path is resolved.
-                                         */
-                                        __wasi_lookupflags_t flags,
-                                        /**
-                                         * The path of the file or directory to inspect.
-                                         */
-                                        const char* path, __wasi_size_t path_len, __wasi_filestat_t* retptr0)
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_filestat_get(void* wasi_context, __wasi_fd_t fd,
+                                                 /**
+                                                  * Flags determining the method of how the path is resolved.
+                                                  */
+                                                 __wasi_lookupflags_t flags,
+                                                 /**
+                                                  * The path of the file or directory to inspect.
+                                                  */
+                                                 const char* path, __wasi_size_t path_len, __wasi_filestat_t* retptr0)
   __attribute__((__warn_unused_result__));
 /**
  * Adjust the timestamps of a file or directory.
  * Note: This is similar to `utimensat` in POSIX.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_path_filestat_set_times(void* wasi_context, __wasi_fd_t fd,
-                                              /**
-                                               * Flags determining the method of how the path is resolved.
-                                               */
-                                              __wasi_lookupflags_t flags,
-                                              /**
-                                               * The path of the file or directory to operate on.
-                                               */
-                                              const char* path, __wasi_size_t path_len,
-                                              /**
-                                               * The desired values of the data access timestamp.
-                                               */
-                                              __wasi_timestamp_t atim,
-                                              /**
-                                               * The desired values of the data modification timestamp.
-                                               */
-                                              __wasi_timestamp_t mtim,
-                                              /**
-                                               * A bitmask indicating which timestamps to adjust.
-                                               */
-                                              __wasi_fstflags_t fst_flags) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_filestat_set_times(void* wasi_context, __wasi_fd_t fd,
+                                                       /**
+                                                        * Flags determining the method of how the path is resolved.
+                                                        */
+                                                       __wasi_lookupflags_t flags,
+                                                       /**
+                                                        * The path of the file or directory to operate on.
+                                                        */
+                                                       const char* path, __wasi_size_t path_len,
+                                                       /**
+                                                        * The desired values of the data access timestamp.
+                                                        */
+                                                       __wasi_timestamp_t atim,
+                                                       /**
+                                                        * The desired values of the data modification timestamp.
+                                                        */
+                                                       __wasi_timestamp_t mtim,
+                                                       /**
+                                                        * A bitmask indicating which timestamps to adjust.
+                                                        */
+                                                       __wasi_fstflags_t fst_flags)
+  __attribute__((__warn_unused_result__));
 /**
  * Create a hard link.
  * Note: This is similar to `linkat` in POSIX.
  */
 __wasi_errno_t
 wasi_snapshot_preview1_backing_path_link(void* wasi_context, __wasi_fd_t old_fd,
-                 /**
-                  * Flags determining the method of how the path is resolved.
-                  */
-                 __wasi_lookupflags_t old_flags,
-                 /**
-                  * The source path from which to link.
-                  */
-                 const char* old_path, __wasi_size_t old_path_len,
-                 /**
-                  * The working directory at which the resolution of the new path starts.
-                  */
-                 __wasi_fd_t new_fd,
-                 /**
-                  * The destination path at which to create the hard link.
-                  */
-                 const char* new_path, __wasi_size_t new_path_len) __attribute__((__warn_unused_result__));
+                                         /**
+                                          * Flags determining the method of how the path is resolved.
+                                          */
+                                         __wasi_lookupflags_t old_flags,
+                                         /**
+                                          * The source path from which to link.
+                                          */
+                                         const char* old_path, __wasi_size_t old_path_len,
+                                         /**
+                                          * The working directory at which the resolution of the new path starts.
+                                          */
+                                         __wasi_fd_t new_fd,
+                                         /**
+                                          * The destination path at which to create the hard link.
+                                          */
+                                         const char* new_path, __wasi_size_t new_path_len)
+  __attribute__((__warn_unused_result__));
 /**
  * Open a file or directory.
  * The returned file descriptor is not guaranteed to be the lowest-numbered
@@ -1986,139 +2005,144 @@ wasi_snapshot_preview1_backing_path_link(void* wasi_context, __wasi_fd_t old_fd,
  * @return
  * The file descriptor of the file that has been opened.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_path_open(void* wasi_context, __wasi_fd_t fd,
-                                /**
-                                 * Flags determining the method of how the path is resolved.
-                                 */
-                                __wasi_lookupflags_t dirflags,
-                                /**
-                                 * The relative path of the file or directory to open, relative to the
-                                 * `path_open::fd` directory.
-                                 */
-                                const char* path, __wasi_size_t path_len,
-                                /**
-                                 * The method by which to open the file.
-                                 */
-                                __wasi_oflags_t oflags,
-                                /**
-                                 * The initial rights of the newly created file descriptor. The
-                                 * implementation is allowed to return a file descriptor with fewer rights
-                                 * than specified, if and only if those rights do not apply to the type of
-                                 * file being opened.
-                                 * The *base* rights are rights that will apply to operations using the file
-                                 * descriptor itself, while the *inheriting* rights are rights that apply to
-                                 * file descriptors derived from it.
-                                 */
-                                __wasi_rights_t fs_rights_base, __wasi_rights_t fs_rights_inheriting,
-                                __wasi_fdflags_t fdflags, __wasi_fd_t* retptr0) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_open(void* wasi_context, __wasi_fd_t fd,
+                                         /**
+                                          * Flags determining the method of how the path is resolved.
+                                          */
+                                         __wasi_lookupflags_t dirflags,
+                                         /**
+                                          * The relative path of the file or directory to open, relative to the
+                                          * `path_open::fd` directory.
+                                          */
+                                         const char* path, __wasi_size_t path_len,
+                                         /**
+                                          * The method by which to open the file.
+                                          */
+                                         __wasi_oflags_t oflags,
+                                         /**
+                                          * The initial rights of the newly created file descriptor. The
+                                          * implementation is allowed to return a file descriptor with fewer rights
+                                          * than specified, if and only if those rights do not apply to the type of
+                                          * file being opened.
+                                          * The *base* rights are rights that will apply to operations using the file
+                                          * descriptor itself, while the *inheriting* rights are rights that apply to
+                                          * file descriptors derived from it.
+                                          */
+                                         __wasi_rights_t fs_rights_base, __wasi_rights_t fs_rights_inheriting,
+                                         __wasi_fdflags_t fdflags, __wasi_fd_t* retptr0)
+  __attribute__((__warn_unused_result__));
 /**
  * Read the contents of a symbolic link.
  * Note: This is similar to `readlinkat` in POSIX.
  * @return
  * The number of bytes placed in the buffer.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_path_readlink(void* wasi_context, __wasi_fd_t fd,
-                                    /**
-                                     * The path of the symbolic link from which to read.
-                                     */
-                                    const char* path, __wasi_size_t path_len,
-                                    /**
-                                     * The buffer to which to write the contents of the symbolic link.
-                                     */
-                                    uint8_t* buf, __wasi_size_t buf_len, __wasi_size_t* retptr0)
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_readlink(void* wasi_context, __wasi_fd_t fd,
+                                             /**
+                                              * The path of the symbolic link from which to read.
+                                              */
+                                             const char* path, __wasi_size_t path_len,
+                                             /**
+                                              * The buffer to which to write the contents of the symbolic link.
+                                              */
+                                             uint8_t* buf, __wasi_size_t buf_len, __wasi_size_t* retptr0)
   __attribute__((__warn_unused_result__));
 /**
  * Remove a directory.
  * Return `errno::notempty` if the directory is not empty.
  * Note: This is similar to `unlinkat(fd, path, AT_REMOVEDIR)` in POSIX.
  */
-__wasi_errno_t
-wasi_snapshot_preview1_backing_path_remove_directory(void* wasi_context, __wasi_fd_t fd,
-                             /**
-                              * The path to a directory to remove.
-                              */
-                             const char* path, __wasi_size_t path_len) __attribute__((__warn_unused_result__));
+__wasi_errno_t wasi_snapshot_preview1_backing_path_remove_directory(void* wasi_context, __wasi_fd_t fd,
+                                                                    /**
+                                                                     * The path to a directory to remove.
+                                                                     */
+                                                                    const char* path, __wasi_size_t path_len)
+  __attribute__((__warn_unused_result__));
 /**
  * Rename a file or directory.
  * Note: This is similar to `renameat` in POSIX.
  */
 __wasi_errno_t
 wasi_snapshot_preview1_backing_path_rename(void* wasi_context, __wasi_fd_t fd,
-                   /**
-                    * The source path of the file or directory to rename.
-                    */
-                   const char* old_path, __wasi_size_t old_path_len,
-                   /**
-                    * The working directory at which the resolution of the new path starts.
-                    */
-                   __wasi_fd_t new_fd,
-                   /**
-                    * The destination path to which to rename the file or directory.
-                    */
-                   const char* new_path, __wasi_size_t new_path_len) __attribute__((__warn_unused_result__));
+                                           /**
+                                            * The source path of the file or directory to rename.
+                                            */
+                                           const char* old_path, __wasi_size_t old_path_len,
+                                           /**
+                                            * The working directory at which the resolution of the new path starts.
+                                            */
+                                           __wasi_fd_t new_fd,
+                                           /**
+                                            * The destination path to which to rename the file or directory.
+                                            */
+                                           const char* new_path, __wasi_size_t new_path_len)
+  __attribute__((__warn_unused_result__));
 /**
  * Create a symbolic link.
  * Note: This is similar to `symlinkat` in POSIX.
  */
 __wasi_errno_t
 wasi_snapshot_preview1_backing_path_symlink(void* wasi_context,
-                    /**
-                     * The contents of the symbolic link.
-                     */
-                    const char* old_path, __wasi_size_t old_path_len, __wasi_fd_t fd,
-                    /**
-                     * The destination path at which to create the symbolic link.
-                     */
-                    const char* new_path, __wasi_size_t new_path_len) __attribute__((__warn_unused_result__));
+                                            /**
+                                             * The contents of the symbolic link.
+                                             */
+                                            const char* old_path, __wasi_size_t old_path_len, __wasi_fd_t fd,
+                                            /**
+                                             * The destination path at which to create the symbolic link.
+                                             */
+                                            const char* new_path, __wasi_size_t new_path_len)
+  __attribute__((__warn_unused_result__));
 /**
  * Unlink a file.
  * Return `errno::isdir` if the path refers to a directory.
  * Note: This is similar to `unlinkat(fd, path, 0)` in POSIX.
  */
-__wasi_errno_t
-wasi_snapshot_preview1_backing_path_unlink_file(void* wasi_context, __wasi_fd_t fd,
-                        /**
-                         * The path to a file to unlink.
-                         */
-                        const char* path, __wasi_size_t path_len) __attribute__((__warn_unused_result__));
+__wasi_errno_t wasi_snapshot_preview1_backing_path_unlink_file(void* wasi_context, __wasi_fd_t fd,
+                                                               /**
+                                                                * The path to a file to unlink.
+                                                                */
+                                                               const char* path, __wasi_size_t path_len)
+  __attribute__((__warn_unused_result__));
 /**
  * Concurrently poll for the occurrence of a set of events.
  * @return
  * The number of events stored.
  */
-__wasi_errno_t
-wasi_snapshot_preview1_backing_poll_oneoff(void* wasi_context,
-                   /**
-                    * The events to which to subscribe.
-                    */
-                   const __wasi_subscription_t* in,
-                   /**
-                    * The events that have occurred.
-                    */
-                   __wasi_event_t* out,
-                   /**
-                    * Both the number of subscriptions and events.
-                    */
-                   __wasi_size_t nsubscriptions, __wasi_size_t* retptr0) __attribute__((__warn_unused_result__));
+__wasi_errno_t wasi_snapshot_preview1_backing_poll_oneoff(void* wasi_context,
+                                                          /**
+                                                           * The events to which to subscribe.
+                                                           */
+                                                          const __wasi_subscription_t* in,
+                                                          /**
+                                                           * The events that have occurred.
+                                                           */
+                                                          __wasi_event_t* out,
+                                                          /**
+                                                           * Both the number of subscriptions and events.
+                                                           */
+                                                          __wasi_size_t nsubscriptions, __wasi_size_t* retptr0)
+  __attribute__((__warn_unused_result__));
 /**
  * Terminate the process normally. An exit code of 0 indicates successful
  * termination of the program. The meanings of other values is dependent on
  * the environment.
  */
 _Noreturn void wasi_snapshot_preview1_backing_proc_exit(void* wasi_context,
-                                /**
-                                 * The exit code returned by the process.
-                                 */
-                                __wasi_exitcode_t rval);
+                                                        /**
+                                                         * The exit code returned by the process.
+                                                         */
+                                                        __wasi_exitcode_t rval);
 /**
  * Send a signal to the process of the calling thread.
  * Note: This is similar to `raise` in POSIX.
  */
 __wasi_errno_t wasi_snapshot_preview1_backing_proc_raise(void* wasi_context,
-                                 /**
-                                  * The signal condition to trigger.
-                                  */
-                                 __wasi_signal_t sig) __attribute__((__warn_unused_result__));
+                                                         /**
+                                                          * The signal condition to trigger.
+                                                          */
+                                                         __wasi_signal_t sig) __attribute__((__warn_unused_result__));
 /**
  * Temporarily yield execution of the calling thread.
  * Note: This is similar to `sched_yield` in POSIX.
@@ -2132,11 +2156,12 @@ __wasi_errno_t wasi_snapshot_preview1_backing_sched_yield(void* wasi_context) __
  * required, it's advisable to use this function to seed a pseudo-random
  * number generator, rather than to provide the random data directly.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_random_get(void* wasi_context,
-                                 /**
-                                  * The buffer to fill with random data.
-                                  */
-                                 uint8_t* buf, __wasi_size_t buf_len) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_random_get(void* wasi_context,
+                                          /**
+                                           * The buffer to fill with random data.
+                                           */
+                                          uint8_t* buf, __wasi_size_t buf_len) __attribute__((__warn_unused_result__));
 /**
  * Receive a message from a socket.
  * Note: This is similar to `recv` in POSIX, though it also supports reading
@@ -2144,19 +2169,20 @@ __wasi_errno_t wasi_snapshot_preview1_backing_random_get(void* wasi_context,
  * @return
  * Number of bytes stored in ri_data and message flags.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_sock_recv(void* wasi_context, __wasi_fd_t fd,
-                                /**
-                                 * List of scatter/gather vectors to which to store data.
-                                 */
-                                const __wasi_iovec_t* ri_data,
-                                /**
-                                 * The length of the array pointed to by `ri_data`.
-                                 */
-                                size_t ri_data_len,
-                                /**
-                                 * Message flags.
-                                 */
-                                __wasi_riflags_t ri_flags, __wasi_size_t* retptr0, __wasi_roflags_t* retptr1)
+__wasi_errno_t
+wasi_snapshot_preview1_backing_sock_recv(void* wasi_context, __wasi_fd_t fd,
+                                         /**
+                                          * List of scatter/gather vectors to which to store data.
+                                          */
+                                         const __wasi_iovec_t* ri_data,
+                                         /**
+                                          * The length of the array pointed to by `ri_data`.
+                                          */
+                                         size_t ri_data_len,
+                                         /**
+                                          * Message flags.
+                                          */
+                                         __wasi_riflags_t ri_flags, __wasi_size_t* retptr0, __wasi_roflags_t* retptr1)
   __attribute__((__warn_unused_result__));
 /**
  * Send a message on a socket.
@@ -2165,29 +2191,30 @@ __wasi_errno_t wasi_snapshot_preview1_backing_sock_recv(void* wasi_context, __wa
  * @return
  * Number of bytes transmitted.
  */
-__wasi_errno_t
-wasi_snapshot_preview1_backing_sock_send(void* wasi_context, __wasi_fd_t fd,
-                 /**
-                  * List of scatter/gather vectors to which to retrieve data
-                  */
-                 const __wasi_ciovec_t* si_data,
-                 /**
-                  * The length of the array pointed to by `si_data`.
-                  */
-                 size_t si_data_len,
-                 /**
-                  * Message flags.
-                  */
-                 __wasi_siflags_t si_flags, __wasi_size_t* retptr0) __attribute__((__warn_unused_result__));
+__wasi_errno_t wasi_snapshot_preview1_backing_sock_send(void* wasi_context, __wasi_fd_t fd,
+                                                        /**
+                                                         * List of scatter/gather vectors to which to retrieve data
+                                                         */
+                                                        const __wasi_ciovec_t* si_data,
+                                                        /**
+                                                         * The length of the array pointed to by `si_data`.
+                                                         */
+                                                        size_t si_data_len,
+                                                        /**
+                                                         * Message flags.
+                                                         */
+                                                        __wasi_siflags_t si_flags, __wasi_size_t* retptr0)
+  __attribute__((__warn_unused_result__));
 /**
  * Shut down socket send and receive channels.
  * Note: This is similar to `shutdown` in POSIX.
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_sock_shutdown(void* wasi_context, __wasi_fd_t fd,
-                                    /**
-                                     * Which channels on the socket to shut down.
-                                     */
-                                    __wasi_sdflags_t how) __attribute__((__warn_unused_result__));
+__wasi_errno_t
+wasi_snapshot_preview1_backing_sock_shutdown(void* wasi_context, __wasi_fd_t fd,
+                                             /**
+                                              * Which channels on the socket to shut down.
+                                              */
+                                             __wasi_sdflags_t how) __attribute__((__warn_unused_result__));
 /** @} */
 
 #ifdef __cplusplus
