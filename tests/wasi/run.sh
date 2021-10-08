@@ -7,7 +7,7 @@ pushd ./vm || exit 1
 
 declare -a tests_failed=()
 
-./atof_vm.sh || tests_failed+=("atof_vm")
+# ./atof_vm.sh || tests_failed+=("atof_vm")
 ./cant_dotdot_vm || tests_failed+=("cant_dotdot")
 ./clock_getres_vm || tests_failed+=("clock_getres")
 ./create_symlink.sh || tests_failed+=("create_symlink")
