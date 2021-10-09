@@ -1037,7 +1037,7 @@ impl WasmModule {
                     // Extracts the optional label from the module instruction
                     // (module $moduleName).
                     if let Ok(name) = module_name.get_name() {
-                        println!("Module Name: {}", name);
+                        info!("Module Name: {}", name);
                     }
                 }
             }
@@ -1056,30 +1056,30 @@ impl WasmModule {
                 CustomSectionKind::Name => match p.read() {
                     &ParserState::SectionRawData(data) => {
                         if let Err(err) = self.process_name_section(data) {
-                            eprintln!("Error processing name section: {}", err);
+                            error!("Error processing name section: {}", err);
                         };
                     }
                     &ParserState::EndSection => return ProcessState::Outer,
                     e => panic!("Custom Section Parsing Error {:?}", e),
                 },
                 CustomSectionKind::Unknown => {
-                    println!("Skipping Unknown Custom Section");
+                    info!("Skipping Unknown Custom Section");
                 }
                 CustomSectionKind::Producers => {
                     // https://github.com/WebAssembly/tool-conventions/blob/main/ProducersSection.md
-                    println!("Skipping Producers Custom Section");
+                    info!("Skipping Producers Custom Section");
                 }
                 CustomSectionKind::SourceMappingURL => {
                     // https://github.com/WebAssembly/tool-conventions/blob/main/Debugging.md
-                    println!("Skipping Source Mapping URL Custom Section");
+                    info!("Skipping Source Mapping URL Custom Section");
                 }
                 CustomSectionKind::Reloc => {
                     // https://github.com/WebAssembly/tool-conventions/blob/main/Linking.md#relocation-sections
-                    println!("Skipping Relocation Custom Section");
+                    info!("Skipping Relocation Custom Section");
                 }
                 CustomSectionKind::Linking => {
                     // https://github.com/WebAssembly/tool-conventions/blob/main/Linking.md
-                    println!("Skipping Linking Custom Section");
+                    info!("Skipping Linking Custom Section");
                 }
             }
         }
