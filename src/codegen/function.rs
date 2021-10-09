@@ -94,13 +94,12 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
         // was provided by the WebAssembly Name Section
         let arg_cnt = crate::llvm_externs::LLVMCountParams(v_ref);
         for i in 0..arg_cnt {
-            if f.locals_name_map.contains_key(&(i as u32)) {
-                let name =
-                    CString::new(f.locals_name_map.get(&(i as u32)).unwrap().as_str()).unwrap();
+            if let Some(name) = f.locals_name_map.get(&(i as u32)) {
+                let name_cstr = CString::new(name.as_str()).expect("CString::new failed");
                 let param_value = crate::llvm_externs::LLVMGetParam(v_ref, i);
                 crate::llvm_externs::LLVMSetValueName2(
                     param_value,
-                    name.as_ptr(),
+                    name_cstr.as_ptr(),
                     name.as_bytes().len() as isize,
                 )
             }
