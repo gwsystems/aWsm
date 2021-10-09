@@ -1029,7 +1029,14 @@ impl WasmModule {
                         }
                     }
                 }
-                Name::Module(_module_name) => {}
+                Name::Module(module_name) => {
+                    // This is not derived from a file name.
+                    // Extracts the optional label from the module instruction
+                    // (module $moduleName).
+                    if let Ok(name) = module_name.get_name() {
+                        println!("Module Name: {}", name);
+                    }
+                }
             }
         }
     }

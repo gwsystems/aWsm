@@ -1,4 +1,4 @@
-(module
+(module $coolModule
 
 (memory 2)
 (export "memory" (memory 0))
