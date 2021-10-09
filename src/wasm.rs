@@ -980,11 +980,9 @@ impl WasmModule {
         }
     }
 
-    /**
-     * Parses the optional name section, which provides human-friendly names
-     * of functions and locals as a debugging aid, and saves to an in-memory
-     * HashMap.
-     */
+    /// Parses the optional name section, which provides human-friendly names
+    /// of functions and locals as a debugging aid, and saves to an in-memory
+    /// HashMap.
     fn process_name_section(&mut self, data: &[u8]) {
         let res = NameSectionReader::new(data, 0).unwrap();
         for name in res {
@@ -1122,12 +1120,10 @@ impl WasmModule {
         }
     }
 
-    /**
-     * Adds the function declarations from the WebAssembly module to the functions
-     * vector. This maintains the same ordering at the source WebAssembly module,
-     * which ensures that the indices of the vector match the indices used in the
-     * name map of the custom Names section.
-     **/
+    /// Adds the function declarations from the WebAssembly module to the functions
+    /// vector. This maintains the same ordering at the source WebAssembly module,
+    /// which ensures that the indices of the vector match the indices used in the
+    /// name map of the custom Names section.
     fn process_function_section(&mut self, p: &mut Parser) -> ProcessState {
         match p.read() {
             &ParserState::FunctionSectionEntry(i) => {
