@@ -283,7 +283,7 @@ pub fn compile_block<'a, 'b, 'c>(
             }
 
             Instruction::Br { depth } => {
-                if !block_terminated {
+                if block_terminated {
                     continue;
                 }
 
@@ -294,7 +294,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 block_terminated = true;
             }
             Instruction::BrIf { depth } => {
-                if !block_terminated {
+                if block_terminated {
                     continue;
                 }
                 let i32_v = stack.pop().unwrap();
@@ -313,7 +313,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 // BrIf is not exhaustive, so it does not terminate a block, it creates an implicit else block
             }
             Instruction::BrTable { table, default } => {
-                if !block_terminated {
+                if block_terminated {
                     continue;
                 }
                 let switch_value = stack.pop().unwrap();
@@ -363,12 +363,13 @@ pub fn compile_block<'a, 'b, 'c>(
                 block_terminated = true;
             }
             Instruction::Unreachable => {
-                // Can't build two unreachable instructions in a row, so avoid that
-                if !block_terminated {
-                    let trap_call = get_stub_function(m_ctx, TRAP);
-                    b.build_call(trap_call, &[]);
-                    b.build_unreachable();
+                if block_terminated {
+                    continue;
                 }
+
+                let trap_call = get_stub_function(m_ctx, TRAP);
+                b.build_call(trap_call, &[]);
+                b.build_unreachable();
                 block_terminated = true;
             }
 
