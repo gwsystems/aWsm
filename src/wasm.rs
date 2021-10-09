@@ -13,7 +13,7 @@ use wasmparser::SectionCode;
 use wasmparser::TableType;
 use wasmparser::Type;
 use wasmparser::WasmDecoder;
-use wasmparser::{CustomSectionKind, Name, NameSectionReader, TypeOrFuncType};
+use wasmparser::{CustomSectionKind, Name, NameSectionReader, Naming, TypeOrFuncType};
 
 #[derive(Debug)]
 pub struct FunctionNameMap {
@@ -991,20 +991,25 @@ impl WasmModule {
                 Name::Function(nm) => {
                     let mut map = nm.get_map()?;
                     for _ in 0..map.get_count() {
-                        let naming = map.read()?;
-                        let mut name = naming.name.to_string();
+                        let Naming { name, index } = map.read()?;
+
+                        // The function names in a WebAssembly Name Section are not
+                        // guaranteed to be unique. Duplicates occur when compiling
+                        // from languages with function overloading. In order to
+                        // guarantee unique symbols, we append a unique suffix.
                         let mut suffix = 0;
-                        while self.function_names.contains(&name) {
+                        let mut unique_name = name.to_string();
+                        while self.function_names.contains(name) {
                             suffix = suffix + 1;
-                            name = format!("{}_{}", naming.name, suffix);
+                            unique_name = format!("{}_{}", name, suffix);
                         }
 
-                        self.function_names.insert(name.clone());
+                        self.function_names.insert(unique_name.clone());
                         self.function_name_maps.insert(
-                            naming.index,
+                            index,
                             FunctionNameMap {
-                                idx: naming.index,
-                                name: String::from(name),
+                                idx: index,
+                                name: unique_name,
                                 locals: HashMap::new(),
                             },
                         );
