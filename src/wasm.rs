@@ -996,7 +996,7 @@ impl WasmModule {
                         let mut suffix = 0;
                         while self.function_names.contains(&name) {
                             suffix = suffix + 1;
-                            name = String::from(naming.name) + "_" + &suffix.to_string();
+                            name = format!("{}_{}", naming.name, suffix);
                         }
 
                         self.function_names.insert(name.clone());
