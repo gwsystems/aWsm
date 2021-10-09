@@ -992,7 +992,7 @@ impl WasmModule {
                     let mut map = nm.get_map()?;
                     for _ in 0..map.get_count() {
                         let naming = map.read()?;
-                        let mut name = String::from(naming.name);
+                        let mut name = naming.name.to_string();
                         let mut suffix = 0;
                         while self.function_names.contains(&name) {
                             suffix = suffix + 1;
