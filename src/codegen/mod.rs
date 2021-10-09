@@ -127,8 +127,9 @@ pub fn process_to_llvm(
         }
     }
 
-    if let Err(something) = llvm_module.verify() {
-        println!("Debug: {}", something);
+    if let Err(error) = llvm_module.verify() {
+        eprintln!("LLVM Validation Error:\n{}", error);
+        eprintln!("LLVM Module Dump:\n");
         llvm_module.dump();
         exit(1);
     };
