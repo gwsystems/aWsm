@@ -1012,19 +1012,22 @@ impl WasmModule {
                     }
                 }
                 Name::Local(nm) => {
-                    let mut fn_reader = nm.get_function_local_reader().unwrap();
+                    let mut fn_reader = nm
+                        .get_function_local_reader()
+                        .expect("get_function_local_reader failed");
                     for _ in 0..fn_reader.get_count() {
-                        let fn_locals = fn_reader.read().unwrap();
-                        let mut fn_locals_map = fn_locals.get_map().unwrap();
+                        let fn_locals = fn_reader.read().expect("fn_reader read failed");
+                        let mut fn_locals_map =
+                            fn_locals.get_map().expect("fn_local get_map failed");
                         for _ in 0..fn_locals_map.get_count() {
-                            let local = fn_locals_map.read().unwrap();
-                            let function_name_map = self
-                                .function_name_maps
-                                .get_mut(&fn_locals.func_index)
-                                .unwrap();
-                            function_name_map
-                                .locals
-                                .insert(local.index, String::from(local.name));
+                            let local = fn_locals_map.read().expect("fn_locals_map read failed");
+                            if let Some(function_name_map) =
+                                self.function_name_maps.get_mut(&fn_locals.func_index)
+                            {
+                                function_name_map
+                                    .locals
+                                    .insert(local.index, String::from(local.name));
+                            }
                         }
                     }
                 }

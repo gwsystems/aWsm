@@ -283,6 +283,10 @@ pub fn compile_block<'a, 'b, 'c>(
             }
 
             Instruction::Br { depth } => {
+                if !block_terminated {
+                    continue;
+                }
+
                 let index = breakout_stack.len() - 1 - depth as usize;
                 let mut tt = breakout_stack[index].borrow_mut();
                 tt.add_jump(basic_block, &locals, &stack);
@@ -290,6 +294,9 @@ pub fn compile_block<'a, 'b, 'c>(
                 block_terminated = true;
             }
             Instruction::BrIf { depth } => {
+                if !block_terminated {
+                    continue;
+                }
                 let i32_v = stack.pop().unwrap();
                 let v = is_non_zero_i32(m_ctx, b, i32_v);
 
@@ -302,8 +309,13 @@ pub fn compile_block<'a, 'b, 'c>(
 
                 basic_block = else_block;
                 b.position_at_end(basic_block);
+
+                // BrIf is not exhaustive, so it does not terminate a block, it creates an implicit else block
             }
             Instruction::BrTable { table, default } => {
+                if !block_terminated {
+                    continue;
+                }
                 let switch_value = stack.pop().unwrap();
 
                 let mut jumps = Vec::new();
@@ -329,12 +341,22 @@ pub fn compile_block<'a, 'b, 'c>(
                     .borrow()
                     .bb;
                 b.build_switch(switch_value, default_jump, &switch_options);
+
+                // br_table is exhaustive as it has a default brach
+                // if the provided index was not in the table
                 block_terminated = true;
             }
 
             Instruction::Return => {
+                if block_terminated {
+                    continue;
+                }
                 if f_ctx.has_return {
-                    b.build_ret(stack.pop().unwrap());
+                    b.build_ret(
+                        stack
+                            .pop()
+                            .expect("Expected return value, but stack was empty"),
+                    );
                 } else {
                     b.build_ret_void();
                 }
@@ -347,7 +369,6 @@ pub fn compile_block<'a, 'b, 'c>(
                     b.build_call(trap_call, &[]);
                     b.build_unreachable();
                 }
-
                 block_terminated = true;
             }
 

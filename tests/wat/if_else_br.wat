@@ -74,4 +74,33 @@
         i32.const 0
         return
     )
+    (func (export "dummy") return )
+    (func (export "brbr_nop") (result i32)
+        (local i32)
+        (local.set 0 (i32.const 1))
+        block $block_0
+            i32.const 0
+            i32.const 0
+            i32.eq
+            if
+                i32.const 0
+                i32.const 0
+                i32.eq
+                br_if 1
+                br 0
+                ;; unreachable 
+                (br_table $block_0 (local.get 0))
+                br 1 
+                i32.const 1
+                return 
+                return
+            else
+                nop
+            end ;; br 0 breaks here
+            i32.const 1
+            return
+        end ;; br 1 and br_table $block_0 breaks here
+        i32.const 0
+        return
+    )
 )

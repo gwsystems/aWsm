@@ -18,6 +18,12 @@
     i32.mul
 )
 
+(func $partial (param $first i32) (param i32) (result i32)
+    local.get 0
+    local.get 1
+    i32.mul
+)
+
 (func $shouldNotUse (export "main") (result i32)
     call $secretFunc
     call $magicNumber
