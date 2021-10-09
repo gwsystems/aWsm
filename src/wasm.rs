@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::error::Error;
 use std::str;
 
 use wasmparser::ExternalKind;
@@ -983,14 +984,14 @@ impl WasmModule {
     /// Parses the optional name section, which provides human-friendly names
     /// of functions and locals as a debugging aid, and saves to an in-memory
     /// HashMap.
-    fn process_name_section(&mut self, data: &[u8]) {
-        let res = NameSectionReader::new(data, 0).unwrap();
-        for name in res {
-            match name.unwrap() {
+    fn process_name_section(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>> {
+        let reader = NameSectionReader::new(data, 0)?;
+        for name in reader {
+            match name? {
                 Name::Function(nm) => {
-                    let mut map = nm.get_map().unwrap();
+                    let mut map = nm.get_map()?;
                     for _ in 0..map.get_count() {
-                        let naming = map.read().unwrap();
+                        let naming = map.read()?;
                         let mut name = String::from(naming.name);
                         let mut suffix = 0;
                         while self.function_names.contains(&name) {
@@ -1010,15 +1011,12 @@ impl WasmModule {
                     }
                 }
                 Name::Local(nm) => {
-                    let mut fn_reader = nm
-                        .get_function_local_reader()
-                        .expect("get_function_local_reader failed");
+                    let mut fn_reader = nm.get_function_local_reader()?;
                     for _ in 0..fn_reader.get_count() {
-                        let fn_locals = fn_reader.read().expect("fn_reader read failed");
-                        let mut fn_locals_map =
-                            fn_locals.get_map().expect("fn_local get_map failed");
+                        let fn_locals = fn_reader.read()?;
+                        let mut fn_locals_map = fn_locals.get_map()?;
                         for _ in 0..fn_locals_map.get_count() {
-                            let local = fn_locals_map.read().expect("fn_locals_map read failed");
+                            let local = fn_locals_map.read()?;
                             if let Some(function_name_map) =
                                 self.function_name_maps.get_mut(&fn_locals.func_index)
                             {
@@ -1039,6 +1037,7 @@ impl WasmModule {
                 }
             }
         }
+        Ok(())
     }
 
     fn process_custom_section(
@@ -1048,14 +1047,35 @@ impl WasmModule {
         kind: CustomSectionKind,
     ) -> ProcessState {
         loop {
-            match p.read() {
-                &ParserState::SectionRawData(data) => {
-                    if kind == CustomSectionKind::Name {
-                        self.process_name_section(data);
+            match kind {
+                CustomSectionKind::Name => match p.read() {
+                    &ParserState::SectionRawData(data) => {
+                        if let Err(err) = self.process_name_section(data) {
+                            eprintln!("Error processing name section: {}", err);
+                        };
                     }
+                    &ParserState::EndSection => return ProcessState::Outer,
+                    e => panic!("Custom Section Parsing Error {:?}", e),
+                },
+                CustomSectionKind::Unknown => {
+                    println!("Skipping Unknown Custom Section");
                 }
-                &ParserState::EndSection => return ProcessState::Outer,
-                e => panic!("Have not implemented custom section state {:?}", e),
+                CustomSectionKind::Producers => {
+                    // https://github.com/WebAssembly/tool-conventions/blob/main/ProducersSection.md
+                    println!("Skipping Producers Custom Section");
+                }
+                CustomSectionKind::SourceMappingURL => {
+                    // https://github.com/WebAssembly/tool-conventions/blob/main/Debugging.md
+                    println!("Skipping Source Mapping URL Custom Section");
+                }
+                CustomSectionKind::Reloc => {
+                    // https://github.com/WebAssembly/tool-conventions/blob/main/Linking.md#relocation-sections
+                    println!("Skipping Relocation Custom Section");
+                }
+                CustomSectionKind::Linking => {
+                    // https://github.com/WebAssembly/tool-conventions/blob/main/Linking.md
+                    println!("Skipping Linking Custom Section");
+                }
             }
         }
     }
