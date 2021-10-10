@@ -999,7 +999,7 @@ impl WasmModule {
                         // guarantee unique symbols, we append a unique suffix.
                         let mut suffix = 0;
                         let mut unique_name = name.to_string();
-                        while self.function_names.contains(name) {
+                        while self.function_names.contains(&unique_name) {
                             suffix = suffix + 1;
                             unique_name = format!("{}_{}", name, suffix);
                         }
@@ -1052,35 +1052,37 @@ impl WasmModule {
         kind: CustomSectionKind,
     ) -> ProcessState {
         loop {
-            match kind {
-                CustomSectionKind::Name => match p.read() {
-                    &ParserState::SectionRawData(data) => {
-                        if let Err(err) = self.process_name_section(data) {
-                            error!("Error processing name section: {}", err);
-                        };
+            match p.read() {
+                &ParserState::SectionRawData(data) => {
+                    match kind {
+                        CustomSectionKind::Name => {
+                            if let Err(err) = self.process_name_section(data) {
+                                error!("Error processing name section: {}", err);
+                            };
+                        }
+                        CustomSectionKind::Unknown => {
+                            info!("Skipping Unknown Custom Section");
+                        }
+                        CustomSectionKind::Producers => {
+                            // https://github.com/WebAssembly/tool-conventions/blob/main/ProducersSection.md
+                            info!("Skipping Producers Custom Section");
+                        }
+                        CustomSectionKind::SourceMappingURL => {
+                            // https://github.com/WebAssembly/tool-conventions/blob/main/Debugging.md
+                            info!("Skipping Source Mapping URL Custom Section");
+                        }
+                        CustomSectionKind::Reloc => {
+                            // https://github.com/WebAssembly/tool-conventions/blob/main/Linking.md#relocation-sections
+                            info!("Skipping Relocation Custom Section");
+                        }
+                        CustomSectionKind::Linking => {
+                            // https://github.com/WebAssembly/tool-conventions/blob/main/Linking.md
+                            info!("Skipping Linking Custom Section");
+                        }
                     }
-                    &ParserState::EndSection => return ProcessState::Outer,
-                    e => panic!("Custom Section Parsing Error {:?}", e),
-                },
-                CustomSectionKind::Unknown => {
-                    info!("Skipping Unknown Custom Section");
                 }
-                CustomSectionKind::Producers => {
-                    // https://github.com/WebAssembly/tool-conventions/blob/main/ProducersSection.md
-                    info!("Skipping Producers Custom Section");
-                }
-                CustomSectionKind::SourceMappingURL => {
-                    // https://github.com/WebAssembly/tool-conventions/blob/main/Debugging.md
-                    info!("Skipping Source Mapping URL Custom Section");
-                }
-                CustomSectionKind::Reloc => {
-                    // https://github.com/WebAssembly/tool-conventions/blob/main/Linking.md#relocation-sections
-                    info!("Skipping Relocation Custom Section");
-                }
-                CustomSectionKind::Linking => {
-                    // https://github.com/WebAssembly/tool-conventions/blob/main/Linking.md
-                    info!("Skipping Linking Custom Section");
-                }
+                &ParserState::EndSection => return ProcessState::Outer,
+                e => panic!("Custom Section Parsing Error {:?}", e),
             }
         }
     }
