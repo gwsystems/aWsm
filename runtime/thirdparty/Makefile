@@ -26,11 +26,11 @@ ${UVWASI_HEADERS} uvwasi-0.0.11/CMakeLists.txt &:
 
 # Install Headers from uvwasi. All backings use serdes and types from this library.
 dist/include/%.h: uvwasi-0.0.11/include/%.h
+	mkdir -p dist/include/
 	cp -u $^ $@
 
 dist/lib/libuvwasi_a.a: uvwasi-0.0.11/CMakeLists.txt
 	mkdir -p dist/lib/
-	mkdir -p dist/include/
 	cd uvwasi-0.0.11 && mkdir -p out/cmake && cd out/cmake  && cmake ../.. -DBUILD_TESTING=ON && cmake --build . && ctest -C Debug --output-on-failure
 	cp ./uvwasi-0.0.11/out/cmake/libuvwasi_a.a dist/lib/libuvwasi_a.a
 
