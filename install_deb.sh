@@ -2,6 +2,7 @@
 # Installs dependencies, builds aWsm, and places it into your path
 # Be sure to validate the Rust and LLVM install scripts we invoke below!
 
+# CI runs this script as root
 sudo="sudo"
 if [[ $(whoami) == "root" ]]; then
 	sudo=""
@@ -23,27 +24,6 @@ $sudo apt install cmake --yes
 $sudo apt install lsb-release wget software-properties-common --yes
 $sudo apt install wabt --yes
 
-# Initialize Wasmception submodule
-# Check to see if ./wasmception directory exists and is not empty.
-# If not assume user didn't initialize submodules
-if [[ ! -d "./wasmception" ]] || [[ -z "$(ls -A wasmception)" ]]; then
-	git submodule update --init --recursive
-fi
-
-# Build Wasmception from Source
-cd wasmception || exit
-make
-cd .. || exit
-
-# Install Rust
-if [[ -x "$(command -v rustup)" ]]; then
-	rustup update
-else
-	curl https://sh.rustup.rs -sSf | bash -s -- -y
-fi
-source "$HOME/.cargo/env"
-export PATH="$HOME/.cargo/bin:$PATH"
-
 # Install LLVM build dependencies
 LLVM_VERSION=12
 $sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" bash $LLVM_VERSION
@@ -56,10 +36,28 @@ $sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-$L
 $sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
 $sudo apt install libc++-11-dev libc++abi-11-dev --yes
 
+# Install Rust
+if [[ -x "$(command -v rustup)" ]]; then
+	rustup update
+else
+	curl https://sh.rustup.rs -sSf | bash -s -- -y
+fi
+source "$HOME/.cargo/env"
+export PATH="$HOME/.cargo/bin:$PATH"
+
 # Build and install aWsm
 cargo build --release
 $sudo cp -t /usr/bin ./target/release/awsm
 
+# Install Wasmception
+if [[ ! -d "./wasmception" ]] || [[ -z "$(ls -A wasmception)" ]]; then
+	git submodule update --init --recursive
+fi
+cd wasmception || exit
+make
+cd .. || exit
+
+# Install WASI-SDK if WASI_SDK_PATH not already set
 if [[ -n "${WASI_SDK_PATH}" ]] && [[ -x "${WASI_SDK_PATH}/bin/clang" ]]; then
 	echo "wasi-sdk detected"
 else
