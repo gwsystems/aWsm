@@ -35,6 +35,15 @@ export PATH="$HOME/.cargo/bin:$PATH"
 # Build project
 cargo build --release
 
+# Install Wasmception
+if [[ ! -d "./wasmception" ]] || [[ -z "$(ls -A wasmception)" ]]; then
+	git submodule update --init --recursive
+fi
+cd wasmception || exit
+make
+cd .. || exit
+
+# Install WASI-SDK if WASI_SDK_PATH not already set
 if [[ -n "${WASI_SDK_PATH}" ]] && [[ -x "${WASI_SDK_PATH}/bin/clang" ]];; then
 	echo "wasi-sdk detected"
 else
