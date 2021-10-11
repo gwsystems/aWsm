@@ -23,6 +23,12 @@ bc/%.bc: wasm/%.wasm
 	../../target/debug/awsm  $< -o $@
 
 # Using uvwasi backend
+
+../../runtime/thirdparty/dist/lib/libuvwasi_a.a:
+	make -C ../../runtime/thirdparty uvwasi.install
+../../runtime/thirdparty/dist/lib/libuv_a.a:
+	make -C ../../runtime/thirdparty libuv.install
+
 UVWASI_CFILES=../../runtime/runtime.c ../../runtime/libc/wasi/wasi_backing.c ../../runtime/libc/wasi/wasi_main.c ../../runtime/libc/wasi/wasi_impl_uvwasi.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c
 
 UVWASI_LIBS=../../runtime/thirdparty/dist/lib/libuvwasi_a.a ../../runtime/thirdparty/dist/lib/libuv_a.a 
