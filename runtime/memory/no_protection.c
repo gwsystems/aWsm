@@ -10,10 +10,10 @@ void alloc_linear_memory() {
 
 void expand_memory() {
     // max_pages = 0 => no limit
-    assert(max_pages == 0 || (memory_size / WASM_PAGE_SIZE < max_pages));
+    awsm_assert(max_pages == 0 || (memory_size / WASM_PAGE_SIZE < max_pages));
 
     memory = realloc(memory, memory_size + WASM_PAGE_SIZE);
-    assert(memory);
+    awsm_assert(memory);
 
     char* mem_as_chars = memory;
     memset(&mem_as_chars[memory_size], 0, WASM_PAGE_SIZE);

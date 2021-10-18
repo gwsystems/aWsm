@@ -13,10 +13,10 @@ void alloc_linear_memory() {
 
 void expand_memory() {
     // max_pages = 0 => no limit
-    assert(max_pages == 0 || (memory_size / WASM_PAGE_SIZE < max_pages));
+    awsm_assert(max_pages == 0 || (memory_size / WASM_PAGE_SIZE < max_pages));
 
     memory = realloc(memory, memory_size + WASM_PAGE_SIZE);
-    assert(memory);
+    awsm_assert(memory);
 
     char* mem_as_chars = memory;
     memset(&mem_as_chars[memory_size], 0, WASM_PAGE_SIZE);
@@ -37,7 +37,7 @@ i32 instruction_memory_grow(i32 count) {
 }
 
 INLINE void check_bounds(u32 offset, u32 bounds_check) {
-    assert(memory_size > bounds_check && offset <= memory_size - bounds_check);
+    awsm_assert(memory_size > bounds_check && offset <= memory_size - bounds_check);
 }
 
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
@@ -166,11 +166,11 @@ INLINE void set_i64(u32 offset, i64 v) {
 }
 
 INLINE char* get_function_from_table(u32 idx, u32 type_id) {
-    assert(idx < INDIRECT_TABLE_SIZE);
+    awsm_assert(idx < INDIRECT_TABLE_SIZE);
 
     struct indirect_table_entry f = indirect_table[idx];
 
-    assert(f.type_id == type_id && f.func_pointer);
+    awsm_assert(f.type_id == type_id && f.func_pointer);
 
     return f.func_pointer;
 }

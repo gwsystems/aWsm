@@ -38,9 +38,9 @@ uint32_t wasi_snapshot_preview1_args_get(__wasi_size_t argv_retptr, __wasi_size_
     // TODO: const pointer?
     const __wasi_size_t argc          = wasi_context_get_argc(CURRENT_WASI_CONTEXT);
     const __wasi_size_t argv_buf_size = wasi_context_get_argv_buf_size(CURRENT_WASI_CONTEXT);
-    assert(argv_buf_size < 255);
+    awsm_assert(argv_buf_size < 255);
     char** wasi_context_argv = wasi_context_get_argv(CURRENT_WASI_CONTEXT);
-    assert(wasi_context_argv != NULL);
+    awsm_assert(wasi_context_argv != NULL);
 
     /* Check Bounds */
     wasi_serdes_check_bounds(argv_retptr, CURRENT_MEMORY_SIZE, sizeof(__wasi_size_t) * argc);
@@ -1199,7 +1199,7 @@ __attribute__((noreturn)) void wasi_snapshot_preview1_proc_exit(__wasi_exitcode_
 #endif
 
     wasi_snapshot_preview1_backing_proc_exit(CURRENT_WASI_CONTEXT, exitcode);
-    assert(0);
+    awsm_assert(0);
 }
 
 /**
