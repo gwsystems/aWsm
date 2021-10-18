@@ -11,9 +11,40 @@ OPTFLAGS=-O0 -g
 OBJ = $(patsubst c/%.c, vm/%_vm, $(wildcard c/*.c))
 all: ${OBJ}
 
-wasm/%.wasm: c/%.c
+.PRECIOUS: wasm/%_original.wasm
+wasm/%_original.wasm: c/%.c
 	@mkdir -p wasm
 	${WASMCC} ${WASMLINKFLAGS} ${OPTFLAGS} $< -o $@
+
+.PRECIOUS: wasm/%.wasm
+wasm/%.wasm: wasm/%_original.wasm
+	wasm-opt -O2 --no-exit-runtime $< -o $@
+
+wasm/%.wat: wasm/%.wasm
+	wasm-opt --print $< > $@
+
+wasm/%_metrics.txt: wasm/%.wasm
+	wasm-opt --metrics $< >$@
+
+wasm/%_func_metrics.txt: wasm/%.wasm
+	wasm-opt --func-metrics $< >$@
+
+wasm/%_call_graph.dot: wasm/%.wasm
+	wasm-opt --print-call-graph $< >$@
+
+wasm/%_call_graph.svg: wasm/%_call_graph.dot
+	dot -Tsvg $< >$@
+
+debug: wasm/atof_metrics.txt \
+	wasm/atof_original_metrics.txt \
+	wasm/atof_func_metrics.txt \
+	wasm/atof_original_func_metrics.txt \
+	wasm/atof_call_graph.dot \
+	wasm/atof_call_graph.svg \
+	wasm/atof_original_call_graph.dot \
+	wasm/atof_original_call_graph.svg \
+	wasm/atof.wat \
+	wasm/atof_original.wat
 
 %.wasi: %.wasm
 	wasm2wat $^ -o $@
