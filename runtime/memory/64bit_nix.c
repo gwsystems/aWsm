@@ -54,7 +54,7 @@ i32 instruction_memory_grow(i32 count) {
 
 INLINE void check_bounds(u32 offset, u32 bounds_check) {
     // Due to how we setup memory for x86, the virtual memory mechanism will catch the error, if bounds < WASM_PAGE_SIZE
-    assert(bounds_check < WASM_PAGE_SIZE || (memory_size > bounds_check && offset <= memory_size - bounds_check));
+    awsm_assert(bounds_check < WASM_PAGE_SIZE || (memory_size > bounds_check && offset <= memory_size - bounds_check));
 }
 
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
@@ -141,14 +141,14 @@ INLINE void set_i64(u32 offset, i64 v) {
 
 // Table handling functionality
 INLINE char* get_function_from_table(u32 idx, u32 type_id) {
-    assert(idx < INDIRECT_TABLE_SIZE);
+    awsm_assert(idx < INDIRECT_TABLE_SIZE);
 
     struct indirect_table_entry f = indirect_table[idx];
 
     // NOTE: Legacy C applications could fail this check if they typecast function pointers.
     // Additional reference: https://emscripten.org/docs/porting/guidelines/function_pointer_issues.html
-    assert(f.type_id == type_id);
-    assert(f.func_pointer);
+    awsm_assert(f.type_id == type_id);
+    awsm_assert(f.func_pointer);
 
     return f.func_pointer;
 }

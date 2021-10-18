@@ -46,8 +46,8 @@ typedef struct wasi_context_s {
 /* Return abstract handle */
 void* wasi_context_init(wasi_options_t* options) {
     /* TODO: Add default types */
-    assert(options != NULL);
-    assert(options->argv != NULL);
+    awsm_assert(options != NULL);
+    awsm_assert(options->argv != NULL);
 
     wasi_context_t* wasi_context = malloc(sizeof(wasi_context_t));
 
@@ -261,7 +261,7 @@ static __wasi_errno_t wasi_fromerrno(int errno_) {
         default: fprintf(stderr, "wasi_fromerrno unexpectedly received: %s\n", strerror(errno_)); fflush(stderr);
     }
 
-    assert(0);
+    awsm_assert(0);
     return 0;
 }
 
