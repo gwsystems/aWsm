@@ -43,7 +43,7 @@ void* wasi_context_init(wasi_options_t* options) {
 
     /* Initialize the sandbox */
     uvwasi_errno_t err = uvwasi_init(wasi_context, &init_options);
-    assert(err == UVWASI_ESUCCESS);
+    awsm_assert(err == UVWASI_ESUCCESS);
 
     return wasi_context;
 }
@@ -311,7 +311,7 @@ wasi_snapshot_preview1_backing_poll_oneoff(void* wasi_context, const __wasi_subs
 
 _Noreturn void wasi_snapshot_preview1_backing_proc_exit(void* wasi_context, __wasi_exitcode_t rval) {
     uvwasi_proc_exit((uvwasi_t*)wasi_context, rval);
-    assert(0);
+    awsm_assert(0);
 }
 
 __wasi_errno_t wasi_snapshot_preview1_backing_proc_raise(void* wasi_context, __wasi_signal_t sig) {

@@ -338,7 +338,7 @@ int env_a_ctz_64(u64 x) {
 }
 
 void env_a_store(i32 p_off, i32 x) {
-    //    assert(sizeof(i32) == sizeof(volatile int));
+    //    awsm_assert(sizeof(i32) == sizeof(volatile int));
     volatile int* p = get_memory_ptr_void(p_off, sizeof(i32));
     *p              = x;
 }
