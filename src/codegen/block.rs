@@ -252,9 +252,12 @@ pub fn compile_block<'a, 'b, 'c>(
             Instruction::Else => {
                 // First terminate the `if` part of the equation, by adding a jump to the termination point
                 // (which will always be the end of the `if`)
-                let mut tt = termination_target.borrow_mut();
-                tt.add_jump(basic_block, &locals, &stack);
-                b.build_br(tt.bb);
+                if !block_terminated {
+                    let mut tt = termination_target.borrow_mut();
+                    tt.add_jump(basic_block, &locals, &stack);
+                    b.build_br(tt.bb);
+                }
+
                 // Fetch the ctx
                 let if_ctx_resolved = if_ctx.as_ref().expect("malformed wasm -- else with no if");
                 // Ensure we don't build a duplicate else
@@ -268,6 +271,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 // Now move us on to the `else` part
                 basic_block = if_ctx_resolved.else_block;
                 b.position_at_end(basic_block);
+                block_terminated = false;
             }
             Instruction::End => {
                 if !block_terminated {
@@ -279,6 +283,10 @@ pub fn compile_block<'a, 'b, 'c>(
             }
 
             Instruction::Br { depth } => {
+                if block_terminated {
+                    continue;
+                }
+
                 let index = breakout_stack.len() - 1 - depth as usize;
                 let mut tt = breakout_stack[index].borrow_mut();
                 tt.add_jump(basic_block, &locals, &stack);
@@ -286,6 +294,9 @@ pub fn compile_block<'a, 'b, 'c>(
                 block_terminated = true;
             }
             Instruction::BrIf { depth } => {
+                if block_terminated {
+                    continue;
+                }
                 let i32_v = stack.pop().unwrap();
                 let v = is_non_zero_i32(m_ctx, b, i32_v);
 
@@ -298,8 +309,13 @@ pub fn compile_block<'a, 'b, 'c>(
 
                 basic_block = else_block;
                 b.position_at_end(basic_block);
+
+                // BrIf is not exhaustive, so it does not terminate a block, it creates an implicit else block
             }
             Instruction::BrTable { table, default } => {
+                if block_terminated {
+                    continue;
+                }
                 let switch_value = stack.pop().unwrap();
 
                 let mut jumps = Vec::new();
@@ -325,25 +341,35 @@ pub fn compile_block<'a, 'b, 'c>(
                     .borrow()
                     .bb;
                 b.build_switch(switch_value, default_jump, &switch_options);
+
+                // br_table is exhaustive as it has a default brach
+                // if the provided index was not in the table
                 block_terminated = true;
             }
 
             Instruction::Return => {
+                if block_terminated {
+                    continue;
+                }
                 if f_ctx.has_return {
-                    b.build_ret(stack.pop().unwrap());
+                    b.build_ret(
+                        stack
+                            .pop()
+                            .expect("Expected return value, but stack was empty"),
+                    );
                 } else {
                     b.build_ret_void();
                 }
                 block_terminated = true;
             }
             Instruction::Unreachable => {
-                // Can't build two unreachable instructions in a row, so avoid that
-                if !block_terminated {
-                    let trap_call = get_stub_function(m_ctx, TRAP);
-                    b.build_call(trap_call, &[]);
-                    b.build_unreachable();
+                if block_terminated {
+                    continue;
                 }
 
+                let trap_call = get_stub_function(m_ctx, TRAP);
+                b.build_call(trap_call, &[]);
+                b.build_unreachable();
                 block_terminated = true;
             }
 

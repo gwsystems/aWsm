@@ -90,6 +90,21 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
         let v_ref: *mut llvm::ffi::LLVMValue = mem::transmute(llvm_f.to_super() as &Value);
         let llvm_ctx: *mut llvm::ffi::LLVMContext = mem::transmute(ctx.llvm_ctx as &llvm::Context);
 
+        // Set the name of LLVM arguments if useful information
+        // was provided by the WebAssembly Name Section
+        let arg_cnt = crate::llvm_externs::LLVMCountParams(v_ref);
+        for i in 0..arg_cnt {
+            if let Some(name) = f.locals_name_map.get(&(i as u32)) {
+                let name_cstr = CString::new(name.as_str()).expect("CString::new failed");
+                let param_value = crate::llvm_externs::LLVMGetParam(v_ref, i);
+                crate::llvm_externs::LLVMSetValueName2(
+                    param_value,
+                    name_cstr.as_ptr(),
+                    name.as_bytes().len() as isize,
+                )
+            }
+        }
+
         let nounwind = CString::new("nounwind").unwrap();
         let kind = crate::llvm_externs::LLVMGetEnumAttributeKindForName(
             nounwind.as_ptr(),

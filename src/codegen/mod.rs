@@ -1,4 +1,5 @@
 use std::io;
+use std::process::exit;
 
 use llvm::Context as LLVMCtx;
 use llvm::Function as LLVMFunction;
@@ -110,11 +111,12 @@ pub fn process_to_llvm(
     // Which we then need to initialize the data
     generate_memory_initialization_stub(&module_ctx, wasm_module.data_initializers);
 
-    // Assume there is only one relevent table
-    assert_eq!(wasm_module.tables.len(), 1);
-    // TODO: Do some sort of dynamic handling of table size
-    assert!(wasm_module.tables[0].limits.initial <= 1024);
-    assert!(wasm_module.tables[0].limits.maximum.unwrap_or(0) <= 1024);
+    if wasm_module.tables.len() > 0 {
+        // Assume there is at most one relevant table
+        assert_eq!(wasm_module.tables.len(), 1);
+        assert!(wasm_module.tables[0].limits.initial <= 1024);
+        assert!(wasm_module.tables[0].limits.maximum.unwrap_or(0) <= 1024);
+    }
 
     generate_table_initialization_stub(&module_ctx, wasm_module.table_initializers);
 
@@ -125,8 +127,11 @@ pub fn process_to_llvm(
         }
     }
 
-    // TODO: Remove this debugging print
-    //        llvm_module.dump();
-
+    if let Err(error) = llvm_module.verify() {
+        error!("LLVM Validation Error:\n{}", error);
+        error!("LLVM Module Dump:\n");
+        llvm_module.dump();
+        exit(1);
+    };
     llvm_module.write_bitcode(output_path)
 }

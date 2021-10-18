@@ -5,6 +5,8 @@ use llvm::PointerType;
 use llvm::Sub;
 use llvm::Value;
 
+use std::collections::HashMap;
+
 use wasmparser::ResizableLimits;
 
 use crate::wasm::DataInitializer;
@@ -110,6 +112,7 @@ pub fn generate_offset_function<'a>(
             ty: Some(offset_func_type),
             ty_index: None,
             locals: Vec::new(),
+            locals_name_map: HashMap::new(),
             code: offset_expression,
         },
     );

@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+use std::error::Error;
 use std::str;
 
 use wasmparser::ExternalKind;
@@ -11,7 +13,14 @@ use wasmparser::SectionCode;
 use wasmparser::TableType;
 use wasmparser::Type;
 use wasmparser::WasmDecoder;
-use wasmparser::{CustomSectionKind, TypeOrFuncType};
+use wasmparser::{CustomSectionKind, Name, NameSectionReader, Naming, TypeOrFuncType};
+
+#[derive(Debug)]
+pub struct FunctionNameMap {
+    idx: u32,
+    name: String,
+    locals: HashMap<u32, String>,
+}
 
 #[derive(Debug)]
 pub struct WasmModule {
@@ -20,7 +29,11 @@ pub struct WasmModule {
 
     pub types: Vec<FuncType>,
     pub globals: Vec<Global>,
+
+    // The indices of the elements in functions are used as the keys in function_name_maps
     pub functions: Vec<Function>,
+    pub function_name_maps: HashMap<u32, FunctionNameMap>,
+    pub function_names: HashSet<String>,
 
     pub memories: Vec<MemoryType>,
     pub data_initializers: Vec<DataInitializer>,
@@ -145,6 +158,21 @@ impl Function {
         }
     }
 
+    pub fn set_locals_name_map(&mut self, locals_name_map: HashMap<u32, String>) {
+        *self = match *self {
+            Function::Imported { .. } => {
+                panic!("Cannot set the local name of an imported function")
+            }
+            Function::Declared { .. } => {
+                panic!("Malformed wasm, a function was declared but not implemented")
+            }
+            Function::Implemented { ref mut f } => {
+                f.locals_name_map = locals_name_map;
+                Function::Implemented { f: f.clone() }
+            }
+        }
+    }
+
     pub fn get_type(&self) -> &FuncType {
         match self {
             Function::Imported { ty, .. } => &ty,
@@ -189,6 +217,7 @@ pub struct ImplementedFunction {
     pub ty: Option<FuncType>,
     pub ty_index: Option<u32>,
     pub locals: Vec<Type>,
+    pub locals_name_map: HashMap<u32, String>,
     pub code: Vec<Instruction>,
 }
 
@@ -848,12 +877,28 @@ impl WasmModule {
             memories: Vec::new(),
             data_initializers: Vec::new(),
             exports: Vec::new(),
+            function_name_maps: HashMap::new(),
+            function_names: HashSet::new(),
         }
     }
 
     pub fn from_wasm_parser(input_filename: &str, p: &mut Parser) -> WasmModule {
         let mut m = WasmModule::new(input_filename);
         m.process_wasm(p);
+        // Fix Up Names if Optional Names section is present
+        // This assumes that the functions are ordered exactly as in WebAssembly, as
+        // the namespace maps from an integral index to a string.
+        if m.function_name_maps.len() > 0 {
+            for (i, func) in m.functions.iter_mut().enumerate() {
+                if let Function::Implemented { f: _ } = func {
+                    if let Some(function_name_map) = m.function_name_maps.get(&(i as u32)) {
+                        func.set_name("wasmf_internal_".to_string() + &function_name_map.name);
+
+                        func.set_locals_name_map(function_name_map.locals.clone());
+                    }
+                }
+            }
+        }
         m
     }
 
@@ -898,13 +943,13 @@ impl WasmModule {
     }
 
     fn generate_function_name(&mut self) -> String {
-        let result = format!("f_{}", self.name_counter);
+        let result = format!("wasmf_internal_{}", self.name_counter);
         self.name_counter += 1;
         result
     }
 
     fn generate_global_name(&mut self) -> String {
-        let result = format!("g_{}", self.name_counter);
+        let result = format!("wasmg_internal_{}", self.name_counter);
         self.name_counter += 1;
         result
     }
@@ -936,17 +981,108 @@ impl WasmModule {
         }
     }
 
+    /// Parses the optional name section, which provides human-friendly names
+    /// of functions and locals as a debugging aid, and saves to an in-memory
+    /// HashMap.
+    fn process_name_section(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>> {
+        let reader = NameSectionReader::new(data, 0)?;
+        for name in reader {
+            match name? {
+                Name::Function(nm) => {
+                    let mut map = nm.get_map()?;
+                    for _ in 0..map.get_count() {
+                        let Naming { name, index } = map.read()?;
+
+                        // The function names in a WebAssembly Name Section are not
+                        // guaranteed to be unique. Duplicates occur when compiling
+                        // from languages with function overloading. In order to
+                        // guarantee unique symbols, we append a unique suffix.
+                        let mut suffix = 0;
+                        let mut unique_name = name.to_string();
+                        while self.function_names.contains(&unique_name) {
+                            suffix = suffix + 1;
+                            unique_name = format!("{}_{}", name, suffix);
+                        }
+
+                        self.function_names.insert(unique_name.clone());
+                        self.function_name_maps.insert(
+                            index,
+                            FunctionNameMap {
+                                idx: index,
+                                name: unique_name,
+                                locals: HashMap::new(),
+                            },
+                        );
+                    }
+                }
+                Name::Local(nm) => {
+                    let mut fn_reader = nm.get_function_local_reader()?;
+                    for _ in 0..fn_reader.get_count() {
+                        let fn_locals = fn_reader.read()?;
+                        let mut fn_locals_map = fn_locals.get_map()?;
+                        for _ in 0..fn_locals_map.get_count() {
+                            let local = fn_locals_map.read()?;
+                            if let Some(function_name_map) =
+                                self.function_name_maps.get_mut(&fn_locals.func_index)
+                            {
+                                function_name_map
+                                    .locals
+                                    .insert(local.index, String::from(local.name));
+                            }
+                        }
+                    }
+                }
+                Name::Module(module_name) => {
+                    // This is not derived from a file name.
+                    // Extracts the optional label from the module instruction
+                    // (module $moduleName).
+                    if let Ok(name) = module_name.get_name() {
+                        info!("Module Name: {}", name);
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn process_custom_section(
         &mut self,
         p: &mut Parser,
         _: Vec<u8>,
-        _: CustomSectionKind,
+        kind: CustomSectionKind,
     ) -> ProcessState {
         loop {
             match p.read() {
-                &ParserState::SectionRawData(_) => {}
+                &ParserState::SectionRawData(data) => {
+                    match kind {
+                        CustomSectionKind::Name => {
+                            if let Err(err) = self.process_name_section(data) {
+                                error!("Error processing name section: {}", err);
+                            };
+                        }
+                        CustomSectionKind::Unknown => {
+                            info!("Skipping Unknown Custom Section");
+                        }
+                        CustomSectionKind::Producers => {
+                            // https://github.com/WebAssembly/tool-conventions/blob/main/ProducersSection.md
+                            info!("Skipping Producers Custom Section");
+                        }
+                        CustomSectionKind::SourceMappingURL => {
+                            // https://github.com/WebAssembly/tool-conventions/blob/main/Debugging.md
+                            info!("Skipping Source Mapping URL Custom Section");
+                        }
+                        CustomSectionKind::Reloc => {
+                            // https://github.com/WebAssembly/tool-conventions/blob/main/Linking.md#relocation-sections
+                            info!("Skipping Relocation Custom Section");
+                        }
+                        CustomSectionKind::Linking => {
+                            // https://github.com/WebAssembly/tool-conventions/blob/main/Linking.md
+                            info!("Skipping Linking Custom Section");
+                        }
+                    }
+                }
                 &ParserState::EndSection => return ProcessState::Outer,
-                e => panic!("Have not implemented custom section state {:?}", e),
+                e => panic!("Custom Section Parsing Error {:?}", e),
             }
         }
     }
@@ -1018,6 +1154,10 @@ impl WasmModule {
         }
     }
 
+    /// Adds the function declarations from the WebAssembly module to the functions
+    /// vector. This maintains the same ordering at the source WebAssembly module,
+    /// which ensures that the indices of the vector match the indices used in the
+    /// name map of the custom Names section.
     fn process_function_section(&mut self, p: &mut Parser) -> ProcessState {
         match p.read() {
             &ParserState::FunctionSectionEntry(i) => {
@@ -1079,6 +1219,7 @@ impl WasmModule {
                     ty: None,
                     ty_index: None,
                     locals: Vec::new(),
+                    locals_name_map: HashMap::new(),
                     code: Vec::new(),
                 })
             }

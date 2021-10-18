@@ -13,9 +13,16 @@ use llvm::ffi::LLVMValue;
 pub const LLVMAttributeFunctionIndex: c_uint = !0;
 
 pub type LLVMAttributeRef = *mut LLVMAttribute;
+pub type LLVMValueRef = *mut LLVMValue;
 
 extern "C" {
     pub fn LLVMAddAttributeAtIndex(F: *mut LLVMValue, Idx: u32, A: LLVMAttributeRef);
+
+    pub fn LLVMCountParams(F: *mut LLVMValue) -> usize;
+
+    pub fn LLVMGetParam(F: *mut LLVMValue, idx: usize) -> LLVMValueRef;
+
+    pub fn LLVMSetValueName2(F: *mut LLVMValue, Name: *const c_char, NameLen: isize);
 
     pub fn LLVMCreateEnumAttribute(
         C: *mut LLVMContext,
