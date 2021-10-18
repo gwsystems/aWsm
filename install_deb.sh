@@ -36,6 +36,10 @@ $sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-$L
 $sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
 $sudo apt install libc++-11-dev libc++abi-11-dev --yes
 
+# Install Binaryen
+# Clang uses Binaryen's wasm-opt utility to optimize WebAssembly
+sudo apt install binaryen --yes
+
 # Install Rust
 if [[ -x "$(command -v rustup)" ]]; then
 	rustup update
