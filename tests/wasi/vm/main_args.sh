@@ -2,9 +2,8 @@
 
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit
 
-if [[ $(./main_args_vm foo -bar --baz=value) -ne 0 ]]; then
-	echo "Fail!"
-	exit 1
-else
+if ./main_args_vm foo -bar --baz=value; then
 	exit 0
+else
+	exit 1
 fi
