@@ -88,7 +88,7 @@ WASMCEPTION_FLAGS = "--target=wasm32-unknown-unknown-wasm -nostartfiles -O3 -flt
 WASMCEPTION_BACKING = "{RUNTIME_PATH}/libc/wasmception_backing.c".format(RUNTIME_PATH=RUNTIME_PATH)
 WASMCEPTION_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--no-threads,--stack-first,--no-entry,--export-all,--export=main,--export=dummy"
 
-WASI_SDK_PATH = os.environ.get("WASI_SDK_PATH")
+WASI_SDK_PATH = os.environ.get("WASI_SDK_PATH", ROOT_PATH + "/wasi-sdk")
 WASI_SDK_CLANG = WASI_SDK_PATH + "/bin/clang"
 WASI_SDK_SYSROOT = WASI_SDK_PATH + "/share/wasi-sysroot"
 WASI_SDK_FLAGS = "--target=wasm32-wasi -mcpu=mvp -O3 -flto"
