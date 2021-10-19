@@ -47,14 +47,10 @@ uint32_t wasi_snapshot_preview1_args_get(__wasi_size_t argv_retoffset, __wasi_si
         goto done;
     }
 
-    /* Swizzle argv */
-    awsm_assert(wasi_serdes_check_array_bounds(argv_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t, argc));
-    __wasi_size_t* argv_retptr = &CURRENT_MEMORY_BASE[argv_retoffset];
-
-    /* Swizzle argv_buf */
-    const __wasi_size_t argv_buf_size = wasi_context_get_argv_buf_size(CURRENT_WASI_CONTEXT);
-    awsm_assert(wasi_serdes_check_bounds(argv_buf_retoffset, CURRENT_MEMORY_SIZE, argv_buf_size));
-    char* argv_buf_retptr = &CURRENT_MEMORY_BASE[argv_buf_retoffset];
+    __wasi_size_t*      argv_retptr     = (__wasi_size_t*)get_memory_ptr_for_runtime(argv_retoffset,
+                                                                            WASI_SERDES_SIZE_size_t * argc);
+    const __wasi_size_t argv_buf_size   = wasi_context_get_argv_buf_size(CURRENT_WASI_CONTEXT);
+    char*               argv_buf_retptr = get_memory_ptr_for_runtime(argv_buf_retoffset, argv_buf_size);
 
     /* args_get backings return a vector of host pointers. We need a host buffer to store this
      * temporarily before unswizzling and writing to linear memory */
@@ -92,13 +88,9 @@ done:
  * @return status code
  */
 uint32_t wasi_snapshot_preview1_args_sizes_get(__wasi_size_t argc_retoffset, __wasi_size_t argv_buf_len_retoffset) {
-    /* Swizzle argc */
-    awsm_assert(wasi_serdes_check_bounds(argc_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t));
-    __wasi_size_t* argc_retptr = &CURRENT_MEMORY_BASE[argc_retoffset];
-
-    /* Swizzle argv_buf_len */
-    awsm_assert(wasi_serdes_check_bounds(argv_buf_len_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t));
-    __wasi_size_t* argv_buf_len_retptr = &CURRENT_MEMORY_BASE[argv_buf_len_retoffset];
+    __wasi_size_t* argc_retptr = (__wasi_size_t*)get_memory_ptr_for_runtime(argc_retoffset, WASI_SERDES_SIZE_size_t);
+    __wasi_size_t* argv_buf_len_retptr = (__wasi_size_t*)get_memory_ptr_for_runtime(argv_buf_len_retoffset,
+                                                                                    WASI_SERDES_SIZE_size_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_args_sizes_get(CURRENT_WASI_CONTEXT, argc_retptr,
                                                                    argv_buf_len_retptr);
@@ -114,9 +106,8 @@ uint32_t wasi_snapshot_preview1_args_sizes_get(__wasi_size_t argc_retoffset, __w
  * @return status code
  */
 uint32_t wasi_snapshot_preview1_clock_res_get(__wasi_clockid_t id, __wasi_size_t resolution_retoffset) {
-    /* Swizzle resolution */
-    awsm_assert(wasi_serdes_check_bounds(resolution_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_timestamp_t));
-    __wasi_timestamp_t* resolution_retptr = &CURRENT_MEMORY_BASE[resolution_retoffset];
+    __wasi_timestamp_t* resolution_retptr = (__wasi_timestamp_t*)
+      get_memory_ptr_for_runtime(resolution_retoffset, WASI_SERDES_SIZE_timestamp_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_clock_res_get(CURRENT_WASI_CONTEXT, id, resolution_retptr);
 }
@@ -131,9 +122,8 @@ uint32_t wasi_snapshot_preview1_clock_res_get(__wasi_clockid_t id, __wasi_size_t
  */
 uint32_t wasi_snapshot_preview1_clock_time_get(__wasi_clockid_t clock_id, __wasi_timestamp_t precision,
                                                __wasi_size_t time_retoffset) {
-    /* Swizzle time */
-    awsm_assert(wasi_serdes_check_bounds(time_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_timestamp_t));
-    __wasi_timestamp_t* time_retptr = &CURRENT_MEMORY_BASE[time_retoffset];
+    __wasi_timestamp_t* time_retptr = (__wasi_timestamp_t*)get_memory_ptr_for_runtime(time_retoffset,
+                                                                                      WASI_SERDES_SIZE_timestamp_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_clock_time_get(CURRENT_WASI_CONTEXT, clock_id, precision,
                                                                    time_retptr);
@@ -167,20 +157,16 @@ uint32_t wasi_snapshot_preview1_environ_get(__wasi_size_t env_retoffset, __wasi_
         goto done;
     }
 
-    /* Swizzle env */
-    awsm_assert(wasi_serdes_check_array_bounds(env_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t, envc));
-    __wasi_size_t* env_retptr = &CURRENT_MEMORY_BASE[env_retoffset];
-
-    /* Swizzle env_buf */
-    awsm_assert(wasi_serdes_check_bounds(env_buf_retoffset, CURRENT_MEMORY_SIZE, env_buf_size));
-    char* env_buf_retptr = &CURRENT_MEMORY_BASE[env_buf_retoffset];
+    __wasi_size_t* env_retptr     = (__wasi_size_t*)get_memory_ptr_for_runtime(env_retoffset,
+                                                                           WASI_SERDES_SIZE_size_t * envc);
+    char*          env_buf_retptr = get_memory_ptr_for_runtime(env_buf_retoffset, env_buf_size);
 
     rc = wasi_snapshot_preview1_backing_environ_get(CURRENT_WASI_CONTEXT, env_temp, env_buf_retptr);
     if (unlikely(rc != __WASI_ERRNO_SUCCESS)) {
         goto done;
     }
 
-    /* Unswizzle env and write to linear memory*/
+    /* Unswizzle env and write to linear memory */
     for (int i = 0; i < envc; i++) {
         env_retptr[i] = env_buf_retoffset + (uint32_t)(env_temp[i] - env_temp[0]);
     }
@@ -203,13 +189,9 @@ done:
  * @return status code
  */
 uint32_t wasi_snapshot_preview1_environ_sizes_get(__wasi_size_t envc_retoffset, __wasi_size_t env_buf_len_retoffset) {
-    /* Swizzle envc */
-    awsm_assert(wasi_serdes_check_bounds(envc_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t));
-    __wasi_size_t* envc_retptr = &CURRENT_MEMORY_BASE[envc_retoffset];
-
-    /* Swizzle env_buf */
-    awsm_assert(wasi_serdes_check_bounds(env_buf_len_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t));
-    __wasi_size_t* env_buf_len_retptr = &CURRENT_MEMORY_BASE[env_buf_len_retoffset];
+    __wasi_size_t* envc_retptr = (__wasi_size_t*)get_memory_ptr_for_runtime(envc_retoffset, WASI_SERDES_SIZE_size_t);
+    __wasi_size_t* env_buf_len_retptr = (__wasi_size_t*)get_memory_ptr_for_runtime(env_buf_len_retoffset,
+                                                                                   WASI_SERDES_SIZE_size_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_environ_sizes_get(CURRENT_WASI_CONTEXT, envc_retptr,
                                                                       env_buf_len_retptr);
@@ -220,12 +202,12 @@ uint32_t wasi_snapshot_preview1_environ_sizes_get(__wasi_size_t envc_retoffset, 
  * Note: similar to `posix_fadvise` in POSIX
  *
  * @param fd
- * @param offset The offset within the file to which the advisory applies.
+ * @param file_offset The offset within the file to which the advisory applies.
  * @param len The length of the region to which the advisory applies.
  * @param advice
  * @return status code
  */
-uint32_t wasi_snapshot_preview1_fd_advise(__wasi_fd_t fd, __wasi_filesize_t offset, __wasi_filesize_t len,
+uint32_t wasi_snapshot_preview1_fd_advise(__wasi_fd_t fd, __wasi_filesize_t file_offset, __wasi_filesize_t len,
                                           uint32_t advice_extended) {
     __wasi_errno_t rc = 0;
 
@@ -236,7 +218,7 @@ uint32_t wasi_snapshot_preview1_fd_advise(__wasi_fd_t fd, __wasi_filesize_t offs
     }
     __wasi_advice_t advice = (__wasi_advice_t)advice_extended;
 
-    rc = wasi_snapshot_preview1_backing_fd_advise(CURRENT_WASI_CONTEXT, fd, offset, len, advice);
+    rc = wasi_snapshot_preview1_backing_fd_advise(CURRENT_WASI_CONTEXT, fd, file_offset, len, advice);
 
 done:
     return (uint32_t)rc;
@@ -282,9 +264,8 @@ uint32_t wasi_snapshot_preview1_fd_datasync(__wasi_fd_t fd) {
  * @return status code
  */
 uint32_t wasi_snapshot_preview1_fd_fdstat_get(__wasi_fd_t fd, __wasi_size_t fdstat_retoffset) {
-    /* Swizzle fdstat */
-    awsm_assert(wasi_serdes_check_bounds(fdstat_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_fdstat_t));
-    __wasi_fdstat_t* fdstat_retptr = &CURRENT_MEMORY_BASE[fdstat_retoffset];
+    __wasi_fdstat_t* fdstat_retptr = (__wasi_fdstat_t*)get_memory_ptr_for_runtime(fdstat_retoffset,
+                                                                                  WASI_SERDES_SIZE_fdstat_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_fd_fdstat_get(CURRENT_WASI_CONTEXT, fd, fdstat_retptr);
 }
@@ -336,9 +317,8 @@ uint32_t wasi_snapshot_preview1_fd_fdstat_set_rights(__wasi_fd_t fd, __wasi_righ
  * @return status code
  */
 uint32_t wasi_snapshot_preview1_fd_filestat_get(__wasi_fd_t fd, __wasi_size_t filestat_retoffset) {
-    /* Swizzle filestat */
-    awsm_assert(wasi_serdes_check_bounds(filestat_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_filestat_t));
-    __wasi_filestat_t* filestat_retptr = &CURRENT_MEMORY_BASE[filestat_retoffset];
+    __wasi_filestat_t* filestat_retptr = (__wasi_filestat_t*)get_memory_ptr_for_runtime(filestat_retoffset,
+                                                                                        WASI_SERDES_SIZE_filestat_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_fd_filestat_get(CURRENT_WASI_CONTEXT, fd, filestat_retptr);
 }
@@ -392,15 +372,11 @@ done:
  */
 uint32_t wasi_snapshot_preview1_fd_pread(__wasi_fd_t fd, __wasi_size_t iovs_baseoffset, __wasi_size_t iovs_len,
                                          __wasi_filesize_t offset, __wasi_size_t nread_retoffset) {
-    __wasi_errno_t rc = 0;
-
-    /* Swizzle nread */
-    awsm_assert(wasi_serdes_check_bounds(nread_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t));
-    __wasi_size_t* nread_retptr = &CURRENT_MEMORY_BASE[nread_retoffset];
+    __wasi_errno_t rc           = 0;
+    __wasi_size_t* nread_retptr = (__wasi_size_t*)get_memory_ptr_for_runtime(nread_retoffset, WASI_SERDES_SIZE_size_t);
 
     /* Swizzle iovs vector, saving to temp buffer */
-    awsm_assert(
-      wasi_serdes_check_array_bounds(iovs_baseoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_iovec_t, iovs_len));
+    check_bounds(iovs_baseoffset, WASI_SERDES_SIZE_iovec_t * iovs_len);
     __wasi_iovec_t* iovs_baseptr = calloc(iovs_len, sizeof(__wasi_iovec_t));
     if (unlikely(iovs_baseptr == NULL)) {
         goto done;
@@ -430,9 +406,8 @@ done:
  * @return status code
  */
 uint32_t wasi_snapshot_preview1_fd_prestat_get(__wasi_fd_t fd, __wasi_size_t prestat_retoffset) {
-    /* Swizzle prestat */
-    awsm_assert(wasi_serdes_check_bounds(prestat_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_prestat_t));
-    __wasi_prestat_t* prestat_retptr = &CURRENT_MEMORY_BASE[prestat_retoffset];
+    __wasi_prestat_t* prestat_retptr = (__wasi_prestat_t*)get_memory_ptr_for_runtime(prestat_retoffset,
+                                                                                     WASI_SERDES_SIZE_prestat_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_fd_prestat_get(CURRENT_WASI_CONTEXT, fd, prestat_retptr);
 }
@@ -447,9 +422,7 @@ uint32_t wasi_snapshot_preview1_fd_prestat_get(__wasi_fd_t fd, __wasi_size_t pre
  */
 uint32_t
 wasi_snapshot_preview1_fd_prestat_dir_name(__wasi_fd_t fd, __wasi_size_t dirname_retoffset, __wasi_size_t dirname_len) {
-    /* Swizzle dirname */
-    awsm_assert(wasi_serdes_check_bounds(dirname_retoffset, CURRENT_MEMORY_SIZE, dirname_len));
-    char* dirname_retptr = &CURRENT_MEMORY_BASE[dirname_retoffset];
+    char* dirname_retptr = get_memory_ptr_for_runtime(dirname_retoffset, dirname_len);
 
     return (uint32_t)wasi_snapshot_preview1_backing_fd_prestat_dir_name(CURRENT_WASI_CONTEXT, fd, dirname_retptr,
                                                                         dirname_len);
@@ -468,14 +441,12 @@ wasi_snapshot_preview1_fd_prestat_dir_name(__wasi_fd_t fd, __wasi_size_t dirname
  */
 uint32_t wasi_snapshot_preview1_fd_pwrite(__wasi_fd_t fd, __wasi_size_t iovs_baseoffset, __wasi_size_t iovs_len,
                                           __wasi_filesize_t file_offset, __wasi_size_t nwritten_retoffset) {
-    __wasi_errno_t rc = 0;
-
-    /* Swizzle nwritten */
-    awsm_assert(wasi_serdes_check_bounds(nwritten_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t));
-    __wasi_size_t* nwritten_retptr = &CURRENT_MEMORY_BASE[nwritten_retoffset];
+    __wasi_errno_t rc              = 0;
+    __wasi_size_t* nwritten_retptr = (__wasi_size_t*)get_memory_ptr_for_runtime(nwritten_retoffset,
+                                                                                WASI_SERDES_SIZE_size_t);
 
     /* Swizzle iovs, writting to temp buffer */
-    awsm_assert(wasi_serdes_check_bounds(iovs_baseoffset, CURRENT_MEMORY_SIZE, iovs_len * WASI_SERDES_SIZE_ciovec_t));
+    check_bounds(iovs_baseoffset, iovs_len * WASI_SERDES_SIZE_ciovec_t);
     __wasi_ciovec_t* iovs_baseptr = calloc(iovs_len, sizeof(__wasi_ciovec_t));
     if (unlikely(iovs_baseptr == NULL)) {
         goto done;
@@ -509,15 +480,11 @@ done:
  */
 uint32_t wasi_snapshot_preview1_fd_read(__wasi_fd_t fd, __wasi_size_t iovs_baseoffset, __wasi_size_t iovs_len,
                                         __wasi_size_t nread_retoffset) {
-    __wasi_errno_t rc = 0;
-
-    /* Swizzle nread */
-    awsm_assert(wasi_serdes_check_bounds(nread_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t));
-    __wasi_size_t* nread_retptr = &CURRENT_MEMORY_BASE[nread_retoffset];
+    __wasi_errno_t rc           = 0;
+    __wasi_size_t* nread_retptr = (__wasi_size_t*)get_memory_ptr_for_runtime(nread_retoffset, WASI_SERDES_SIZE_size_t);
 
     /* Swizzle iovs, writting to temp buffer */
-    awsm_assert(
-      wasi_serdes_check_array_bounds(iovs_baseoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_iovec_t, iovs_len));
+    check_bounds(iovs_baseoffset, WASI_SERDES_SIZE_iovec_t * iovs_len);
     __wasi_iovec_t* iovs_baseptr = calloc(iovs_len, sizeof(__wasi_iovec_t));
     if (unlikely(iovs_baseptr == NULL)) {
         goto done;
@@ -558,13 +525,8 @@ done:
  */
 uint32_t wasi_snapshot_preview1_fd_readdir(__wasi_fd_t fd, __wasi_size_t buf_baseoffset, __wasi_size_t buf_len,
                                            __wasi_dircookie_t cookie, __wasi_size_t nread_retoffset) {
-    /* Swizzle buf */
-    awsm_assert(wasi_serdes_check_bounds(buf_baseoffset, CURRENT_MEMORY_SIZE, buf_len));
-    uint8_t* buf_baseptr = &CURRENT_MEMORY_BASE[buf_baseoffset];
-
-    /* Swizzle nread */
-    awsm_assert(wasi_serdes_check_bounds(nread_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t));
-    __wasi_size_t* nread_retptr = &CURRENT_MEMORY_BASE[nread_retoffset];
+    uint8_t*       buf_baseptr  = (uint8_t*)get_memory_ptr_for_runtime(buf_baseoffset, buf_len);
+    __wasi_size_t* nread_retptr = (__wasi_size_t*)get_memory_ptr_for_runtime(nread_retoffset, WASI_SERDES_SIZE_size_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_fd_readdir(CURRENT_WASI_CONTEXT, fd, buf_baseptr, buf_len, cookie,
                                                                nread_retptr);
@@ -608,9 +570,8 @@ uint32_t wasi_snapshot_preview1_fd_seek(__wasi_fd_t fd, __wasi_filedelta_t file_
     }
     __wasi_whence_t whence = (__wasi_whence_t)whence_extended;
 
-    /* Swizzle newoffset */
-    awsm_assert(wasi_serdes_check_bounds(newoffset_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_filesize_t));
-    __wasi_filesize_t* newoffset_retptr = &CURRENT_MEMORY_BASE[newoffset_retoffset];
+    __wasi_filesize_t* newoffset_retptr = (__wasi_filesize_t*)get_memory_ptr_for_runtime(newoffset_retoffset,
+                                                                                         WASI_SERDES_SIZE_filesize_t);
 
     rc = wasi_snapshot_preview1_backing_fd_seek(CURRENT_WASI_CONTEXT, fd, file_offset, whence, newoffset_retptr);
 
@@ -636,9 +597,8 @@ uint32_t wasi_snapshot_preview1_fd_sync(__wasi_fd_t fd) {
  * @return status code
  */
 uint32_t wasi_snapshot_preview1_fd_tell(__wasi_fd_t fd, __wasi_size_t fileoffset_retoffset) {
-    /* Swizzle fileoffset */
-    awsm_assert(wasi_serdes_check_bounds(fileoffset_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_filesize_t));
-    __wasi_filesize_t* fileoffset_retptr = &CURRENT_MEMORY_BASE[fileoffset_retoffset];
+    __wasi_filesize_t* fileoffset_retptr = (__wasi_filesize_t*)get_memory_ptr_for_runtime(fileoffset_retoffset,
+                                                                                          WASI_SERDES_SIZE_filesize_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_fd_tell(CURRENT_WASI_CONTEXT, fd, fileoffset_retptr);
 }
@@ -655,15 +615,12 @@ uint32_t wasi_snapshot_preview1_fd_tell(__wasi_fd_t fd, __wasi_size_t fileoffset
  */
 uint32_t wasi_snapshot_preview1_fd_write(__wasi_fd_t fd, __wasi_size_t iovs_baseoffset, __wasi_size_t iovs_len,
                                          __wasi_size_t nwritten_retoffset) {
-    __wasi_errno_t rc = 0;
-
-    /* Swizzle nwritten */
-    awsm_assert(wasi_serdes_check_bounds(nwritten_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t));
-    __wasi_size_t* nwritten_retptr = &CURRENT_MEMORY_BASE[nwritten_retoffset];
+    __wasi_errno_t rc              = 0;
+    __wasi_size_t* nwritten_retptr = (__wasi_size_t*)get_memory_ptr_for_runtime(nwritten_retoffset,
+                                                                                WASI_SERDES_SIZE_size_t);
 
     /* Swizzle iovs, writting to temporary buffer */
-    awsm_assert(
-      wasi_serdes_check_array_bounds(iovs_baseoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_ciovec_t, iovs_len));
+    check_bounds(iovs_baseoffset, WASI_SERDES_SIZE_ciovec_t * iovs_len);
     __wasi_ciovec_t* iovs_baseptr = calloc(iovs_len, sizeof(__wasi_ciovec_t));
     if (unlikely(iovs_baseptr == NULL)) {
         goto done;
@@ -696,9 +653,7 @@ done:
  */
 uint32_t
 wasi_snapshot_preview1_path_create_directory(__wasi_fd_t fd, __wasi_size_t path_baseoffset, __wasi_size_t path_len) {
-    /* Swizzle path */
-    awsm_assert(wasi_serdes_check_bounds(path_baseoffset, CURRENT_MEMORY_SIZE, path_len));
-    const char* path_baseptr = &CURRENT_MEMORY_BASE[path_baseoffset];
+    const char* path_baseptr = (const char*)get_memory_ptr_for_runtime(path_baseoffset, path_len);
 
     return (uint32_t)wasi_snapshot_preview1_backing_path_create_directory(CURRENT_WASI_CONTEXT, fd, path_baseptr,
                                                                           path_len);
@@ -717,13 +672,9 @@ wasi_snapshot_preview1_path_create_directory(__wasi_fd_t fd, __wasi_size_t path_
 uint32_t
 wasi_snapshot_preview1_path_filestat_get(__wasi_fd_t fd, __wasi_lookupflags_t flags, __wasi_size_t path_baseoffset,
                                          __wasi_size_t path_len, __wasi_size_t filestat_retoffset) {
-    /* Swizzle path */
-    awsm_assert(wasi_serdes_check_bounds(path_baseoffset, CURRENT_MEMORY_SIZE, path_len));
-    const char* path_baseptr = &CURRENT_MEMORY_BASE[path_baseoffset];
-
-    /* Swizzle filestat */
-    awsm_assert(wasi_serdes_check_bounds(filestat_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_filestat_t));
-    __wasi_filestat_t* filestat_retptr = &CURRENT_MEMORY_BASE[filestat_retoffset];
+    const char*        path_baseptr    = (const char*)get_memory_ptr_for_runtime(path_baseoffset, path_len);
+    __wasi_filestat_t* filestat_retptr = (__wasi_filestat_t*)get_memory_ptr_for_runtime(filestat_retoffset,
+                                                                                        WASI_SERDES_SIZE_filestat_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_path_filestat_get(CURRENT_WASI_CONTEXT, fd, flags, path_baseptr,
                                                                       path_len, filestat_retptr);
@@ -745,11 +696,8 @@ uint32_t wasi_snapshot_preview1_path_filestat_set_times(__wasi_fd_t fd, __wasi_l
                                                         __wasi_size_t path_baseoffset, __wasi_size_t path_len,
                                                         __wasi_timestamp_t atim, __wasi_timestamp_t mtim,
                                                         uint32_t fstflags_extended) {
-    __wasi_errno_t rc = 0;
-
-    /* Swizzle path */
-    awsm_assert(wasi_serdes_check_bounds(path_baseoffset, CURRENT_MEMORY_SIZE, path_len));
-    const char* path_baseptr = &CURRENT_MEMORY_BASE[path_baseoffset];
+    __wasi_errno_t rc           = 0;
+    const char*    path_baseptr = (const char*)get_memory_ptr_for_runtime(path_baseoffset, path_len);
 
     /* Narrow and cast fst_flags from opaque 32-bit wasm32 type to __wasi_fstflags_t */
     if (unlikely(fstflags_extended > UINT16_MAX)) {
@@ -781,13 +729,8 @@ uint32_t
 wasi_snapshot_preview1_path_link(__wasi_fd_t old_fd, __wasi_lookupflags_t old_flags, __wasi_size_t old_path_baseoffset,
                                  __wasi_size_t old_path_len, __wasi_fd_t new_fd, __wasi_size_t new_path_baseoffset,
                                  __wasi_size_t new_path_len) {
-    /* Swizzle old_path */
-    awsm_assert(wasi_serdes_check_bounds(old_path_baseoffset, CURRENT_MEMORY_SIZE, old_path_len));
-    const char* old_path_baseptr = (const char*)&CURRENT_MEMORY_BASE[old_path_baseoffset];
-
-    /* Swizzle new_path */
-    awsm_assert(wasi_serdes_check_bounds(new_path_baseoffset, CURRENT_MEMORY_SIZE, new_path_len));
-    const char* new_path_baseptr = (const char*)&CURRENT_MEMORY_BASE[new_path_baseoffset];
+    const char* old_path_baseptr = (const char*)get_memory_ptr_for_runtime(old_path_baseoffset, old_path_len);
+    const char* new_path_baseptr = (const char*)get_memory_ptr_for_runtime(new_path_baseoffset, new_path_len);
 
     return (uint32_t)wasi_snapshot_preview1_backing_path_link(CURRENT_WASI_CONTEXT, old_fd, old_flags, old_path_baseptr,
                                                               old_path_len, new_fd, new_path_baseptr, new_path_len);
@@ -817,11 +760,8 @@ wasi_snapshot_preview1_path_open(__wasi_fd_t dirfd, __wasi_lookupflags_t lookupf
                                  __wasi_size_t path_len, uint32_t oflags_extended, __wasi_rights_t fs_rights_base,
                                  __wasi_rights_t fs_rights_inheriting, uint32_t fdflags_extended,
                                  __wasi_size_t fd_retoffset) {
-    __wasi_errno_t rc = 0;
-
-    /* Swizzle path */
-    awsm_assert(wasi_serdes_check_bounds(path_baseoffset, CURRENT_MEMORY_SIZE, path_len));
-    const char* path_baseptr = &CURRENT_MEMORY_BASE[path_baseoffset];
+    __wasi_errno_t rc           = 0;
+    const char*    path_baseptr = (const char*)get_memory_ptr_for_runtime(path_baseoffset, path_len);
 
     /* Narrow and cast oflags from opaque 32-bit wasm32 type to __wasi_oflags_t */
     if (unlikely(oflags_extended > UINT16_MAX)) {
@@ -837,9 +777,7 @@ wasi_snapshot_preview1_path_open(__wasi_fd_t dirfd, __wasi_lookupflags_t lookupf
     }
     __wasi_fdflags_t fdflags = (__wasi_fdflags_t)fdflags_extended;
 
-    /* Swizzle fd */
-    awsm_assert(wasi_serdes_check_bounds(fd_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_fd_t));
-    __wasi_fd_t* fd_retptr = &CURRENT_MEMORY_BASE[fd_retoffset];
+    __wasi_fd_t* fd_retptr = (__wasi_fd_t*)get_memory_ptr_for_runtime(fd_retoffset, WASI_SERDES_SIZE_fd_t);
 
     rc = wasi_snapshot_preview1_backing_path_open(CURRENT_WASI_CONTEXT, dirfd, lookupflags, path_baseptr, path_len,
                                                   oflags, fs_rights_base, fs_rights_inheriting, fdflags, fd_retptr);
@@ -862,17 +800,9 @@ done:
 uint32_t wasi_snapshot_preview1_path_readlink(__wasi_fd_t fd, __wasi_size_t path_baseoffset, __wasi_size_t path_len,
                                               __wasi_size_t buf_baseretoffset, __wasi_size_t buf_len,
                                               __wasi_size_t nread_retoffset) {
-    /* Swizzle buf */
-    awsm_assert(wasi_serdes_check_bounds(buf_baseretoffset, CURRENT_MEMORY_SIZE, buf_len));
-    uint8_t* buf_retptr = &CURRENT_MEMORY_BASE[buf_baseretoffset];
-
-    /* Swizzle path */
-    awsm_assert(wasi_serdes_check_bounds(path_baseoffset, CURRENT_MEMORY_SIZE, path_len));
-    const char* path_baseptr = &CURRENT_MEMORY_BASE[path_baseoffset];
-
-    /* Swizzle nread */
-    awsm_assert(wasi_serdes_check_bounds(nread_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t));
-    __wasi_size_t* nread_retptr = &CURRENT_MEMORY_BASE[nread_retoffset];
+    uint8_t*       buf_retptr   = (uint8_t*)get_memory_ptr_for_runtime(buf_baseretoffset, buf_len);
+    const char*    path_baseptr = (const char*)get_memory_ptr_for_runtime(path_baseoffset, path_len);
+    __wasi_size_t* nread_retptr = (__wasi_size_t*)get_memory_ptr_for_runtime(nread_retoffset, WASI_SERDES_SIZE_size_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_path_readlink(CURRENT_WASI_CONTEXT, fd, path_baseptr, path_len,
                                                                   buf_retptr, buf_len, nread_retptr);
@@ -889,9 +819,7 @@ uint32_t wasi_snapshot_preview1_path_readlink(__wasi_fd_t fd, __wasi_size_t path
  */
 uint32_t
 wasi_snapshot_preview1_path_remove_directory(__wasi_fd_t fd, __wasi_size_t path_baseoffset, __wasi_size_t path_len) {
-    /* Swizzle path */
-    awsm_assert(wasi_serdes_check_bounds(path_baseoffset, CURRENT_MEMORY_SIZE, path_len));
-    const char* path_baseptr = &CURRENT_MEMORY_BASE[path_baseoffset];
+    const char* path_baseptr = (const char*)get_memory_ptr_for_runtime(path_baseoffset, path_len);
 
     return (uint32_t)wasi_snapshot_preview1_backing_path_remove_directory(CURRENT_WASI_CONTEXT, fd, path_baseptr,
                                                                           path_len);
@@ -909,13 +837,8 @@ wasi_snapshot_preview1_path_remove_directory(__wasi_fd_t fd, __wasi_size_t path_
 uint32_t
 wasi_snapshot_preview1_path_rename(__wasi_fd_t fd, __wasi_size_t old_path_baseoffset, __wasi_size_t old_path_len,
                                    __wasi_fd_t new_fd, __wasi_size_t new_path_baseoffset, __wasi_size_t new_path_len) {
-    /* Swizzle old_path */
-    awsm_assert(wasi_serdes_check_bounds(old_path_baseoffset, CURRENT_MEMORY_SIZE, old_path_len));
-    const char* old_path_baseptr = &CURRENT_MEMORY_BASE[old_path_baseoffset];
-
-    /* Swizzle new_path */
-    awsm_assert(wasi_serdes_check_bounds(new_path_baseoffset, CURRENT_MEMORY_SIZE, new_path_len));
-    const char* new_path_baseptr = &CURRENT_MEMORY_BASE[new_path_baseoffset];
+    const char* old_path_baseptr = (const char*)get_memory_ptr_for_runtime(old_path_baseoffset, old_path_len);
+    const char* new_path_baseptr = (const char*)get_memory_ptr_for_runtime(new_path_baseoffset, new_path_len);
 
     return (uint32_t)wasi_snapshot_preview1_backing_path_rename(CURRENT_WASI_CONTEXT, fd, old_path_baseptr,
                                                                 old_path_len, new_fd, new_path_baseptr, new_path_len);
@@ -934,13 +857,8 @@ wasi_snapshot_preview1_path_rename(__wasi_fd_t fd, __wasi_size_t old_path_baseof
 uint32_t
 wasi_snapshot_preview1_path_symlink(__wasi_size_t old_path_baseoffset, __wasi_size_t old_path_len, __wasi_fd_t fd,
                                     __wasi_size_t new_path_baseoffset, __wasi_size_t new_path_len) {
-    /* Swizzle old_path */
-    awsm_assert(wasi_serdes_check_bounds(old_path_baseoffset, CURRENT_MEMORY_SIZE, old_path_len));
-    const char* old_path_baseptr = &CURRENT_MEMORY_BASE[old_path_baseoffset];
-
-    /* Swizzle new_path */
-    awsm_assert(wasi_serdes_check_bounds(new_path_baseoffset, CURRENT_MEMORY_SIZE, new_path_len));
-    const char* new_path_baseptr = &CURRENT_MEMORY_BASE[new_path_baseoffset];
+    const char* old_path_baseptr = (const char*)get_memory_ptr_for_runtime(old_path_baseoffset, old_path_len);
+    const char* new_path_baseptr = (const char*)get_memory_ptr_for_runtime(new_path_baseoffset, new_path_len);
 
     return (uint32_t)wasi_snapshot_preview1_backing_path_symlink(CURRENT_WASI_CONTEXT, old_path_baseptr, old_path_len,
                                                                  fd, new_path_baseptr, new_path_len);
@@ -957,9 +875,7 @@ wasi_snapshot_preview1_path_symlink(__wasi_size_t old_path_baseoffset, __wasi_si
  */
 uint32_t
 wasi_snapshot_preview1_path_unlink_file(__wasi_fd_t fd, __wasi_size_t path_baseoffset, __wasi_size_t path_len) {
-    /* Swizzle path */
-    awsm_assert(wasi_serdes_check_bounds(path_baseoffset, CURRENT_MEMORY_SIZE, path_len));
-    const char* path_baseptr = &CURRENT_MEMORY_BASE[path_baseoffset];
+    const char* path_baseptr = (const char*)get_memory_ptr_for_runtime(path_baseoffset, path_len);
 
     return (uint32_t)wasi_snapshot_preview1_backing_path_unlink_file(CURRENT_WASI_CONTEXT, fd, path_baseptr, path_len);
 }
@@ -975,19 +891,13 @@ wasi_snapshot_preview1_path_unlink_file(__wasi_fd_t fd, __wasi_size_t path_baseo
  */
 uint32_t wasi_snapshot_preview1_poll_oneoff(__wasi_size_t in_baseoffset, __wasi_size_t out_baseoffset,
                                             __wasi_size_t nsubscriptions, __wasi_size_t nevents_retoffset) {
-    /* Swizzle in */
-    awsm_assert(wasi_serdes_check_array_bounds(in_baseoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_subscription_t,
-                                               nsubscriptions));
-    const __wasi_subscription_t* in_baseptr = &CURRENT_MEMORY_BASE[in_baseoffset];
-
-    /* Swizzle out */
-    awsm_assert(
-      wasi_serdes_check_array_bounds(out_baseoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_event_t, nsubscriptions));
-    __wasi_event_t* out_baseptr = &CURRENT_MEMORY_BASE[out_baseoffset];
-
-    /* Swizzle nevents */
-    awsm_assert(wasi_serdes_check_bounds(nevents_retoffset, CURRENT_MEMORY_SIZE, WASI_SERDES_SIZE_size_t));
-    __wasi_size_t* nevents_retptr = &CURRENT_MEMORY_BASE[nevents_retoffset];
+    const __wasi_subscription_t* in_baseptr = (const __wasi_subscription_t*)
+      get_memory_ptr_for_runtime(in_baseoffset, WASI_SERDES_SIZE_subscription_t * nsubscriptions);
+    __wasi_event_t* out_baseptr    = (__wasi_event_t*)get_memory_ptr_for_runtime(out_baseoffset,
+                                                                              WASI_SERDES_SIZE_subscription_t
+                                                                                * nsubscriptions);
+    __wasi_size_t*  nevents_retptr = (__wasi_size_t*)get_memory_ptr_for_runtime(nevents_retoffset,
+                                                                               WASI_SERDES_SIZE_size_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_poll_oneoff(CURRENT_WASI_CONTEXT, in_baseptr, out_baseptr,
                                                                 nsubscriptions, nevents_retptr);
@@ -1040,9 +950,7 @@ done:
  * @return status code
  */
 uint32_t wasi_snapshot_preview1_random_get(__wasi_size_t buf_baseretoffset, __wasi_size_t buf_len) {
-    /* Swizzle buf */
-    awsm_assert(wasi_serdes_check_bounds(buf_baseretoffset, CURRENT_MEMORY_SIZE, buf_len));
-    uint8_t* buf_baseretptr = &CURRENT_MEMORY_BASE[buf_baseretoffset];
+    uint8_t* buf_baseretptr = (uint8_t*)get_memory_ptr_for_runtime(buf_baseretoffset, buf_len);
 
     return (uint32_t)wasi_snapshot_preview1_backing_random_get(CURRENT_WASI_CONTEXT, buf_baseretptr, buf_len);
 }
@@ -1077,20 +985,7 @@ uint32_t
 wasi_snapshot_preview1_sock_recv(__wasi_fd_t fd, __wasi_size_t ri_data_baseretoffset, __wasi_size_t ri_data_len,
                                  uint32_t ri_flags_extended, __wasi_size_t ri_data_nbytes_retoffset,
                                  __wasi_size_t message_nbytes_retoffset) {
-    __wasi_errno_t rc = 0;
-
-    /* Narrow and cast ri_flags from opaque 32-bit wasm32 type to __wasi_fstflags_t */
-    if (unlikely(ri_flags_extended > UINT16_MAX)) {
-        rc = __WASI_ERRNO_INVAL;
-        goto done;
-    }
-    __wasi_riflags_t ri_flags = (__wasi_riflags_t)ri_flags_extended;
-
-    /* If we wanted to actually call this, we would have to swizzle offsets */
-    rc = wasi_unsupported_syscall(__func__);
-
-done:
-    return (uint32_t)rc;
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -1110,20 +1005,7 @@ done:
  */
 uint32_t wasi_snapshot_preview1_sock_send(__wasi_fd_t fd, __wasi_size_t si_data_baseoffset, __wasi_size_t si_data_len,
                                           uint32_t si_flags_extended, __wasi_size_t nbytes_retoffset) {
-    __wasi_errno_t rc = 0;
-
-    /* Narrow and cast ri_flags from opaque 32-bit wasm32 type to __wasi_fstflags_t */
-    if (unlikely(si_flags_extended > UINT16_MAX)) {
-        rc = __WASI_ERRNO_INVAL;
-        goto done;
-    }
-    __wasi_siflags_t siflags = (__wasi_siflags_t)si_flags_extended;
-
-    /* If we wanted to actually call this, we would have to swizzle offsets */
-    rc = wasi_unsupported_syscall(__func__);
-
-done:
-    return (uint32_t)rc;
+    return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -1137,15 +1019,5 @@ done:
  * @return status code
  */
 uint32_t wasi_snapshot_preview1_sock_shutdown(__wasi_fd_t fd, uint32_t how) {
-    __wasi_errno_t rc = 0;
-
-    if (unlikely(how > UINT16_MAX)) {
-        rc = __WASI_ERRNO_INVAL;
-        goto done;
-    }
-
-    rc = wasi_unsupported_syscall(__func__);
-
-done:
-    return (uint32_t)rc;
+    return wasi_unsupported_syscall(__func__);
 }
