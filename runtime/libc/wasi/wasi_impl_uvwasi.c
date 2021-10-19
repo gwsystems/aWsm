@@ -43,6 +43,9 @@ void* wasi_context_init(wasi_options_t* options) {
 
     /* Initialize the sandbox */
     uvwasi_errno_t err = uvwasi_init(wasi_context, &init_options);
+
+    free(init_options.argv);
+    free(init_options.preopens);
     awsm_assert(err == UVWASI_ESUCCESS);
 
     return wasi_context;
@@ -233,8 +236,8 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_tell(void* wasi_context, __wasi
 }
 
 __wasi_errno_t wasi_snapshot_preview1_backing_fd_write(void* wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t* iovs,
-                                                       size_t iovs_len, __wasi_size_t* retptr0) {
-    return uvwasi_fd_write((uvwasi_t*)wasi_context, fd, (const uvwasi_ciovec_t*)iovs, iovs_len, retptr0);
+                                                       size_t iovs_len, __wasi_size_t* nwritten_retptr) {
+    return uvwasi_fd_write((uvwasi_t*)wasi_context, fd, (const uvwasi_ciovec_t*)iovs, iovs_len, nwritten_retptr);
 }
 
 __wasi_errno_t wasi_snapshot_preview1_backing_path_create_directory(void* wasi_context, __wasi_fd_t fd,
