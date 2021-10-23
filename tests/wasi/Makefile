@@ -18,7 +18,7 @@ wasm/%_original.wasm: c/%.c
 
 .PRECIOUS: wasm/%.wasm
 wasm/%.wasm: wasm/%_original.wasm
-	wasm-opt -O2 --no-exit-runtime $< -o $@
+	wasm-opt -O0 -g $< -o $@
 
 wasm/%.wat: wasm/%.wasm
 	wasm-opt --print $< > $@
@@ -35,6 +35,7 @@ wasm/%_call_graph.dot: wasm/%.wasm
 wasm/%_call_graph.svg: wasm/%_call_graph.dot
 	dot -Tsvg $< >$@
 
+.PHONY: debug
 debug: wasm/atof_metrics.txt \
 	wasm/atof_original_metrics.txt \
 	wasm/atof_func_metrics.txt \
@@ -44,7 +45,11 @@ debug: wasm/atof_metrics.txt \
 	wasm/atof_original_call_graph.dot \
 	wasm/atof_original_call_graph.svg \
 	wasm/atof.wat \
-	wasm/atof_original.wat
+	wasm/atof_original.wat \
+	vm/atof_original_vm \
+	vm/atof_vm \
+	bc/atof.ll \
+	bc/atof_original.ll
 
 %.wasi: %.wasm
 	wasm2wat $^ -o $@
@@ -52,6 +57,10 @@ debug: wasm/atof_metrics.txt \
 bc/%.bc: wasm/%.wasm
 	@mkdir -p bc
 	../../target/debug/awsm  $< -o $@
+
+.PRECIOUS: bc/%.ll
+bc/%.ll: bc/%.bc
+	llvm-dis-12 $< -o $@
 
 # Using uvwasi backend
 

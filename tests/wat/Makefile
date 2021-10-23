@@ -70,9 +70,6 @@ clean:
 ../../runtime/thirdparty/dist/lib/libuvwasi_a.a:
 	make -C ../../runtime/thirdparty dist/lib/libuvwasi_a.a:
 
-.PHONY: ../../runtime/thirdparty/dist/include
-../../runtime/thirdparty/dist/include:
-	make -C ../../runtime/thirdparty dist/include/wasi
 
 UVWASI_CFILES=../../runtime/runtime.c ../../runtime/libc/wasi/wasi_backing.c ../../runtime/libc/wasi/wasi_main.c ../../runtime/libc/wasi/wasi_impl_uvwasi.c ../../runtime/libc/env.c ../../runtime/memory/64bit_nix.c
 UVWASI_LIBS=../../runtime/thirdparty/dist/lib/libuvwasi_a.a ../../runtime/thirdparty/dist/lib/libuv_a.a 
@@ -83,7 +80,7 @@ UVWASI_INCLUDES=-I../../runtime/libc/wasi/include -I../../runtime/thirdparty/dis
 
 # Using minimal backend
 MINIMAL_CFILES=${RUNTIME_CFILES} ${RUNTIME_PATH}/libc/wasi/wasi_backing.c ${RUNTIME_PATH}/libc/wasi/wasi_main.c ${RUNTIME_PATH}/libc/wasi/wasi_impl_minimal.c
-MINIMAL_INCLUDES=-I${RUNTIME_PATH}/libc/
+MINIMAL_INCLUDES=-I${RUNTIME_PATH}/libc/ -I${RUNTIME_PATH}/libc/wasi/include/
 
 %_minimal: %.bc ${MINIMAL_CFILES} ../../runtime/thirdparty/dist/include
 	clang -lm ${OPTFLAGS} ${RUNTIME_CFLAGS} ${MINIMAL_INCLUDES} ${MINIMAL_CFILES} $< -o $@
