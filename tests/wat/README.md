@@ -1,0 +1,1 @@
+Many of the tests in this directory are based on the official WebAssembly testsuite at https://github.com/WebAssembly/testsuite/. These and all original tests are licensed under the Apache-2.0 License
