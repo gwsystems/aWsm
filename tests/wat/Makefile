@@ -59,6 +59,10 @@ all: \
 	block__.minimal.out \
 	block__break-inner.minimal.out \
 	br__.minimal.out \
+	br__as-binary-both.minimal.out \
+	br__as-binary-left.minimal.out \
+	br__as-block-first.minimal.out \
+	br__as-block-mid.minimal.out \
 	br__as-call_indirect-all.minimal.out \
 	br__as-call_indirect-first.minimal.out \
 	br__as-call_indirect-func.minimal.out \
@@ -68,6 +72,17 @@ all: \
 	br__as-call-first.minimal.out \
 	br__as-call-last.minimal.out \
 	br__as-call-mid.minimal.out \
+	br__as-compare-both.minimal.out \
+	br__as-compare-left.minimal.out \
+	br__as-compare-right.minimal.out \
+	br__as-convert-operand.minimal.out \
+	br__as-global.set-value.minimal.out \
+	br__as-if-cond.minimal.out \
+	br__as-load-address.minimal.out \
+	br__as-loadN-address.minimal.out \
+	br__as-memory.grow-size.minimal.out \
+	br__as-store-address.minimal.out \
+	br__as-storeN-address.minimal.out \
 	br__as-select-all.minimal.out \
 	br__as-select-cond.minimal.out \
 	br__as-select-first.minimal.out \
@@ -82,8 +97,10 @@ all: \
 	br__type-f64.minimal.out \
 	br__type-i32-i32.minimal.out \
 	br__type-i32.minimal.out \
+	br__type-i32-value.minimal.out \
 	br__type-i64-i64.minimal.out \
 	br__type-i64.minimal.out \
+	br__type-i64-value.minimal.out \
 	br_if__.minimal.out \
 	br_table__.minimal.out \
 	br_table__as-block-first.minimal.out \

@@ -6,14 +6,6 @@
 	;; Auxiliary definition
 	(func $dummy)
 
-	(func $type-i32-value (export "type-i32-value") (result i32)
-		(block (result i32) (i32.ctz (br 0 (i32.const 1))))
-	)
-
-	(func $type-i64-value (export "type-i64-value") (result i64)
-		(block (result i64) (i64.ctz (br 0 (i64.const 2))))
-	)
-
 	(func $type-f32-value (export "type-f32-value") (result f32)
 		(block (result f32) (f32.neg (br 0 (f32.const 3))))
 	)
@@ -28,14 +20,6 @@
 	;; 		(f64.add (br 0 (f64.const 4) (f64.const 5))) (f64.const 6)
 	;; 	)
 	;; )
-
-	(func $as-block-first (export "as-block-first")
-		(block (br 0) (call $dummy))
-	)
-
-	(func $as-block-mid (export "as-block-mid")
-		(block (call $dummy) (br 0) (call $dummy))
-	)
 
 	(func $as-block-last (export "as-block-last")
 		(block (nop) (call $dummy) (br 0))
@@ -103,14 +87,6 @@
 	;; 	(block (result i64) (return (br 0 (i32.const 1) (i64.const 7))))
 	;; )
 
-	(func $as-if-cond (export "as-if-cond") (result i32)
-		(block (result i32)
-			(if (result i32) (br 0 (i32.const 2))
-				(then (i32.const 0))
-				(else (i32.const 1))
-			)
-		)
-	)
 	(func $as-if-then (export "as-if-then") (param i32 i32) (result i32)
 		(block (result i32)
 			(if (result i32) (local.get 0)
@@ -139,67 +115,19 @@
 	(func $as-local.tee-value (export "as-local.tee-value") (result i32) (local i32)
 		(block (result i32) (local.tee 0 (br 0 (i32.const 1))))
 	)
-	(global $a (mut i32) (i32.const 10))
-	(func $as-global.set-value (export "as-global.set-value") (result i32)
-		(block (result i32) (global.set $a (br 0 (i32.const 1))))
-	)
 
 	(memory 1)
-	(func $as-load-address (export "as-load-address") (result f32)
-		(block (result f32) (f32.load (br 0 (f32.const 1.7))))
-	)
-	(func $as-loadN-address (export "as-loadN-address") (result i64)
-		(block (result i64) (i64.load8_s (br 0 (i64.const 30))))
-	)
 
-	(func $as-store-address (export "as-store-address") (result i32)
-		(block (result i32)
-			(f64.store (br 0 (i32.const 30)) (f64.const 7)) (i32.const -1)
-		)
-	)
-
-	(func $as-storeN-address (export "as-storeN-address") (result i32)
-		(block (result i32)
-			(i32.store8 (br 0 (i32.const 32)) (i32.const 7)) (i32.const -1)
-		)
-	)
-	
 	(func $as-unary-operand (export "as-unary-operand") (result f32)
 		(block (result f32) (f32.neg (br 0 (f32.const 3.4))))
-	)
-
-	(func $as-binary-left (export "as-binary-left") (result i32)
-		(block (result i32) (i32.add (br 0 (i32.const 3)) (i32.const 10)))
 	)
 
 	(func $as-binary-right (export "as-binary-right") (result i64)
 		(block (result i64) (i64.sub (i64.const 10) (br 0 (i64.const 45))))
 	)
 
-	(func $as-binary-both (export "as-binary-both") (result i32)
-		(block (result i32) (i32.add (br 0 (i32.const 46))))
-	)
-
 	(func $as-test-operand (export "as-test-operand") (result i32)
 		(block (result i32) (i32.eqz (br 0 (i32.const 44))))
-	)
-
-	(func $as-compare-left (export "as-compare-left") (result i32)
-		(block (result i32) (f64.le (br 0 (i32.const 43)) (f64.const 10)))
-	)
-	(func $as-compare-right (export "as-compare-right") (result i32)
-		(block (result i32) (f32.ne (f32.const 10) (br 0 (i32.const 42))))
-	)
-	(func $as-compare-both (export "as-compare-both") (result i32)
-		(block (result i32) (f64.le (br 0 (i32.const 44))))
-	)
-
-	(func $as-convert-operand (export "as-convert-operand") (result i32)
-		(block (result i32) (i32.wrap_i64 (br 0 (i32.const 41))))
-	)
-
-	(func $as-memory.grow-size (export "as-memory.grow-size") (result i32)
-		(block (result i32) (memory.grow (br 0 (i32.const 40))))
 	)
 
 	(func $nested-block-value (export "nested-block-value") (result i32)
@@ -284,12 +212,6 @@
 	)
 
 	(func (export "_start") (param i32)
-		(call $type-i32-value (i32.const 1))
-		drop
-		drop
-		(call $type-i64-value (i64.const 2))
-		drop
-		drop
 		(call $type-f32-value (f32.const 3))
 		drop
 		drop
@@ -300,8 +222,6 @@
 		;; drop
 		;; drop
 
-		(call $as-block-first)
-		(call $as-block-mid)
 		(call $as-block-last)
 		(call $as-block-value (i32.const 2))
 		drop
@@ -344,10 +264,6 @@
 		;; drop
 		;; drop
 
-		(call $as-if-cond (i32.const 2))
-		drop
-		drop
-
 		(if (i32.ne (call $as-if-then (i32.const 1) (i32.const 6)) (i32.const 3)) (then     
 			(call $proc_exit (i32.const 1))
 		))
@@ -370,57 +286,16 @@
 		(call $as-local.tee-value (i32.const 1))
 		drop
 		drop
-		(call $as-global.set-value (i32.const 1))
-		drop
-		drop
-
-		(call $as-load-address (f32.const 1.7))
-		drop
-		drop
-		(call $as-loadN-address (i64.const 30))
-		drop
-		drop
-
-		(call $as-store-address (i32.const 30))
-		drop
-		drop
-		(call $as-storeN-address (i32.const 32))
-		drop
-		drop
 
 		(call $as-unary-operand (f32.const 3.4))
 		drop
 		drop
 
-		(call $as-binary-left (i32.const 3))
-		drop
-		drop
 		(call $as-binary-right (i64.const 45))
-		drop
-		drop
-		(call $as-binary-both (i32.const 46))
 		drop
 		drop
 
 		(call $as-test-operand (i32.const 44))
-		drop
-		drop
-
-		(call $as-compare-left (i32.const 43))
-		drop
-		drop
-		(call $as-compare-right (i32.const 42))
-		drop
-		drop
-		(call $as-compare-both (i32.const 44))
-		drop
-		drop
-
-		(call $as-convert-operand (i32.const 41))
-		drop
-		drop
-
-		(call $as-memory.grow-size (i32.const 40))
 		drop
 		drop
 
