@@ -157,16 +157,6 @@
 			(f64.store (br 0 (i32.const 30)) (f64.const 7)) (i32.const -1)
 		)
 	)
-	(func $as-store-value (export "as-store-value") (result i32)
-		(block (result i32)
-			(i64.store (i32.const 2) (br 0 (i32.const 31))) (i32.const -1)
-		)
-	)
-	(func $as-store-both (export "as-store-both") (result i32)
-		(block (result i32)
-			(i64.store (br 0 (i32.const 32))) (i32.const -1)
-		)
-	)
 
 	(func $as-storeN-address (export "as-storeN-address") (result i32)
 		(block (result i32)
@@ -174,18 +164,6 @@
 		)
 	)
 	
-	(func $as-storeN-value (export "as-storeN-value") (result i32)
-		(block (result i32)
-			(i64.store16 (i32.const 2) (br 0 (i32.const 33))) (i32.const -1)
-		)
-	)
-
-	(func $as-storeN-both (export "as-storeN-both") (result i32)
-		(block (result i32)
-			(i64.store16 (br 0 (i32.const 34))) (i32.const -1)
-		)
-	)
-
 	(func $as-unary-operand (export "as-unary-operand") (result f32)
 		(block (result f32) (f32.neg (br 0 (f32.const 3.4))))
 	)
@@ -406,19 +384,7 @@
 		(call $as-store-address (i32.const 30))
 		drop
 		drop
-		(call $as-store-value (i32.const 31))
-		drop
-		drop
-		(call $as-store-both (i32.const 32))
-		drop
-		drop
 		(call $as-storeN-address (i32.const 32))
-		drop
-		drop
-		(call $as-storeN-value (i32.const 33))
-		drop
-		drop
-		(call $as-storeN-both (i32.const 34))
 		drop
 		drop
 
