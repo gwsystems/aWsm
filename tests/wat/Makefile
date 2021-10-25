@@ -59,6 +59,10 @@ all: \
 	block__.minimal.out \
 	block__break-inner.minimal.out \
 	br__.minimal.out \
+	br__as-call-all.minimal.out \
+	br__as-call-first.minimal.out \
+	br__as-call-last.minimal.out \
+	br__as-call-mid.minimal.out \
 	br__as-select-all.minimal.out \
 	br__as-select-cond.minimal.out \
 	br__as-select-first.minimal.out \

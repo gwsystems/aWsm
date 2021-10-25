@@ -129,24 +129,6 @@
 	)
 
 	(func $f (param i32 i32 i32) (result i32) (i32.const -1))
-	(func $as-call-first (export "as-call-first") (result i32)
-		(block (result i32)
-			(call $f (br 0 (i32.const 12)) (i32.const 2) (i32.const 3))
-		)
-	)
-	(func $as-call-mid (export "as-call-mid") (result i32)
-		(block (result i32)
-			(call $f (i32.const 1) (br 0 (i32.const 13)) (i32.const 3))
-		)
-	)
-	(func $as-call-last (export "as-call-last") (result i32)
-		(block (result i32)
-			(call $f (i32.const 1) (i32.const 2) (br 0 (i32.const 14)))
-		)
-	)
-	(func $as-call-all (export "as-call-all") (result i32)
-		(block (result i32) (call $f (br 0 (i32.const 15))))
-	)
 
 	(type $sig (func (param i32 i32 i32) (result i32)))
 	(table funcref (elem $f))
@@ -438,19 +420,6 @@
 		(if (i32.ne (call $as-if-else (i32.const 1) (i32.const 6)) (i32.const 6)) (then     
 			(call $proc_exit (i32.const 4))
 		))
-
-		(call $as-call-first (i32.const 12))
-		drop
-		drop
-		(call $as-call-mid (i32.const 13))
-		drop
-		drop
-		(call $as-call-last (i32.const 14))
-		drop
-		drop
-		(call $as-call-all (i32.const 15))
-		drop
-		drop
 
 		(call $as-call_indirect-func (i32.const 20))
 		drop
