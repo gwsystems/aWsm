@@ -128,25 +128,6 @@
 		)
 	)
 
-	(func $as-select-first (export "as-select-first") (param i32 i32) (result i32)
-		(block (result i32)
-			(select (br 0 (i32.const 5)) (local.get 0) (local.get 1))
-		)
-	)
-	(func $as-select-second (export "as-select-second") (param i32 i32) (result i32)
-		(block (result i32)
-			(select (local.get 0) (br 0 (i32.const 6)) (local.get 1))
-		)
-	)
-	(func $as-select-cond (export "as-select-cond") (result i32)
-		(block (result i32)
-			(select (i32.const 0) (i32.const 1) (br 0 (i32.const 7)))
-		)
-	)
-	(func $as-select-all (export "as-select-all") (result i32)
-		(block (result i32) (select (br 0 (i32.const 8))))
-	)
-
 	(func $f (param i32 i32 i32) (result i32) (i32.const -1))
 	(func $as-call-first (export "as-call-first") (result i32)
 		(block (result i32)
@@ -457,29 +438,6 @@
 		(if (i32.ne (call $as-if-else (i32.const 1) (i32.const 6)) (i32.const 6)) (then     
 			(call $proc_exit (i32.const 4))
 		))
-
-		(if (i32.ne (call $as-select-first (i32.const 0) (i32.const 6)) (i32.const 5)) (then     
-			(call $proc_exit (i32.const 5))
-		))
-
-		(if (i32.ne (call $as-select-first (i32.const 1) (i32.const 6)) (i32.const 5)) (then     
-			(call $proc_exit (i32.const 6))
-		))
-
-		(if (i32.ne (call $as-select-second (i32.const 0) (i32.const 6)) (i32.const 6)) (then     
-			(call $proc_exit (i32.const 7))
-		))
-
-		(if (i32.ne (call $as-select-second (i32.const 1) (i32.const 6)) (i32.const 6)) (then     
-			(call $proc_exit (i32.const 8))
-		))
-
-		(call $as-select-cond (i32.const 7))
-		drop
-		drop
-		(call $as-select-all (i32.const 8))
-		drop
-		drop
 
 		(call $as-call-first (i32.const 12))
 		drop

@@ -59,6 +59,10 @@ all: \
 	block__.minimal.out \
 	block__break-inner.minimal.out \
 	br__.minimal.out \
+	br__as-select-all.minimal.out \
+	br__as-select-cond.minimal.out \
+	br__as-select-first.minimal.out \
+	br__as-select-second.minimal.out \
 	br__type-f32-f32.minimal.out \
 	br__type-f32.minimal.out \
 	br__type-f64-f64.minimal.out \
