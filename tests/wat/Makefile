@@ -59,6 +59,11 @@ all: \
 	block__.minimal.out \
 	block__break-inner.minimal.out \
 	br__.minimal.out \
+	br__as-call_indirect-all.minimal.out \
+	br__as-call_indirect-first.minimal.out \
+	br__as-call_indirect-func.minimal.out \
+	br__as-call_indirect-last.minimal.out \
+	br__as-call_indirect-mid.minimal.out \
 	br__as-call-all.minimal.out \
 	br__as-call-first.minimal.out \
 	br__as-call-last.minimal.out \

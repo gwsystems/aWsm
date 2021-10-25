@@ -132,41 +132,6 @@
 
 	(type $sig (func (param i32 i32 i32) (result i32)))
 	(table funcref (elem $f))
-	(func $as-call_indirect-func (export "as-call_indirect-func") (result i32)
-		(block (result i32)
-			(call_indirect (type $sig)
-				(br 0 (i32.const 20))
-				(i32.const 1) (i32.const 2) (i32.const 3)
-			)
-		)
-	)
-	(func $as-call_indirect-first (export "as-call_indirect-first") (result i32)
-		(block (result i32)
-			(call_indirect (type $sig)
-				(i32.const 0)
-				(br 0 (i32.const 21)) (i32.const 2) (i32.const 3)
-			)
-		)
-	)
-	(func $as-call_indirect-mid (export "as-call_indirect-mid") (result i32)
-		(block (result i32)
-			(call_indirect (type $sig)
-				(i32.const 0)
-				(i32.const 1) (br 0 (i32.const 22)) (i32.const 3)
-			)
-		)
-	)
-	(func $as-call_indirect-last (export "as-call_indirect-last") (result i32)
-		(block (result i32)
-			(call_indirect (type $sig)
-				(i32.const 0)
-				(i32.const 1) (i32.const 2) (br 0 (i32.const 23))
-			)
-		)
-	)
-	(func $as-call_indirect-all (export "as-call_indirect-all") (result i32)
-		(block (result i32) (call_indirect (type $sig) (br 0 (i32.const 24))))
-	)
 
 	(func $as-local.set-value (export "as-local.set-value") (result i32) (local f32)
 		(block (result i32) (local.set 0 (br 0 (i32.const 17))) (i32.const -1))
@@ -420,22 +385,6 @@
 		(if (i32.ne (call $as-if-else (i32.const 1) (i32.const 6)) (i32.const 6)) (then     
 			(call $proc_exit (i32.const 4))
 		))
-
-		(call $as-call_indirect-func (i32.const 20))
-		drop
-		drop
-		(call $as-call_indirect-first (i32.const 21))
-		drop
-		drop
-		(call $as-call_indirect-mid (i32.const 22))
-		drop
-		drop
-		(call $as-call_indirect-last (i32.const 23))
-		drop
-		drop
-		(call $as-call_indirect-all (i32.const 24))
-		drop
-		drop
 
 		(call $as-local.set-value (i32.const 17))
 		drop
