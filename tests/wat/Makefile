@@ -136,4 +136,5 @@ all: \
 	br_table__type-i32.minimal.out \
 	br_table__type-i64-value.minimal.out \
 	br_table__type-i64.minimal.out \
+	call__.minimal.out \
 	loop__.minimal.out

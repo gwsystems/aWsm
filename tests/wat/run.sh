@@ -86,6 +86,7 @@ declare -a tests_failed=()
 ./br_table__type-i32.minimal.out || tests_failed+=("br_table::type-i32")
 ./br_table__type-i64-value.minimal.out || tests_failed+=("br_table::type-i64-value")
 ./br_table__type-i64.minimal.out || tests_failed+=("br_table::type-i64")
+./call__.minimal.out || tests_failed+=("call::*")
 ./loop__.minimal.out || tests_failed+=("loop::*")
 
 for test_failed in "${tests_failed[@]}"; do
