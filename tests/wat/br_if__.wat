@@ -496,10 +496,14 @@
 
 		(call $as-loop-last (i32.const 0))
 		(call $as-loop-last (i32.const 1))
-		;; (call $as-br-value (i32.const 1))
+		(call $as-br-value (i32.const 1))
+		drop
+		drop
 
 		(call $as-br_if-cond)
-		;; (call $as-br_if-value (i32.const 1))
+		(call $as-br_if-value (i32.const 1))
+		drop
+		drop
 
 		(if (i32.ne (call $as-br_if-value-cond (i32.const 0)) (i32.const 2)) (then     
 			(call $proc_exit (i32.const 19))

@@ -308,27 +308,25 @@
         )
     )
 
-    ;; TODO: Revisit this test! This causes malformed stacks
-    ;; (func $break-inner (result i32)
-    ;;     (local i32)
-    ;;     (local.set 0 (i32.const 0))
-    ;;     (local.set 0 (i32.add (local.get 0) (block (result i32) (loop (result i32) (block (result i32) (br 2 (i32.const 0x1)))))))
-    ;;     (local.set 0 (i32.add (local.get 0) (block (result i32) (loop (result i32) (loop (result i32) (br 2 (i32.const 0x2)))))))
-    ;;     (local.set 0 (i32.add (local.get 0) (block (result i32) (loop (result i32) (block (result i32) (loop (result i32) (br 1 (i32.const 0x4))))))))
-    ;;     (local.set 0 (i32.add (local.get 0) (block (result i32) (loop (result i32) (i32.ctz (br 1 (i32.const 0x8)))))))
-    ;;     (local.set 0 (i32.add (local.get 0) (block (result i32) (loop (result i32) (i32.ctz (loop (result i32) (br 2 (i32.const 0x10))))))))
-    ;;     (local.get 0)
-    ;; )
+    (func $break-inner (result i32)
+        (local i32)
+        (local.set 0 (i32.const 0))
+        (local.set 0 (i32.add (local.get 0) (block (result i32) (loop (result i32) (block (result i32) (br 2 (i32.const 0x1)))))))
+        (local.set 0 (i32.add (local.get 0) (block (result i32) (loop (result i32) (loop (result i32) (br 2 (i32.const 0x2)))))))
+        (local.set 0 (i32.add (local.get 0) (block (result i32) (loop (result i32) (block (result i32) (loop (result i32) (br 1 (i32.const 0x4))))))))
+        (local.set 0 (i32.add (local.get 0) (block (result i32) (loop (result i32) (i32.ctz (br 1 (i32.const 0x8)))))))
+        (local.set 0 (i32.add (local.get 0) (block (result i32) (loop (result i32) (i32.ctz (loop (result i32) (br 2 (i32.const 0x10))))))))
+        (local.get 0)
+    )
 
-    ;; TODO: Revisit this test! This causes malformed stacks
-    ;; (func $cont-inner (result i32)
-    ;;     (local i32)
-    ;;     (local.set 0 (i32.const 0))
-    ;;     (local.set 0 (i32.add (local.get 0) (loop (result i32) (loop (result i32) (br 1)))))
-    ;;     (local.set 0 (i32.add (local.get 0) (loop (result i32) (i32.ctz (br 0)))))
-    ;;     (local.set 0 (i32.add (local.get 0) (loop (result i32) (i32.ctz (loop (result i32) (br 1))))))
-    ;;     (local.get 0)
-    ;; )
+    (func $cont-inner (result i32)
+        (local i32)
+        (local.set 0 (i32.const 0))
+        (local.set 0 (i32.add (local.get 0) (loop (result i32) (loop (result i32) (br 1)))))
+        (local.set 0 (i32.add (local.get 0) (loop (result i32) (i32.ctz (br 0)))))
+        (local.set 0 (i32.add (local.get 0) (loop (result i32) (i32.ctz (loop (result i32) (br 1))))))
+        (local.get 0)
+    )
 
     ;; wat2wasm error: loop params not currently supported.
     ;; (func $param (result i32)
@@ -627,7 +625,9 @@
         drop
         drop
 
-        ;; (call $break-inner (i32.const 0x1f))
+        (call $break-inner (i32.const 0x1f))
+		drop
+		drop
 
         ;; (call $param (i32.const 3))
         ;; (call $params (i32.const 3))
