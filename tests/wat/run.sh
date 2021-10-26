@@ -6,6 +6,7 @@ make -k clean all
 
 declare -a tests_failed=()
 
+./align__.minimal.out || tests_failed+=("align::*")
 ./block__.minimal.out || tests_failed+=("block::*")
 ./block__break-inner.minimal.out || tests_failed+=("block::break-inner")
 ./br__.minimal.out || tests_failed+=("br::*")

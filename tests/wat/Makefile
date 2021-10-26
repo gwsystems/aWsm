@@ -56,6 +56,7 @@ clean:
 	clang -lm ${OPTFLAGS} ${RUNTIME_CFLAGS} ${MINIMAL_INCLUDES} ${MINIMAL_CFILES} $< -o $@
 
 all: \
+	align__.minimal.out \
 	block__.minimal.out \
 	block__break-inner.minimal.out \
 	br__.minimal.out \
