@@ -59,6 +59,15 @@ all: \
 	align__.minimal.out \
 	block__.minimal.out \
 	block__break-inner.minimal.out \
+	bulk__data.drop.minimal.out \
+	bulk__elem.drop.minimal.out \
+	bulk__goodbye.minimal.out \
+	bulk__memory.copy.minimal.out \
+	bulk__memory.fill.minimal.out \
+	bulk__memory.init.minimal.out \
+	bulk__sixtyfive.minimal.out \
+	bulk__table.copy.minimal.out \
+	bulk__table.init.minimal.out \
 	br__.minimal.out \
 	br__as-binary-both.minimal.out \
 	br__as-binary-left.minimal.out \
@@ -140,4 +149,9 @@ all: \
 	br_table__type-i64.minimal.out \
 	call__.minimal.out \
 	call__fib.minimal.out \
+	call_indirect__.minimal.out \
+	conversions__.minimal.out \
+	conversions__i32.trunc_f32_u.minimal.out \
+	conversions__i64.extend_i32_s.minimal.out \
+	conversions__i64.extend_i32_u.minimal.out \
 	loop__.minimal.out
