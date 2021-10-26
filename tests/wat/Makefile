@@ -2,7 +2,7 @@ ROOT_PATH:=$(shell cd ../.. && realpath .)
 RUNTIME_PATH:=${ROOT_PATH}/runtime
 
 CC=clang
-OPTFLAGS=-O3 -flto
+OPTFLAGS=-O0 -g -flto
 AWSM_CC:=${ROOT_PATH}/target/debug/awsm
 
 RUNTIME_CFILES+=${RUNTIME_PATH}/runtime.c
@@ -137,4 +137,5 @@ all: \
 	br_table__type-i64-value.minimal.out \
 	br_table__type-i64.minimal.out \
 	call__.minimal.out \
+	call__fib.minimal.out \
 	loop__.minimal.out

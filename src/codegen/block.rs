@@ -1148,7 +1148,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 if block_terminated {
                     continue;
                 }
-                i64_cmp_unsigned(m_ctx, b, &mut stack, Predicate::LessThan)
+                i64_cmp_unsigned(m_ctx, b, &mut stack, Predicate::LessThanOrEqual)
             }
             Instruction::I64LtS => {
                 if block_terminated {

@@ -139,18 +139,6 @@
 		)
 	)
 
-	(func $fib (export "fib") (param i64) (result i64)
-		(if (result i64) (i64.le_u (local.get 0) (i64.const 1))
-			(then (i64.const 1))
-			(else
-				(i64.add
-					(call $fib (i64.sub (local.get 0) (i64.const 2)))
-					(call $fib (i64.sub (local.get 0) (i64.const 1)))
-				)
-			)
-		)
-	)
-
 	(func $even (export "even") (param i64) (result i32)
 		(if (result i32) (i64.eqz (local.get 0))
 			(then (i32.const 44))
@@ -426,26 +414,6 @@
 			(call $proc_exit (i32.const 28))
 		))
 
-		(if (i64.ne (call $fib (i64.const 0)) (i64.const 1)) (then
-			(call $proc_exit (i32.const 29))
-		))
-
-		(if (i64.ne (call $fib (i64.const 1)) (i64.const 1)) (then
-			(call $proc_exit (i32.const 30))
-		))
-
-		(if (i64.ne (call $fib (i64.const 2)) (i64.const 2)) (then
-			(call $proc_exit (i32.const 31))
-		))
-
-		(if (i64.ne (call $fib (i64.const 5)) (i64.const 8)) (then
-			(call $proc_exit (i32.const 32))
-		))
-
-		(if (i64.ne (call $fib (i64.const 20)) (i64.const 10946)) (then
-			(call $proc_exit (i32.const 33))
-		))
-
 		(if (i32.ne (call $even (i64.const 0)) (i32.const 44)) (then
 			(call $proc_exit (i32.const 34))
 		))
@@ -502,10 +470,6 @@
 			(call $proc_exit (i32.const 48))
 		))
 
-		(if (i32.ne (call $as-br_if-first) (i32.const 2)) (then
-			(call $proc_exit (i32.const 49))
-		))
-
 		(if (i32.ne (call $as-br_if-last) (i32.const 2)) (then
 			(call $proc_exit (i32.const 50))
 		))
@@ -557,7 +521,7 @@
 			(call $proc_exit (i32.const 61))
 		))
 
-		(if (i32.ne (call $as-load-operand) (i32.const 0x132)) (then
+		(if (i32.ne (call $as-load-operand) (i32.const 1)) (then
 			(call $proc_exit (i32.const 62))
 		))
 
