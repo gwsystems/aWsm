@@ -63,6 +63,7 @@ all: \
 	br__as-binary-left.minimal.out \
 	br__as-block-first.minimal.out \
 	br__as-block-mid.minimal.out \
+	br__as-block-value-deep.minimal.out \
 	br__as-call_indirect-all.minimal.out \
 	br__as-call_indirect-first.minimal.out \
 	br__as-call_indirect-func.minimal.out \
