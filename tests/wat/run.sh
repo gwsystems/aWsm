@@ -106,6 +106,13 @@ declare -a tests_failed=()
 ./conversions__i64.extend_i32_s.minimal.out || tests_failed+=("conversions::i64.extend_i32_s")
 ./conversions__i64.extend_i32_u.minimal.out || tests_failed+=("conversions::i64.extend_i32_u")
 ./loop__.minimal.out || tests_failed+=("loop::*")
+./if__.minimal.out || tests_failed+=("if::*")
+./if__as-unary-operand.minimal.out || tests_failed+=("if::as-unary-operand.minimal")
+./return__.minimal.out || tests_failed+=("return::*")
+./select__.minimal.out || tests_failed+=("select::*")
+./switch__.minimal.out || tests_failed+=("switch::*")
+./unwind__.minimal.out || tests_failed+=("unwind::*")
+./unwind__by-br_if-value.minimal.out || tests_failed+=("unwind::by-br_if-value")
 
 for test_failed in "${tests_failed[@]}"; do
 	echo "Failed $test_failed"

@@ -154,4 +154,12 @@ all: \
 	conversions__i32.trunc_f32_u.minimal.out \
 	conversions__i64.extend_i32_s.minimal.out \
 	conversions__i64.extend_i32_u.minimal.out \
-	loop__.minimal.out
+	loop__.minimal.out \
+	if__.minimal.out \
+	if__as-unary-operand.minimal.out \
+	return__.minimal.out \
+	select__.minimal.out \
+	switch__.minimal.out \
+	unwind__.minimal.out \
+	unwind__by-br_if-value.minimal.out \
+	
