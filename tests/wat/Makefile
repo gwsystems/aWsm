@@ -152,14 +152,20 @@ all: \
 	call_indirect__.minimal.out \
 	conversions__.minimal.out \
 	conversions__i32.reinterpret_f32.minimal.out \
+	conversions__i32.trunc_f32_u.minimal.out \
 	conversions__i32.trunc_f64_s.minimal.out \
 	conversions__i32.trunc_f64_u.minimal.out \
-	conversions__i32.trunc_f32_u.minimal.out \
 	conversions__i64.extend_i32_s.minimal.out \
 	conversions__i64.extend_i32_u.minimal.out \
-	loop__.minimal.out \
+	conversions__i64.trunc_f32_u.minimal.out \
+	conversions__i64.trunc_f64_u.minimal.out \
+	i32__.minimal.out \
+	i32__clz.minimal.out \
+	i32__ctz.minimal.out \
+	i32__rem_s.minimal.out \
 	if__.minimal.out \
 	if__as-unary-operand.minimal.out \
+	loop__.minimal.out \
 	return__.minimal.out \
 	select__.minimal.out \
 	switch__.minimal.out \
