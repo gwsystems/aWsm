@@ -151,6 +151,9 @@ all: \
 	call__fib.minimal.out \
 	call_indirect__.minimal.out \
 	conversions__.minimal.out \
+	conversions__i32.reinterpret_f32.minimal.out \
+	conversions__i32.trunc_f64_s.minimal.out \
+	conversions__i32.trunc_f64_u.minimal.out \
 	conversions__i32.trunc_f32_u.minimal.out \
 	conversions__i64.extend_i32_s.minimal.out \
 	conversions__i64.extend_i32_u.minimal.out \
