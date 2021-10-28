@@ -1,4 +1,5 @@
 #include "runtime.h"
+#include <math.h>
 
 // TODO: Throughout here we use `assert` for error conditions, which isn't optimal
 // Instead we should use `unlikely` branches to a single trapping function (which should optimize better)
@@ -127,50 +128,97 @@ INLINE i64 i64_rem(i64 a, i64 b) {
 // In C, float => int conversions always truncate
 // If a int2float(int::min_value) <= float <= int2float(int::max_value), it must always be safe to truncate it
 u32 u32_trunc_f32(float f) {
-    awsm_assert(0 <= (u32)f);
-    awsm_assert((u32)f <= UINT32_MAX);
+    float integer_part = 0;
+    float decimal_part = modff(f, &integer_part);
+
+    if (unlikely(integer_part < 0 || integer_part > (float)UINT32_MAX)) {
+        fprintf(stderr, "integer overflow\n");
+        awsm_assert(0);
+    }
+
     return (u32)f;
 }
 
 i32 i32_trunc_f32(float f) {
-    awsm_assert(INT32_MIN <= (i32)f);
-    awsm_assert((i32)f <= INT32_MAX);
+    float integer_part = 0;
+    float decimal_part = modff(f, &integer_part);
+
+    if (unlikely(integer_part < (float)INT32_MIN || integer_part > (float)INT32_MAX)) {
+        fprintf(stderr, "integer overflow\n");
+        awsm_assert(0);
+    }
+
     return (i32)f;
 }
 
 u32 u32_trunc_f64(double f) {
-    awsm_assert(0 <= (u32)f);
-    awsm_assert((u32)f <= UINT32_MAX);
+    double integer_part = 0;
+    double decimal_part = modf(f, &integer_part);
+
+    if (unlikely(integer_part < 0 || integer_part > (double)UINT32_MAX)) {
+        fprintf(stderr, "integer overflow\n");
+        awsm_assert(0);
+    }
     return (u32)f;
 }
 
 i32 i32_trunc_f64(double f) {
-    awsm_assert(INT32_MIN <= (i32)f);
-    awsm_assert((i32)f <= INT32_MAX);
+    double integer_part = 0;
+    double decimal_part = modf(f, &integer_part);
+
+    if (unlikely(integer_part < (double)INT32_MIN || integer_part > (double)INT32_MAX)) {
+        fprintf(stderr, "integer overflow\n");
+        awsm_assert(0);
+    }
+
     return (i32)f;
 }
 
 u64 u64_trunc_f32(float f) {
-    awsm_assert(0 <= (u64)f);
-    awsm_assert((u64)f <= UINT64_MAX);
+    float integer_part = 0;
+    float decimal_part = modff(f, &integer_part);
+
+    if (unlikely(integer_part < 0 || integer_part > (float)UINT64_MAX)) {
+        fprintf(stderr, "integer overflow\n");
+        awsm_assert(0);
+    }
+
     return (u64)f;
 }
 
 i64 i64_trunc_f32(float f) {
-    awsm_assert(INT64_MIN <= (i64)f);
-    awsm_assert((i64)f <= INT64_MAX);
+    float integer_part = 0;
+    float decimal_part = modff(f, &integer_part);
+
+    if (unlikely(integer_part < (float)INT64_MIN || integer_part > (float)INT64_MAX)) {
+        fprintf(stderr, "integer overflow\n");
+        awsm_assert(0);
+    }
+
     return (i64)f;
 }
 
 u64 u64_trunc_f64(double f) {
-    awsm_assert(0 <= (u64)f);
-    awsm_assert((u64)f <= UINT64_MAX);
+    double integer_part = 0;
+    double decimal_part = modf(f, &integer_part);
+
+    if (unlikely(integer_part < 0 || integer_part > (double)UINT64_MAX)) {
+        fprintf(stderr, "integer overflow\n");
+        awsm_assert(0);
+    }
+
     return (u64)f;
 }
 
 i64 i64_trunc_f64(double f) {
-    awsm_assert(INT64_MIN <= (i64)f);
-    awsm_assert((i64)f <= INT64_MAX);
+    double integer_part = 0;
+    double decimal_part = modf(f, &integer_part);
+
+    if (unlikely(integer_part < (double)INT64_MIN || integer_part > (double)INT64_MAX)) {
+        fprintf(stderr, "integer overflow\n");
+        awsm_assert(0);
+    }
+
     return (i64)f;
 }
 
