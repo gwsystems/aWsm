@@ -163,6 +163,9 @@ all: \
 	i32__clz.minimal.out \
 	i32__ctz.minimal.out \
 	i32__rem_s.minimal.out \
+	i64__.minimal.out \
+	i64__ctz.minimal.out \
+	i64__rem_s.minimal.out \
 	if__.minimal.out \
 	if__as-unary-operand.minimal.out \
 	loop__.minimal.out \
