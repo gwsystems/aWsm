@@ -599,7 +599,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 let result = if m_ctx.opt.use_fast_unsafe_implementations {
                     b.build_fptoui(v, <u32>::get_type(m_ctx.llvm_ctx))
                 } else {
-                    b.build_call(get_stub_function(m_ctx, I32_TRUNC_F64), &[v])
+                    b.build_call(get_stub_function(m_ctx, U32_TRUNC_F64), &[v])
                 };
                 stack.push(result);
             }
@@ -873,7 +873,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 }
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I32);
-                let result = b.build_zext(v, <i64>::get_type(m_ctx.llvm_ctx));
+                let result = b.build_sext(v, <i64>::get_type(m_ctx.llvm_ctx));
                 stack.push(result);
             }
             Instruction::I64ExtendUI32 => {
@@ -882,7 +882,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 }
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I32);
-                let result = b.build_sext(v, <i64>::get_type(m_ctx.llvm_ctx));
+                let result = b.build_zext(v, <i64>::get_type(m_ctx.llvm_ctx));
                 stack.push(result);
             }
 

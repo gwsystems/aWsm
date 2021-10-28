@@ -94,8 +94,8 @@ pub const I64_CTPOP: &str = "llvm.ctpop.i64";
 pub const I32_CLZ: &str = "llvm.ctlz.i32";
 pub const I64_CLZ: &str = "llvm.ctlz.i64";
 
-pub const I32_CTZ: &str = "llvm.ctlz.i32";
-pub const I64_CTZ: &str = "llvm.ctlz.i64";
+pub const I32_CTZ: &str = "llvm.cttz.i32";
+pub const I64_CTZ: &str = "llvm.cttz.i64";
 
 pub const F32_FABS: &str = "llvm.fabs.f32";
 pub const F64_FABS: &str = "llvm.fabs.f64";

@@ -2,7 +2,7 @@
 
 # Tests WASI syscalls via C test programs and wasi-libc
 
-make -k clean all
+make -k all
 
 declare -a tests_failed=()
 

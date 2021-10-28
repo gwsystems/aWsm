@@ -59,15 +59,6 @@ all: \
 	align__.minimal.out \
 	block__.minimal.out \
 	block__break-inner.minimal.out \
-	bulk__data.drop.minimal.out \
-	bulk__elem.drop.minimal.out \
-	bulk__goodbye.minimal.out \
-	bulk__memory.copy.minimal.out \
-	bulk__memory.fill.minimal.out \
-	bulk__memory.init.minimal.out \
-	bulk__sixtyfive.minimal.out \
-	bulk__table.copy.minimal.out \
-	bulk__table.init.minimal.out \
 	br__.minimal.out \
 	br__as-binary-both.minimal.out \
 	br__as-binary-left.minimal.out \

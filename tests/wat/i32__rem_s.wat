@@ -15,71 +15,71 @@
 		))
 
 		(if (i32.ne (call $rem_s (i32.const 1) (i32.const 1)) (i32.const 0)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 2))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const 0) (i32.const 1)) (i32.const 0)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 3))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const 0) (i32.const -1)) (i32.const 0)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 4))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const -1) (i32.const -1)) (i32.const 0)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 5))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const 0x80000000) (i32.const -1)) (i32.const 0)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 6))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const 0x80000000) (i32.const 2)) (i32.const 0)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 7))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const 0x80000001) (i32.const 1000)) (i32.const -647)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 8))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const 5) (i32.const 2)) (i32.const 1)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 9))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const -5) (i32.const 2)) (i32.const -1)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 10))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const 5) (i32.const -2)) (i32.const 1)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 11))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const -5) (i32.const -2)) (i32.const -1)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 12))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const 7) (i32.const 3)) (i32.const 1)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 13))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const -7) (i32.const 3)) (i32.const -1)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 14))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const 7) (i32.const -3)) (i32.const 1)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 15))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const -7) (i32.const -3)) (i32.const -1)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 16))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const 11) (i32.const 5)) (i32.const 1)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 17))
 		))
 
 		(if (i32.ne (call $rem_s (i32.const 17) (i32.const 7)) (i32.const 3)) (then     
-			(call $proc_exit (i32.const 1))
+			(call $proc_exit (i32.const 18))
 		))
 
 	)

@@ -87,7 +87,13 @@ INLINE i32 i32_div(i32 a, i32 b) {
 }
 
 INLINE i32 i32_rem(i32 a, i32 b) {
-    awsm_assert(b && (a != INT32_MIN || b != -1));
+    awsm_assert(b != 0);
+
+    /* Because MIN is one less than MAX, we can FPE here */
+    if (unlikely(a == INT32_MIN)) {
+        return (a + abs(b)) % b;
+    }
+
     return a % b;
 }
 
@@ -107,7 +113,13 @@ INLINE i64 i64_div(i64 a, i64 b) {
 }
 
 INLINE i64 i64_rem(i64 a, i64 b) {
-    awsm_assert(b && (a != INT64_MIN || b != -1));
+    awsm_assert(b != 0);
+
+    /* Because MIN is one less than MAX, we can FPE here */
+    if (unlikely(a == INT64_MIN)) {
+        return (a + labs(b)) % b;
+    }
+
     return a % b;
 }
 
@@ -115,42 +127,50 @@ INLINE i64 i64_rem(i64 a, i64 b) {
 // In C, float => int conversions always truncate
 // If a int2float(int::min_value) <= float <= int2float(int::max_value), it must always be safe to truncate it
 u32 u32_trunc_f32(float f) {
-    awsm_assert(0 <= f && f <= (float)UINT32_MAX);
+    awsm_assert(0 <= (u32)f);
+    awsm_assert((u32)f <= UINT32_MAX);
     return (u32)f;
 }
 
 i32 i32_trunc_f32(float f) {
-    awsm_assert(INT32_MIN <= f && f <= (float)INT32_MAX);
+    awsm_assert(INT32_MIN <= (i32)f);
+    awsm_assert((i32)f <= INT32_MAX);
     return (i32)f;
 }
 
 u32 u32_trunc_f64(double f) {
-    awsm_assert(0 <= f && f <= (float)UINT32_MAX);
+    awsm_assert(0 <= (u32)f);
+    awsm_assert((u32)f <= UINT32_MAX);
     return (u32)f;
 }
 
 i32 i32_trunc_f64(double f) {
-    awsm_assert(INT32_MIN <= f && f <= (float)INT32_MAX);
+    awsm_assert(INT32_MIN <= (i32)f);
+    awsm_assert((i32)f <= INT32_MAX);
     return (i32)f;
 }
 
 u64 u64_trunc_f32(float f) {
-    awsm_assert(0 <= f && f <= (float)UINT64_MAX);
+    awsm_assert(0 <= (u64)f);
+    awsm_assert((u64)f <= UINT64_MAX);
     return (u64)f;
 }
 
 i64 i64_trunc_f32(float f) {
-    awsm_assert(INT64_MIN <= f && f <= (float)INT64_MAX);
+    awsm_assert(INT64_MIN <= (i64)f);
+    awsm_assert((i64)f <= INT64_MAX);
     return (i64)f;
 }
 
 u64 u64_trunc_f64(double f) {
-    awsm_assert(0 <= f && f <= (double)UINT64_MAX);
+    awsm_assert(0 <= (u64)f);
+    awsm_assert((u64)f <= UINT64_MAX);
     return (u64)f;
 }
 
 i64 i64_trunc_f64(double f) {
-    awsm_assert(INT64_MIN <= f && f <= (double)INT64_MAX);
+    awsm_assert(INT64_MIN <= (i64)f);
+    awsm_assert((i64)f <= INT64_MAX);
     return (i64)f;
 }
 
