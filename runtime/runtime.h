@@ -6,6 +6,9 @@
 #define INLINE __attribute__((always_inline))
 #define WEAK   __attribute__((weak))
 
+#define likely(X)   __builtin_expect(!!(X), 1)
+#define unlikely(X) __builtin_expect(!!(X), 0)
+
 #if __has_include("assert.h") && (defined(__APPLE__) || defined(__linux__))
 #include <assert.h>
 #define awsm_assert assert

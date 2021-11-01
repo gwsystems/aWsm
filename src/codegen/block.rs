@@ -21,7 +21,7 @@ use crate::codegen::runtime_stubs::*;
 use crate::codegen::type_conversions::llvm_type_to_wasm_type;
 use crate::codegen::type_conversions::wasm_func_type_to_llvm_type;
 
-use crate::wasm::Instruction;
+use crate::wasm::{Function, Instruction};
 
 pub struct IfCtx<'a, 'b> {
     else_block: &'a BasicBlock,
@@ -44,7 +44,7 @@ pub fn compile_block<'a, 'b, 'c>(
     // This avoids so called "virtual" stack handling
     // Right now we just assume LLVM isn't stupid and won't emit useless instructions
 
-    // We alias a few common fields so we don't have to type out a ton of stuff everytime we use them
+    // We alias a few common fields so we don't have to type out a ton of stuff every time we use them
     let b: &Builder = f_ctx.builder;
 
     // Each semantic "scope" has its own stack
@@ -54,14 +54,20 @@ pub fn compile_block<'a, 'b, 'c>(
     let mut basic_block = initial_bb;
     b.position_at_end(basic_block);
 
-    // A block can be terminated, which changes the behavior of the "end" instruction
-    // FIXME: Should we advance to an `end` instruction if we terminate the block??
     let mut block_terminated = false;
 
     let mut remaining_instructions = instructions;
     loop {
         let inst = remaining_instructions[0].clone();
         remaining_instructions = &remaining_instructions[1..];
+
+        // Advance to end or else instruction if block is terminated
+        if block_terminated
+            && !((inst == Instruction::Else && if_ctx.as_ref().is_some())
+                || inst == Instruction::End)
+        {
+            continue;
+        }
 
         match inst {
             Instruction::BlockStart { produced_type } => {
@@ -283,10 +289,6 @@ pub fn compile_block<'a, 'b, 'c>(
             }
 
             Instruction::Br { depth } => {
-                if block_terminated {
-                    continue;
-                }
-
                 let index = breakout_stack.len() - 1 - depth as usize;
                 let mut tt = breakout_stack[index].borrow_mut();
                 tt.add_jump(basic_block, &locals, &stack);
@@ -294,9 +296,6 @@ pub fn compile_block<'a, 'b, 'c>(
                 block_terminated = true;
             }
             Instruction::BrIf { depth } => {
-                if block_terminated {
-                    continue;
-                }
                 let i32_v = stack.pop().unwrap();
                 let v = is_non_zero_i32(m_ctx, b, i32_v);
 
@@ -313,9 +312,6 @@ pub fn compile_block<'a, 'b, 'c>(
                 // BrIf is not exhaustive, so it does not terminate a block, it creates an implicit else block
             }
             Instruction::BrTable { table, default } => {
-                if block_terminated {
-                    continue;
-                }
                 let switch_value = stack.pop().unwrap();
 
                 let mut jumps = Vec::new();
@@ -348,9 +344,6 @@ pub fn compile_block<'a, 'b, 'c>(
             }
 
             Instruction::Return => {
-                if block_terminated {
-                    continue;
-                }
                 if f_ctx.has_return {
                     b.build_ret(
                         stack
@@ -363,10 +356,6 @@ pub fn compile_block<'a, 'b, 'c>(
                 block_terminated = true;
             }
             Instruction::Unreachable => {
-                if block_terminated {
-                    continue;
-                }
-
                 let trap_call = get_stub_function(m_ctx, TRAP);
                 b.build_call(trap_call, &[]);
                 b.build_unreachable();
@@ -377,6 +366,25 @@ pub fn compile_block<'a, 'b, 'c>(
                 let &(llvm_f, ref wasm_f) = &m_ctx.functions[index as usize];
 
                 let arg_count = wasm_f.count_args();
+
+                if arg_count > stack.len() {
+                    if let Function::Implemented { f } = wasm_f {
+                        panic!(
+                            "Call to function {} expected {} arguments, but stack only has {}",
+                            f.generated_name,
+                            arg_count,
+                            stack.len()
+                        );
+                    } else {
+                        panic!(
+                            "Call to function {} expected {} arguments, but stack only has {}",
+                            index,
+                            arg_count,
+                            stack.len()
+                        );
+                    }
+                }
+
                 let mut args = Vec::new();
                 for _ in 0..arg_count {
                     args.push(stack.pop().unwrap());
@@ -518,7 +526,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 let result = if m_ctx.opt.use_fast_unsafe_implementations {
                     b.build_fptoui(v, <u32>::get_type(m_ctx.llvm_ctx))
                 } else {
-                    b.build_call(get_stub_function(m_ctx, I32_TRUNC_F64), &[v])
+                    b.build_call(get_stub_function(m_ctx, U32_TRUNC_F64), &[v])
                 };
                 stack.push(result);
             }
@@ -684,13 +692,13 @@ pub fn compile_block<'a, 'b, 'c>(
             Instruction::I64ExtendSI32 => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I32);
-                let result = b.build_zext(v, <i64>::get_type(m_ctx.llvm_ctx));
+                let result = b.build_sext(v, <i64>::get_type(m_ctx.llvm_ctx));
                 stack.push(result);
             }
             Instruction::I64ExtendUI32 => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I32);
-                let result = b.build_sext(v, <i64>::get_type(m_ctx.llvm_ctx));
+                let result = b.build_zext(v, <i64>::get_type(m_ctx.llvm_ctx));
                 stack.push(result);
             }
 
@@ -865,7 +873,9 @@ pub fn compile_block<'a, 'b, 'c>(
             Instruction::I64Eq => i64_cmp_signed(m_ctx, b, &mut stack, Predicate::Equal),
             Instruction::I64Ne => i64_cmp_signed(m_ctx, b, &mut stack, Predicate::NotEqual),
             Instruction::I64LeS => i64_cmp_signed(m_ctx, b, &mut stack, Predicate::LessThanOrEqual),
-            Instruction::I64LeU => i64_cmp_unsigned(m_ctx, b, &mut stack, Predicate::LessThan),
+            Instruction::I64LeU => {
+                i64_cmp_unsigned(m_ctx, b, &mut stack, Predicate::LessThanOrEqual)
+            }
             Instruction::I64LtS => i64_cmp_signed(m_ctx, b, &mut stack, Predicate::LessThan),
             Instruction::I64LtU => i64_cmp_unsigned(m_ctx, b, &mut stack, Predicate::LessThan),
             Instruction::I64GeS => {
