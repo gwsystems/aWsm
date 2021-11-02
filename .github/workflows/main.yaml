@@ -80,7 +80,12 @@ jobs:
       - name: WebAssembly Specification Test Suite
         if: matrix.libc == 'wasi-sdk'
         run: |
-          cd tests/wat && ./run.sh
+          cd tests/wat && ./run.sh uvwasi
+          cd tests/wat && ./run.sh minimal
+      - name: WebAssembly Specification Test Suite
+        if: matrix.libc == 'wasmception'
+        run: |
+          cd tests/wat && ./run.sh wasmception
       - name: WASI Tests
         if: matrix.libc == 'wasi-sdk'
         run: |

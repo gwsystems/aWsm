@@ -15,8 +15,6 @@ void* current_wasi_context;
 /* Code that actually runs the wasm code */
 IMPORT void wasmf__start(void);
 
-#define unlikely(x) __builtin_expect(!!(x), 0)
-
 /**
  * @brief Lifecycle function that runs at end at termination of WebAssembly module. Suitable for logging and cleanup
  */
