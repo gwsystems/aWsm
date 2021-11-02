@@ -4,7 +4,7 @@
 (export "memory" (memory 0))
 (table $tbl 0 anyfunc)
 
-(func $shouldNotUse (export "main") (result i32)
+(func $shouldNotUse (export "_start") (result i32)
     (block
         (block
             (block

@@ -17,7 +17,7 @@
 
 #include "../runtime.h"
 
-IMPORT i32 wasmf_main(i32 a, i32 b);
+IMPORT i32 wasmf__start(i32 a, i32 b);
 
 int runtime_main(int argc, char** argv) {
     runtime_init();
@@ -35,7 +35,7 @@ int runtime_main(int argc, char** argv) {
     stub_init();
 
     switch_out_of_runtime();
-    int ret = wasmf_main(argc, array_offset);
+    int ret = wasmf__start(argc, array_offset);
     switch_into_runtime();
 
     return ret;
