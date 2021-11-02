@@ -106,6 +106,7 @@ impl<'a> BreakoutTarget<'a> {
     where
         'a: 'b,
     {
+        b.position_at_end(self.bb);
         self.result_type.map(|ty| {
             let mut vals: Vec<(&BasicBlock, &Value)> = Vec::new();
             for jf in &self.jumps {
@@ -113,7 +114,7 @@ impl<'a> BreakoutTarget<'a> {
             }
 
             if vals.is_empty() {
-                // See above comment about unreachablity
+                // See above comment about unreachability
                 // TODO: Figure out if we can instead produce an unreachable result
                 if let TypeOrFuncType::Type(t) = ty {
                     wasm_type_to_zeroed_value(ctx, t)

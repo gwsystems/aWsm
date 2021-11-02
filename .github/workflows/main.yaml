@@ -37,7 +37,7 @@ jobs:
           sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" bash $LLVM_VERSION
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
           sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
-          sudo apt install libc++-dev libc++abi-dev --yes
+          sudo apt install libc++-dev libc++abi-dev wabt --yes
           # not really sure why we need to modify this
           PATH=/usr/bin:$PATH
           llvm-config --version
@@ -65,6 +65,12 @@ jobs:
         # to pass explicit flags
         run: |
           cargo test -- --skip code_benches
+
+      # These tests assume WASI
+      - name: WebAssembly Specification Test Suite
+        if: matrix.libc == 'wasi-sdk'
+        run: |
+          cd tests/wat && ./run.sh
 
       - name: Code benches
         run: |
