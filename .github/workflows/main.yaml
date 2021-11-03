@@ -77,10 +77,13 @@ jobs:
           cargo test -- --skip code_benches
 
       # These tests assume WASI
-      - name: WebAssembly Specification Test Suite
+      - name: WebAssembly Specification Test Suite (uvwasi)
         if: matrix.libc == 'wasi-sdk'
         run: |
           cd tests/wat && ./run.sh uvwasi
+      - name: WebAssembly Specification Test Suite (minimal)
+        if: matrix.libc == 'wasi-sdk'
+        run: |
           cd tests/wat && ./run.sh minimal
       - name: WebAssembly Specification Test Suite
         if: matrix.libc == 'wasmception'
