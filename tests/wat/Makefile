@@ -58,6 +58,10 @@ clean:
 %.wasm: %.wat
 	@wat2wasm --debug-names $< -o $@
 
+# Wasmception using main as the entrypoint, so we need to replace _start with main
+%.wasmception.wat: %.wat
+	sed 's/_start/main/' $< >$@
+
 %.bc: %.wasm
 	@RUST_BACKTRACE=1 ${AWSM_CC} $< -o $@ 1>$*.log 2>&1
 
@@ -69,7 +73,7 @@ clean:
 	@wasmtime $^
 
 # Using wasmception backend
-%.wasmception.out: %.bc ${WASMCEPTION_RUNTIME_CFILES}
+%.wasmception.out: %.wasmception.bc ${WASMCEPTION_RUNTIME_CFILES}
 	@${CC} -lm ${OPTFLAGS} $^ -o $@
 
 # Using uvwasi backend
