@@ -75,6 +75,7 @@ All files need to be added to the Makefile and ./run.sh driver script following 
 | f32                   | N             | N              | N           |
 | f32_bitwise           | N             | N              | N           |
 | f32_cmp               | N             | N              | N           |
+| f32_min               | Y             | N              | N           |
 | f64                   | N             | N              | N           |
 | f64_bitwise           | N             | N              | N           |
 | f64_cmp               | N             | N              | N           |
