@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../../../runtime.h"
 #include "./wasi_spec.h"
 
 typedef struct wasi_options_s {
@@ -14,7 +13,7 @@ typedef struct wasi_options_s {
 } wasi_options_t;
 
 static inline void wasi_options_init(wasi_options_t* options) {
-    awsm_assert(options != NULL);
+    assert(options != NULL);
 
     options->argc = 0;
     options->argv = NULL;

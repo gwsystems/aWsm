@@ -146,7 +146,7 @@ uint32_t wasi_snapshot_preview1_environ_get(__wasi_size_t env_retoffset, __wasi_
     }
 
     const __wasi_size_t env_buf_size = wasi_context_get_env_buf_size(CURRENT_WASI_CONTEXT);
-    awsm_assert(env_buf_size > envc);
+    assert(env_buf_size > envc);
 
     /* wasi_snapshot_preview1_backing_environ_get returns a vector of host pointers. We write
      * these results to environ_temp temporarily before converting to offsets and writing to
@@ -287,7 +287,7 @@ uint32_t wasi_snapshot_preview1_fd_fdstat_set_flags(__wasi_fd_t fd, uint32_t fdf
     }
     __wasi_fdflags_t fdflags = (__wasi_fdflags_t)fdflags_extended;
 
-    rc = wasi_snapshot_preview1_backing_fdstat_set_flags(CURRENT_WASI_CONTEXT, fd, fdflags);
+    rc = wasi_snapshot_preview1_backing_fd_fdstat_set_flags(CURRENT_WASI_CONTEXT, fd, fdflags);
 
 done:
     return (uint32_t)rc;
@@ -305,8 +305,8 @@ done:
  */
 uint32_t wasi_snapshot_preview1_fd_fdstat_set_rights(__wasi_fd_t fd, __wasi_rights_t fs_rights_base,
                                                      __wasi_rights_t fs_rights_inheriting) {
-    return (uint32_t)wasi_snapshot_preview1_backing_fdstat_set_rights(CURRENT_WASI_CONTEXT, fd, fs_rights_base,
-                                                                      fs_rights_inheriting);
+    return (uint32_t)wasi_snapshot_preview1_backing_fd_fdstat_set_rights(CURRENT_WASI_CONTEXT, fd, fs_rights_base,
+                                                                         fs_rights_inheriting);
 }
 
 /**
@@ -354,7 +354,7 @@ uint32_t wasi_snapshot_preview1_fd_filestat_set_times(__wasi_fd_t fd, __wasi_tim
     }
     __wasi_fstflags_t fstflags = (__wasi_fstflags_t)fstflags_extended;
 
-    rc = wasi_snapshot_preview1_backing_filestat_set_times(CURRENT_WASI_CONTEXT, fd, atim, mtim, fstflags);
+    rc = wasi_snapshot_preview1_backing_fd_filestat_set_times(CURRENT_WASI_CONTEXT, fd, atim, mtim, fstflags);
 
 done:
     return (uint32_t)rc;
@@ -912,7 +912,7 @@ uint32_t wasi_snapshot_preview1_poll_oneoff(__wasi_size_t in_baseoffset, __wasi_
  */
 __attribute__((noreturn)) void wasi_snapshot_preview1_proc_exit(__wasi_exitcode_t exitcode) {
     wasi_snapshot_preview1_backing_proc_exit(CURRENT_WASI_CONTEXT, exitcode);
-    awsm_assert(0);
+    assert(0);
 }
 
 /**

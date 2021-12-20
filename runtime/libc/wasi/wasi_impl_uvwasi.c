@@ -180,8 +180,8 @@ wasi_snapshot_preview1_backing_fd_filestat_set_size(void* wasi_context, __wasi_f
 }
 
 __wasi_errno_t
-wasi_snapshot_preview1_backing_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_timestamp_t atim,
-                                                  __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags) {
+wasi_snapshot_preview1_backing_fd_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_timestamp_t atim,
+                                                     __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags) {
     return uvwasi_fd_filestat_set_times((uvwasi_t*)wasi_context, fd, atim, mtim, fst_flags);
 }
 
