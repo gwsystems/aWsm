@@ -17,7 +17,6 @@ use wasmparser::{CustomSectionKind, Name, NameSectionReader, Naming, TypeOrFuncT
 
 #[derive(Debug)]
 pub struct FunctionNameMap {
-    idx: u32,
     name: String,
     locals: HashMap<u32, String>,
 }
@@ -1008,7 +1007,6 @@ impl WasmModule {
                         self.function_name_maps.insert(
                             index,
                             FunctionNameMap {
-                                idx: index,
                                 name: unique_name,
                                 locals: HashMap::new(),
                             },
