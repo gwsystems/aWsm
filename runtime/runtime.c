@@ -224,7 +224,7 @@ i64 i64_trunc_f64(double f) {
 
 // Float => Float truncation functions
 INLINE float f32_trunc_f32(float f) {
-    return trunc(f);
+    return truncf(f);
 }
 
 INLINE float f32_min(float a, float b) {
@@ -240,15 +240,19 @@ INLINE float f32_floor(float a) {
 }
 
 INLINE float f32_ceil(float a) {
-    return ceil(a);
+    return ceilf(a);
 }
 
 INLINE float f32_nearest(float a) {
-    return round(a);
+    return nearbyintf(a);
 }
 
 INLINE float f32_copysign(float a, float b) {
     return copysignf(a, b);
+}
+
+INLINE double f64_trunc_f64(double f) {
+    return trunc(f);
 }
 
 INLINE double f64_min(double a, double b) {
@@ -268,7 +272,7 @@ INLINE double f64_ceil(double a) {
 }
 
 INLINE double f64_nearest(double a) {
-    return round(a);
+    return nearbyint(a);
 }
 
 INLINE double f64_copysign(double a, double b) {
