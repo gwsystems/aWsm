@@ -285,12 +285,12 @@ pub enum Instruction {
     Nop,
     Select,
 
-    GetLocal { index: u32 },
-    SetLocal { index: u32 },
-    TeeLocal { index: u32 },
+    LocalGet { index: u32 },
+    LocalSet { index: u32 },
+    LocalTee { index: u32 },
 
-    GetGlobal { index: u32 },
-    SetGlobal { index: u32 },
+    GlobalGet { index: u32 },
+    GlobalSet { index: u32 },
 
     I32Const(i32),
 
@@ -298,10 +298,10 @@ pub enum Instruction {
 
     I32ReinterpretF32,
 
-    I32TruncSF32,
-    I32TruncUF32,
-    I32TruncSF64,
-    I32TruncUF64,
+    I32TruncF32S,
+    I32TruncF32U,
+    I32TruncF64S,
+    I32TruncF64U,
 
     I32Add,
     I32And,
@@ -336,15 +336,15 @@ pub enum Instruction {
 
     I64Const(i64),
 
-    I64ExtendSI32,
-    I64ExtendUI32,
+    I64ExtendI32S,
+    I64ExtendI32U,
 
     I64ReinterpretF64,
 
-    I64TruncSF32,
-    I64TruncUF32,
-    I64TruncSF64,
-    I64TruncUF64,
+    I64TruncF32S,
+    I64TruncF32U,
+    I64TruncF64S,
+    I64TruncF64U,
 
     I64Add,
     I64And,
@@ -383,10 +383,10 @@ pub enum Instruction {
 
     F32ReinterpretI32,
 
-    F32ConvertSI32,
-    F32ConvertUI32,
-    F32ConvertSI64,
-    F32ConvertUI64,
+    F32ConvertI32S,
+    F32ConvertI32U,
+    F32ConvertI64S,
+    F32ConvertI64U,
 
     F32Abs,
     F32Add,
@@ -417,10 +417,10 @@ pub enum Instruction {
 
     F64ReinterpretI64,
 
-    F64ConvertSI32,
-    F64ConvertUI32,
-    F64ConvertSI64,
-    F64ConvertUI64,
+    F64ConvertI32S,
+    F64ConvertI32U,
+    F64ConvertI64S,
+    F64ConvertI64U,
 
     F64Abs,
     F64Add,
@@ -538,14 +538,14 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
             Operator::Nop => Instruction::Nop,
             Operator::Select => Instruction::Select,
 
-            Operator::GetLocal { local_index } => Instruction::GetLocal { index: local_index },
-            Operator::SetLocal { local_index } => Instruction::SetLocal { index: local_index },
-            Operator::TeeLocal { local_index } => Instruction::TeeLocal { index: local_index },
+            Operator::LocalGet { local_index } => Instruction::LocalGet { index: local_index },
+            Operator::LocalSet { local_index } => Instruction::LocalSet { index: local_index },
+            Operator::LocalTee { local_index } => Instruction::LocalTee { index: local_index },
 
-            Operator::GetGlobal { global_index } => Instruction::GetGlobal {
+            Operator::GlobalGet { global_index } => Instruction::GlobalGet {
                 index: global_index,
             },
-            Operator::SetGlobal { global_index } => Instruction::SetGlobal {
+            Operator::GlobalSet { global_index } => Instruction::GlobalSet {
                 index: global_index,
             },
 
@@ -555,10 +555,10 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
 
             Operator::I32ReinterpretF32 => Instruction::I32ReinterpretF32,
 
-            Operator::I32TruncSF32 => Instruction::I32TruncSF32,
-            Operator::I32TruncUF32 => Instruction::I32TruncUF32,
-            Operator::I32TruncSF64 => Instruction::I32TruncSF64,
-            Operator::I32TruncUF64 => Instruction::I32TruncUF64,
+            Operator::I32TruncF32S => Instruction::I32TruncF32S,
+            Operator::I32TruncF32U => Instruction::I32TruncF32U,
+            Operator::I32TruncF64S => Instruction::I32TruncF64S,
+            Operator::I32TruncF64U => Instruction::I32TruncF64U,
 
             Operator::I32Add => Instruction::I32Add,
             Operator::I32And => Instruction::I32And,
@@ -593,15 +593,15 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
 
             Operator::I64Const { value } => Instruction::I64Const(value),
 
-            Operator::I64ExtendSI32 => Instruction::I64ExtendSI32,
-            Operator::I64ExtendUI32 => Instruction::I64ExtendUI32,
+            Operator::I64ExtendI32S => Instruction::I64ExtendI32S,
+            Operator::I64ExtendI32U => Instruction::I64ExtendI32U,
 
             Operator::I64ReinterpretF64 => Instruction::I64ReinterpretF64,
 
-            Operator::I64TruncSF32 => Instruction::I64TruncSF32,
-            Operator::I64TruncUF32 => Instruction::I64TruncUF32,
-            Operator::I64TruncSF64 => Instruction::I64TruncSF64,
-            Operator::I64TruncUF64 => Instruction::I64TruncUF64,
+            Operator::I64TruncF32S => Instruction::I64TruncF32S,
+            Operator::I64TruncF32U => Instruction::I64TruncF32U,
+            Operator::I64TruncF64S => Instruction::I64TruncF64S,
+            Operator::I64TruncF64U => Instruction::I64TruncF64U,
 
             Operator::I64Add => Instruction::I64Add,
             Operator::I64And => Instruction::I64And,
@@ -643,10 +643,10 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
 
             Operator::F32ReinterpretI32 => Instruction::F32ReinterpretI32,
 
-            Operator::F32ConvertSI32 => Instruction::F32ConvertSI32,
-            Operator::F32ConvertUI32 => Instruction::F32ConvertUI32,
-            Operator::F32ConvertSI64 => Instruction::F32ConvertSI64,
-            Operator::F32ConvertUI64 => Instruction::F32ConvertUI64,
+            Operator::F32ConvertI32S => Instruction::F32ConvertI32S,
+            Operator::F32ConvertI32U => Instruction::F32ConvertI32U,
+            Operator::F32ConvertI64S => Instruction::F32ConvertI64S,
+            Operator::F32ConvertI64U => Instruction::F32ConvertI64U,
 
             Operator::F32Abs => Instruction::F32Abs,
             Operator::F32Add => Instruction::F32Add,
@@ -680,10 +680,10 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
 
             Operator::F64ReinterpretI64 => Instruction::F64ReinterpretI64,
 
-            Operator::F64ConvertSI32 => Instruction::F64ConvertSI32,
-            Operator::F64ConvertUI32 => Instruction::F64ConvertUI32,
-            Operator::F64ConvertSI64 => Instruction::F64ConvertSI64,
-            Operator::F64ConvertUI64 => Instruction::F64ConvertUI64,
+            Operator::F64ConvertI32S => Instruction::F64ConvertI32S,
+            Operator::F64ConvertI32U => Instruction::F64ConvertI32U,
+            Operator::F64ConvertI64S => Instruction::F64ConvertI64S,
+            Operator::F64ConvertI64U => Instruction::F64ConvertI64U,
 
             Operator::F64Abs => Instruction::F64Abs,
             Operator::F64Add => Instruction::F64Add,
