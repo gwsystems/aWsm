@@ -160,6 +160,13 @@ fn insert_runtime_globals<'a>(
     }
     b.build_ret_void();
 
+    // We add in globals to tell the runtime how much memory to allocate and startup
+    // (And what the max amount of allocated memory should be)
+    let globals_len: usize = global_values.len();
+    let max_pages_global =
+        llvm_module.add_global_variable("globals_len", globals_len.compile(llvm_ctx));
+    max_pages_global.set_constant(true);
+
     global_values
 }
 
