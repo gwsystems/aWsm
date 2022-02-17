@@ -92,7 +92,7 @@ impl Global {
             Type::AnyRef => 8,
             Type::Func => 4,
             Type::EmptyBlockType => 0,
-            Type::Null => 0,
+            Type::NullRef => 0,
         }
     }
 }
