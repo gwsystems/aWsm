@@ -52,7 +52,7 @@ pub struct Opt {
 
 fn main() -> io::Result<()> {
     let log_spec = "debug";
-    flexi_logger::Logger::with_str(log_spec).start().unwrap();
+    flexi_logger::Logger::try_with_str(log_spec).unwrap().start().unwrap();
 
     let opt = Opt::from_args();
     info!("running awsm({:?}, {:?})", opt.input, opt.output);
