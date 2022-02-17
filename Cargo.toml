@@ -8,7 +8,7 @@ edition = "2018"
 flexi_logger = "0.22.3"
 llvm-alt = { git = "https://github.com/gwsystems/llvm-rs", branch = "sfbase"}
 log = "0.4.14"
-structopt = "0.3.2"
+structopt = "0.3.26"
 wasmparser = "0.39.2"
 
 [profile.release]
