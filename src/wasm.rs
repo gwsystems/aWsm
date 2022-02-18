@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::str;
 
-use wasmparser::ExternalKind;
+use wasmparser::{ExternalKind, ElemSectionEntryTable, ElementItem};
 use wasmparser::FuncType;
 use wasmparser::ImportSectionEntryType;
 use wasmparser::MemoryType;
@@ -1336,8 +1336,12 @@ impl WasmModule {
 
     fn process_table_element_section(&mut self, p: &mut Parser) -> ProcessState {
         match p.read() {
-            &ParserState::BeginActiveElementSectionEntry(table_id) => {
-                ProcessState::TableElementEntry { table_id }
+            &ParserState::BeginElementSectionEntry{table, ty: _} => {
+                match table {
+                    ElemSectionEntryTable::Active(table_id) => ProcessState::TableElementEntry { table_id },
+                    ElemSectionEntryTable::Passive => ProcessState::TableElementSection,
+                    ElemSectionEntryTable::Declared => ProcessState::TableElementSection,
+                }
             }
             &ParserState::EndSection => ProcessState::Outer,
             e => panic!("Have not implemented table element section state {:?}", e),
@@ -1380,7 +1384,13 @@ impl WasmModule {
         let mut function_indexes: Vec<u32> = Vec::new();
         loop {
             match p.read() {
-                &ParserState::ElementSectionEntryBody(ref v) => function_indexes.extend(v.iter()),
+                &ParserState::ElementSectionEntryBody(ref v) => {
+                    for elem in v.iter() {
+                        if let ElementItem::Func(idx) = elem {
+                            function_indexes.push(*idx);
+                        }
+                    }
+                }
                 &ParserState::EndElementSectionEntry => {
                     assert_eq!(table_id, 0);
                     let ti = TableInitializer {
