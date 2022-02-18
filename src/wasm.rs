@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::str;
 
-use wasmparser::{ExternalKind, ElemSectionEntryTable, ElementItem};
 use wasmparser::FuncType;
 use wasmparser::ImportSectionEntryType;
 use wasmparser::MemoryType;
@@ -14,6 +13,7 @@ use wasmparser::TableType;
 use wasmparser::Type;
 use wasmparser::WasmDecoder;
 use wasmparser::{CustomSectionKind, Name, NameSectionReader, Naming, TypeOrFuncType};
+use wasmparser::{ElemSectionEntryTable, ElementItem, ExternalKind};
 
 #[derive(Debug)]
 pub struct FunctionNameMap {
@@ -1336,13 +1336,13 @@ impl WasmModule {
 
     fn process_table_element_section(&mut self, p: &mut Parser) -> ProcessState {
         match p.read() {
-            &ParserState::BeginElementSectionEntry{table, ty: _} => {
-                match table {
-                    ElemSectionEntryTable::Active(table_id) => ProcessState::TableElementEntry { table_id },
-                    ElemSectionEntryTable::Passive => ProcessState::TableElementSection,
-                    ElemSectionEntryTable::Declared => ProcessState::TableElementSection,
+            &ParserState::BeginElementSectionEntry { table, ty: _ } => match table {
+                ElemSectionEntryTable::Active(table_id) => {
+                    ProcessState::TableElementEntry { table_id }
                 }
-            }
+                ElemSectionEntryTable::Passive => ProcessState::TableElementSection,
+                ElemSectionEntryTable::Declared => ProcessState::TableElementSection,
+            },
             &ParserState::EndSection => ProcessState::Outer,
             e => panic!("Have not implemented table element section state {:?}", e),
         }
