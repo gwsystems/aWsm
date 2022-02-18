@@ -449,24 +449,24 @@ pub fn compile_block<'a, 'b, 'c>(
                 stack.push(res);
             }
 
-            Instruction::GetLocal { index } => {
+            Instruction::LocalGet { index } => {
                 stack.push(locals[index as usize]);
             }
-            Instruction::SetLocal { index } => {
+            Instruction::LocalSet { index } => {
                 let v = stack.pop().unwrap();
                 locals[index as usize] = v;
             }
-            Instruction::TeeLocal { index } => {
-                // Differs from `SetLocal` in that it doesn't pop it's operand off the stack
+            Instruction::LocalTee { index } => {
+                // Differs from `LocalSet` in that it doesn't pop it's operand off the stack
                 let v = *stack.last().unwrap();
                 locals[index as usize] = v;
             }
 
-            Instruction::GetGlobal { index } => {
+            Instruction::GlobalGet { index } => {
                 let v = m_ctx.globals[index as usize].load(m_ctx, b);
                 stack.push(v);
             }
-            Instruction::SetGlobal { index } => {
+            Instruction::GlobalSet { index } => {
                 let v = stack.pop().unwrap();
                 m_ctx.globals[index as usize].store(m_ctx, b, v);
             }
@@ -490,7 +490,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 stack.push(result);
             }
 
-            Instruction::I32TruncSF32 => {
+            Instruction::I32TruncF32S => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::F32);
                 let result = if m_ctx.opt.use_fast_unsafe_implementations {
@@ -500,7 +500,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 };
                 stack.push(result);
             }
-            Instruction::I32TruncUF32 => {
+            Instruction::I32TruncF32U => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::F32);
                 let result = if m_ctx.opt.use_fast_unsafe_implementations {
@@ -510,7 +510,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 };
                 stack.push(result);
             }
-            Instruction::I32TruncSF64 => {
+            Instruction::I32TruncF64S => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::F64);
                 let result = if m_ctx.opt.use_fast_unsafe_implementations {
@@ -520,7 +520,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 };
                 stack.push(result);
             }
-            Instruction::I32TruncUF64 => {
+            Instruction::I32TruncF64U => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::F64);
                 let result = if m_ctx.opt.use_fast_unsafe_implementations {
@@ -689,13 +689,13 @@ pub fn compile_block<'a, 'b, 'c>(
                 stack.push(v);
             }
 
-            Instruction::I64ExtendSI32 => {
+            Instruction::I64ExtendI32S => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I32);
                 let result = b.build_sext(v, <i64>::get_type(m_ctx.llvm_ctx));
                 stack.push(result);
             }
-            Instruction::I64ExtendUI32 => {
+            Instruction::I64ExtendI32U => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I32);
                 let result = b.build_zext(v, <i64>::get_type(m_ctx.llvm_ctx));
@@ -709,25 +709,25 @@ pub fn compile_block<'a, 'b, 'c>(
                 stack.push(result);
             }
 
-            Instruction::I64TruncSF32 => {
+            Instruction::I64TruncF32S => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::F32);
                 let result = b.build_call(get_stub_function(m_ctx, I64_TRUNC_F32), &[v]);
                 stack.push(result);
             }
-            Instruction::I64TruncUF32 => {
+            Instruction::I64TruncF32U => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::F32);
                 let result = b.build_call(get_stub_function(m_ctx, U64_TRUNC_F32), &[v]);
                 stack.push(result);
             }
-            Instruction::I64TruncSF64 => {
+            Instruction::I64TruncF64S => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::F64);
                 let result = b.build_call(get_stub_function(m_ctx, I64_TRUNC_F64), &[v]);
                 stack.push(result);
             }
-            Instruction::I64TruncUF64 => {
+            Instruction::I64TruncF64U => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::F64);
                 let result = b.build_call(get_stub_function(m_ctx, U64_TRUNC_F64), &[v]);
@@ -906,25 +906,25 @@ pub fn compile_block<'a, 'b, 'c>(
                 stack.push(result);
             }
 
-            Instruction::F32ConvertSI32 => {
+            Instruction::F32ConvertI32S => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I32);
                 let result = b.build_sitofp(v, <f32>::get_type(m_ctx.llvm_ctx));
                 stack.push(result);
             }
-            Instruction::F32ConvertUI32 => {
+            Instruction::F32ConvertI32U => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I32);
                 let result = b.build_uitofp(v, <f32>::get_type(m_ctx.llvm_ctx));
                 stack.push(result);
             }
-            Instruction::F32ConvertSI64 => {
+            Instruction::F32ConvertI64S => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I64);
                 let result = b.build_sitofp(v, <f32>::get_type(m_ctx.llvm_ctx));
                 stack.push(result);
             }
-            Instruction::F32ConvertUI64 => {
+            Instruction::F32ConvertI64U => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I64);
                 let result = b.build_uitofp(v, <f32>::get_type(m_ctx.llvm_ctx));
@@ -1021,25 +1021,25 @@ pub fn compile_block<'a, 'b, 'c>(
                 stack.push(result);
             }
 
-            Instruction::F64ConvertSI32 => {
+            Instruction::F64ConvertI32S => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I32);
                 let result = b.build_sitofp(v, <f64>::get_type(m_ctx.llvm_ctx));
                 stack.push(result);
             }
-            Instruction::F64ConvertUI32 => {
+            Instruction::F64ConvertI32U => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I32);
                 let result = b.build_uitofp(v, <f64>::get_type(m_ctx.llvm_ctx));
                 stack.push(result);
             }
-            Instruction::F64ConvertSI64 => {
+            Instruction::F64ConvertI64S => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I64);
                 let result = b.build_sitofp(v, <f64>::get_type(m_ctx.llvm_ctx));
                 stack.push(result);
             }
-            Instruction::F64ConvertUI64 => {
+            Instruction::F64ConvertI64U => {
                 let v = stack.pop().unwrap();
                 assert_type(m_ctx, v, Type::I64);
                 let result = b.build_uitofp(v, <f64>::get_type(m_ctx.llvm_ctx));

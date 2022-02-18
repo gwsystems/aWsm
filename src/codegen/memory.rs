@@ -92,7 +92,6 @@ pub fn generate_offset_function<'a>(
 ) -> &'a llvm::Function {
     let offset_func_name = format!("init_{}_offset_{}", prefix, n);
     let offset_func_type = wasmparser::FuncType {
-        form: wasmparser::Type::Func,
         params: Box::new([]),
         returns: Box::new([wasmparser::Type::I32]),
     };
