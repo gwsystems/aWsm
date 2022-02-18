@@ -1088,14 +1088,15 @@ impl WasmModule {
         match p.read() {
             &ParserState::TypeSectionEntry(ref f) => {
                 match f {
-                    TypeDef::Func(func_type) => {
-                        self.types.push(func_type.clone());
-                    }
+                    TypeDef::Func(func_type) => self.types.push(func_type.clone()),
                     TypeDef::Instance(_instance_type) => {
-                        panic!("Unsupported!")
+                        panic!(
+                            "TypeDef::Instance (type {:?}) not implemented",
+                            _instance_type
+                        )
                     }
                     TypeDef::Module(_module_type) => {
-                        panic!("Unsupported!")
+                        panic!("TypeDef::Module (type {:?}) not implemented", _module_type)
                     }
                 }
                 ProcessState::TypeSection
@@ -1153,11 +1154,14 @@ impl WasmModule {
                     ImportSectionEntryType::Table(table_ty) => {
                         self.tables.push(*table_ty);
                     }
-                    ImportSectionEntryType::Module(_i) => {
-                        panic!("Unsupported!")
+                    ImportSectionEntryType::Module(i) => {
+                        panic!("ImportSectionEntryType::Module (idx {}) not implemented", i)
                     }
-                    ImportSectionEntryType::Instance(_i) => {
-                        panic!("Unsupported!")
+                    ImportSectionEntryType::Instance(i) => {
+                        panic!(
+                            "ImportSectionEntryType::Instance (idx {}) not implemented",
+                            i
+                        )
                     }
                 }
                 ProcessState::ImportSection
@@ -1355,8 +1359,12 @@ impl WasmModule {
                 ElemSectionEntryTable::Active(table_id) => {
                     ProcessState::TableElementEntry { table_id }
                 }
-                ElemSectionEntryTable::Passive => ProcessState::TableElementSection,
-                ElemSectionEntryTable::Declared => ProcessState::TableElementSection,
+                ElemSectionEntryTable::Passive => {
+                    panic!("ElemSectionEntryTable::Passive not implemented")
+                }
+                ElemSectionEntryTable::Declared => {
+                    panic!("ElemSectionEntryTable::Declared not implemented")
+                }
             },
             &ParserState::EndSection => ProcessState::Outer,
             e => panic!("Have not implemented table element section state {:?}", e),
@@ -1401,8 +1409,11 @@ impl WasmModule {
             match p.read() {
                 &ParserState::ElementSectionEntryBody(ref v) => {
                     for elem in v.iter() {
-                        if let ElementItem::Func(idx) = elem {
-                            function_indexes.push(*idx);
+                        match elem {
+                            ElementItem::Func(idx) => function_indexes.push(*idx),
+                            ElementItem::Null(ty) => {
+                                panic!("ElementItem::Null (type {:?}) not implemented", ty)
+                            }
                         }
                     }
                 }
