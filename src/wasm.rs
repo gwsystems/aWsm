@@ -88,11 +88,10 @@ impl Global {
             Type::F32 => 4,
             Type::F64 => 8,
             Type::V128 => 16,
-            Type::AnyFunc => 4,
-            Type::AnyRef => 8,
+            Type::FuncRef => 4,
+            Type::ExternRef => 8,
             Type::Func => 4,
             Type::EmptyBlockType => 0,
-            Type::NullRef => 0,
         }
     }
 }
