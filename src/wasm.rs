@@ -1127,7 +1127,9 @@ impl WasmModule {
                 match ty {
                     ImportSectionEntryType::Function(i) => {
                         let source = module.to_string();
-                        let name = field.unwrap().to_string();
+                        let name = field
+                            .expect("Expected imported function to have name")
+                            .to_string();
                         let appended = source.clone() + "_" + &name;
                         self.functions.push(Function::Imported {
                             source,
@@ -1139,7 +1141,9 @@ impl WasmModule {
                     }
                     ImportSectionEntryType::Global(global_ty) => {
                         let source = module.to_string();
-                        let name = field.unwrap().to_string();
+                        let name = field
+                            .expect("Expected imported global to have name")
+                            .to_string();
                         let appended = source + "_" + &name;
 
                         self.globals.push(Global::Imported {
