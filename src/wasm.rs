@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::str;
 
-use wasmparser::FuncType;
 use wasmparser::ImportSectionEntryType;
 use wasmparser::MemoryType;
 use wasmparser::Operator;
@@ -14,6 +13,7 @@ use wasmparser::Type;
 use wasmparser::WasmDecoder;
 use wasmparser::{CustomSectionKind, Name, NameSectionReader, Naming, TypeOrFuncType};
 use wasmparser::{ElemSectionEntryTable, ElementItem, ExternalKind};
+use wasmparser::{FuncType, TypeDef};
 
 #[derive(Debug)]
 pub struct FunctionNameMap {
@@ -1087,7 +1087,17 @@ impl WasmModule {
     fn process_type_section(&mut self, p: &mut Parser) -> ProcessState {
         match p.read() {
             &ParserState::TypeSectionEntry(ref f) => {
-                self.types.push(f.clone());
+                match f {
+                    TypeDef::Func(func_type) => {
+                        self.types.push(func_type.clone());
+                    }
+                    TypeDef::Instance(_instance_type) => {
+                        panic!("Unsupported!")
+                    }
+                    TypeDef::Module(_module_type) => {
+                        panic!("Unsupported!")
+                    }
+                }
                 ProcessState::TypeSection
             }
             &ParserState::EndSection => ProcessState::Outer,
@@ -1116,7 +1126,7 @@ impl WasmModule {
                 match ty {
                     ImportSectionEntryType::Function(i) => {
                         let source = module.to_string();
-                        let name = field.to_string();
+                        let name = field.unwrap().to_string();
                         let appended = source.clone() + "_" + &name;
                         self.functions.push(Function::Imported {
                             source,
@@ -1128,7 +1138,7 @@ impl WasmModule {
                     }
                     ImportSectionEntryType::Global(global_ty) => {
                         let source = module.to_string();
-                        let name = field.to_string();
+                        let name = field.unwrap().to_string();
                         let appended = source + "_" + &name;
 
                         self.globals.push(Global::Imported {
@@ -1142,6 +1152,12 @@ impl WasmModule {
                     }
                     ImportSectionEntryType::Table(table_ty) => {
                         self.tables.push(*table_ty);
+                    }
+                    ImportSectionEntryType::Module(_i) => {
+                        panic!("Unsupported!")
+                    }
+                    ImportSectionEntryType::Instance(_i) => {
+                        panic!("Unsupported!")
                     }
                 }
                 ProcessState::ImportSection
