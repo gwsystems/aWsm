@@ -313,7 +313,7 @@ void runtime_init() {
     // Rounding always is round-to-nearest ties-to-even, in correspondence with IEEE 754-2019
     // https://webassembly.github.io/spec/core/exec/numerics.html#floating-point-operations
     int rc = fesetround(FE_TONEAREST);
-    assert(rc == 0);
+    awsm_assert(rc == 0);
 
     runtime_heap_base = wasmg___heap_base;
     if (runtime_heap_base == 0) {
