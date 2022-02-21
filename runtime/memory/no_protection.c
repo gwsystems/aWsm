@@ -9,8 +9,7 @@ void alloc_linear_memory() {
 }
 
 void expand_memory() {
-    // max_pages = 0 => no limit
-    awsm_assert(max_pages == 0 || (memory_size / WASM_PAGE_SIZE < max_pages));
+    awsm_assert(memory_size / WASM_PAGE_SIZE < max_pages);
 
     memory = realloc(memory, memory_size + WASM_PAGE_SIZE);
     awsm_assert(memory);

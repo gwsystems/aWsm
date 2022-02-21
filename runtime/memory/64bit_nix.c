@@ -24,8 +24,7 @@ void alloc_linear_memory() {
 }
 
 void expand_memory() {
-    // max_pages = 0 => no limit
-    awsm_assert(max_pages == 0 || (memory_size / WASM_PAGE_SIZE < max_pages));
+    awsm_assert(memory_size / WASM_PAGE_SIZE < max_pages);
     // Remap the relevant wasm page to readable
     char* mem_as_chars = memory;
     char* page_address = &mem_as_chars[memory_size];
