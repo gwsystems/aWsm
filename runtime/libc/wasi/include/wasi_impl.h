@@ -30,7 +30,7 @@ __wasi_size_t wasi_context_get_envc(void* wasi_context);
 __wasi_size_t wasi_context_get_env_buf_size(void* wasi_context);
 
 static inline __wasi_errno_t wasi_unsupported_syscall(const char* syscall) {
-#ifdef LOG_UNSUPPORTED_WASI
+#ifndef NDEBUG
     fprintf(stderr, "Syscall %s is not supported\n", syscall);
 #endif
     return __WASI_ERRNO_NOTSUP;
