@@ -22,7 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Clang Format
-        run: find runtime example_code -type f -print | grep -v runtime/libuv | grep -v runtime/uvwasi | grep --exclude-dir -i -E '^*.(c|h|ld|s)$' | xargs clang-format -Werror -n -ferror-limit=0
+        run: |
+          sudo apt install clang-format-12 --yes
+          find runtime example_code -type f -print | grep -v runtime/libuv | grep -v runtime/uvwasi | grep --exclude-dir -i -E '^*.(c|h|ld|s)$' | xargs clang-format-12 -Werror -n -ferror-limit=0
       - name: Cargo Format
         run: cargo fmt -- --check
 
