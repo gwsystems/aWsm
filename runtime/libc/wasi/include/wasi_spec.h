@@ -1707,22 +1707,22 @@ wasi_snapshot_preview1_backing_fd_fdstat_get(void* wasi_context, __wasi_fd_t fd,
  * Note: This is similar to `fcntl(fd, F_SETFL, flags)` in POSIX.
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fdstat_set_flags(void* wasi_context, __wasi_fd_t fd,
-                                                /**
-                                                 * The desired values of the file descriptor flags.
-                                                 */
-                                                __wasi_fdflags_t flags) __attribute__((__warn_unused_result__));
+wasi_snapshot_preview1_backing_fd_fdstat_set_flags(void* wasi_context, __wasi_fd_t fd,
+                                                   /**
+                                                    * The desired values of the file descriptor flags.
+                                                    */
+                                                   __wasi_fdflags_t flags) __attribute__((__warn_unused_result__));
 /**
  * Adjust the rights associated with a file descriptor.
  * This can only be used to remove rights, and returns `errno::notcapable` if called in a way that would attempt to add
  * rights
  */
-__wasi_errno_t
-wasi_snapshot_preview1_backing_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd,
-                                                 /**
-                                                  * The desired rights of the file descriptor.
-                                                  */
-                                                 __wasi_rights_t fs_rights_base, __wasi_rights_t fs_rights_inheriting)
+__wasi_errno_t wasi_snapshot_preview1_backing_fd_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd,
+                                                                   /**
+                                                                    * The desired rights of the file descriptor.
+                                                                    */
+                                                                   __wasi_rights_t fs_rights_base,
+                                                                   __wasi_rights_t fs_rights_inheriting)
   __attribute__((__warn_unused_result__));
 /**
  * Return the attributes of an open file.
@@ -1747,19 +1747,20 @@ wasi_snapshot_preview1_backing_fd_filestat_set_size(void* wasi_context, __wasi_f
  * Note: This is similar to `futimens` in POSIX.
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_filestat_set_times(void* wasi_context, __wasi_fd_t fd,
-                                                  /**
-                                                   * The desired values of the data access timestamp.
-                                                   */
-                                                  __wasi_timestamp_t atim,
-                                                  /**
-                                                   * The desired values of the data modification timestamp.
-                                                   */
-                                                  __wasi_timestamp_t mtim,
-                                                  /**
-                                                   * A bitmask indicating which timestamps to adjust.
-                                                   */
-                                                  __wasi_fstflags_t fst_flags) __attribute__((__warn_unused_result__));
+wasi_snapshot_preview1_backing_fd_filestat_set_times(void* wasi_context, __wasi_fd_t fd,
+                                                     /**
+                                                      * The desired values of the data access timestamp.
+                                                      */
+                                                     __wasi_timestamp_t atim,
+                                                     /**
+                                                      * The desired values of the data modification timestamp.
+                                                      */
+                                                     __wasi_timestamp_t mtim,
+                                                     /**
+                                                      * A bitmask indicating which timestamps to adjust.
+                                                      */
+                                                     __wasi_fstflags_t fst_flags)
+  __attribute__((__warn_unused_result__));
 /**
  * Read from a file descriptor, without using and updating the file descriptor's offset.
  * Note: This is similar to `preadv` in POSIX.

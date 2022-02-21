@@ -287,7 +287,7 @@ uint32_t wasi_snapshot_preview1_fd_fdstat_set_flags(__wasi_fd_t fd, uint32_t fdf
     }
     __wasi_fdflags_t fdflags = (__wasi_fdflags_t)fdflags_extended;
 
-    rc = wasi_snapshot_preview1_backing_fdstat_set_flags(CURRENT_WASI_CONTEXT, fd, fdflags);
+    rc = wasi_snapshot_preview1_backing_fd_fdstat_set_flags(CURRENT_WASI_CONTEXT, fd, fdflags);
 
 done:
     return (uint32_t)rc;
@@ -305,8 +305,8 @@ done:
  */
 uint32_t wasi_snapshot_preview1_fd_fdstat_set_rights(__wasi_fd_t fd, __wasi_rights_t fs_rights_base,
                                                      __wasi_rights_t fs_rights_inheriting) {
-    return (uint32_t)wasi_snapshot_preview1_backing_fdstat_set_rights(CURRENT_WASI_CONTEXT, fd, fs_rights_base,
-                                                                      fs_rights_inheriting);
+    return (uint32_t)wasi_snapshot_preview1_backing_fd_fdstat_set_rights(CURRENT_WASI_CONTEXT, fd, fs_rights_base,
+                                                                         fs_rights_inheriting);
 }
 
 /**
@@ -354,7 +354,7 @@ uint32_t wasi_snapshot_preview1_fd_filestat_set_times(__wasi_fd_t fd, __wasi_tim
     }
     __wasi_fstflags_t fstflags = (__wasi_fstflags_t)fstflags_extended;
 
-    rc = wasi_snapshot_preview1_backing_filestat_set_times(CURRENT_WASI_CONTEXT, fd, atim, mtim, fstflags);
+    rc = wasi_snapshot_preview1_backing_fd_filestat_set_times(CURRENT_WASI_CONTEXT, fd, atim, mtim, fstflags);
 
 done:
     return (uint32_t)rc;

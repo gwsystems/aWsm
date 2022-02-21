@@ -500,7 +500,7 @@ wasi_snapshot_preview1_backing_fd_fdstat_get(void* wasi_context, __wasi_fd_t fd,
  * WASI_EPERM
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fdstat_set_flags(void* wasi_context, __wasi_fd_t fd, __wasi_fdflags_t fdflags) {
+wasi_snapshot_preview1_backing_fd_fdstat_set_flags(void* wasi_context, __wasi_fd_t fd, __wasi_fdflags_t fdflags) {
     /* TODO: Sandbox fd in context */
 
     int flags = (((flags & __WASI_FDFLAGS_APPEND) ? O_APPEND : 0) | ((flags & __WASI_FDFLAGS_DSYNC) ? O_DSYNC : 0)
@@ -524,8 +524,8 @@ wasi_snapshot_preview1_backing_fdstat_set_flags(void* wasi_context, __wasi_fd_t 
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd, __wasi_rights_t fs_rights_base,
-                                                 __wasi_rights_t fs_rights_inheriting) {
+wasi_snapshot_preview1_backing_fd_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd, __wasi_rights_t fs_rights_base,
+                                                    __wasi_rights_t fs_rights_inheriting) {
     return wasi_unsupported_syscall(__func__);
 }
 
@@ -565,8 +565,8 @@ wasi_snapshot_preview1_backing_fd_filestat_set_size(void* wasi_context, __wasi_f
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_timestamp_t atim,
-                                                  __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags) {
+wasi_snapshot_preview1_backing_fd_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_timestamp_t atim,
+                                                     __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags) {
     /* similar to `futimens` in POSIX. */
     return wasi_unsupported_syscall(__func__);
 }
