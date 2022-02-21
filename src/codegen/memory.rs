@@ -26,7 +26,7 @@ pub fn add_memory_size_globals(ctx: &ModuleCtx, limits: &ResizableLimits) {
         .add_global_variable("starting_pages", limits.initial.compile(ctx.llvm_ctx));
     starting_pages_global.set_constant(true);
 
-    let maximum: u32 = limits.maximum.unwrap_or(0);
+    let maximum: u32 = limits.maximum.unwrap_or(65536);
     let max_pages_global = ctx
         .llvm_module
         .add_global_variable("max_pages", maximum.compile(ctx.llvm_ctx));
