@@ -108,6 +108,9 @@ fn insert_native_globals<'a>(
         };
         global_values.push(v);
     }
+
+    write_globals_len(&*llvm_ctx, &*llvm_module, 0);
+
     global_values
 }
 
@@ -160,7 +163,15 @@ fn insert_runtime_globals<'a>(
     }
     b.build_ret_void();
 
+    write_globals_len(&*llvm_ctx, &*llvm_module, global_values.len() as u32);
+
     global_values
+}
+
+fn write_globals_len<'a>(llvm_ctx: &'a LLVMCtx, llvm_module: &'a LLVMModule, globals_len: u32) {
+    let max_pages_global =
+        llvm_module.add_global_variable("globals_len", globals_len.compile(llvm_ctx));
+    max_pages_global.set_constant(true);
 }
 
 fn initializer_to_value<'a>(
