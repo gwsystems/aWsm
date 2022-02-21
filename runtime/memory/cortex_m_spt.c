@@ -35,7 +35,7 @@ void alloc_linear_memory() {
 }
 
 void expand_memory() {
-    awsm_assert(memory_size + WASM_PAGE_SIZE <= max_pages * WASM_PAGE_SIZE);
+    awsm_assert(memory_size / WASM_PAGE_SIZE < max_pages);
     awsm_assert(memory_size + WASM_PAGE_SIZE <= sizeof(CORTEX_M_MEM));
 
     char* mem_as_chars = memory;
