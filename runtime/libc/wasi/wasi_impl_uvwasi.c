@@ -159,13 +159,13 @@ wasi_snapshot_preview1_backing_fd_fdstat_get(void* wasi_context, __wasi_fd_t fd,
 }
 
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fdstat_set_flags(void* wasi_context, __wasi_fd_t fd, __wasi_fdflags_t flags) {
+wasi_snapshot_preview1_backing_fd_fdstat_set_flags(void* wasi_context, __wasi_fd_t fd, __wasi_fdflags_t flags) {
     return uvwasi_fd_fdstat_set_flags((uvwasi_t*)wasi_context, fd, flags);
 }
 
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd, __wasi_rights_t fs_rights_base,
-                                                 __wasi_rights_t fs_rights_inheriting) {
+wasi_snapshot_preview1_backing_fd_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd, __wasi_rights_t fs_rights_base,
+                                                    __wasi_rights_t fs_rights_inheriting) {
     return uvwasi_fd_fdstat_set_rights((uvwasi_t*)wasi_context, fd, fs_rights_base, fs_rights_inheriting);
 }
 
@@ -180,8 +180,8 @@ wasi_snapshot_preview1_backing_fd_filestat_set_size(void* wasi_context, __wasi_f
 }
 
 __wasi_errno_t
-wasi_snapshot_preview1_backing_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_timestamp_t atim,
-                                                  __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags) {
+wasi_snapshot_preview1_backing_fd_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_timestamp_t atim,
+                                                     __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags) {
     return uvwasi_fd_filestat_set_times((uvwasi_t*)wasi_context, fd, atim, mtim, fst_flags);
 }
 
