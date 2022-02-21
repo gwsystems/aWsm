@@ -17,7 +17,8 @@ use crate::codegen::function::compile_function;
 use crate::codegen::type_conversions::wasm_func_type_to_llvm_type;
 use crate::codegen::ModuleCtx;
 
-const MAX_WEBASSEMBLY_PAGES: u32 = 65536;
+// https://webassembly.github.io/spec/core/valid/types.html#memory-types
+const MAX_WEBASSEMBLY_PAGES: u32 = u32::pow(2, 16);
 
 // We add in globals to tell the runtime how much memory to allocate and startup
 // (And what the max amount of allocated memory should be)
