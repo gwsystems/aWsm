@@ -1,7 +1,7 @@
 #!/bin/bash
 
 utility="clang-format"
-utility_version="$("$utility" --version 2> /dev/null)" || {
+utility_version="$("$utility" --version 2>/dev/null)" || {
 	echo "$utility not found in path!"
 	exit 1
 }
@@ -29,9 +29,9 @@ fi
 # And format them with clang-format
 # Match all *.c, *.h, *.ld, and *.s files in runtime and example_code
 # And format them with clang-format
-find runtime example_code -type f -print \
-	| grep -v runtime/libuv \
-	| grep -v runtime/uvwasi \
-	| grep --exclude-dir -i -E '^*.(c|h|ld|s)$' | xargs clang-format -i
+find runtime example_code -type f -print |
+	grep -v runtime/libuv |
+	grep -v runtime/uvwasi |
+	grep --exclude-dir -i -E '^*.(c|h|ld|s)$' | xargs clang-format-12 -i
 
 cargo fmt
