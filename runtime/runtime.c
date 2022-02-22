@@ -1,4 +1,5 @@
 #include "runtime.h"
+#include <fenv.h>
 #include <math.h>
 
 // TODO: Throughout here we use `assert` for error conditions, which isn't optimal
@@ -224,7 +225,7 @@ i64 i64_trunc_f64(double f) {
 
 // Float => Float truncation functions
 INLINE float f32_trunc_f32(float f) {
-    return trunc(f);
+    return truncf(f);
 }
 
 INLINE float f32_min(float a, float b) {
@@ -240,15 +241,19 @@ INLINE float f32_floor(float a) {
 }
 
 INLINE float f32_ceil(float a) {
-    return ceil(a);
+    return ceilf(a);
 }
 
 INLINE float f32_nearest(float a) {
-    return round(a);
+    return nearbyintf(a);
 }
 
 INLINE float f32_copysign(float a, float b) {
     return copysignf(a, b);
+}
+
+INLINE double f64_trunc_f64(double f) {
+    return trunc(f);
 }
 
 INLINE double f64_min(double a, double b) {
@@ -268,7 +273,7 @@ INLINE double f64_ceil(double a) {
 }
 
 INLINE double f64_nearest(double a) {
-    return round(a);
+    return nearbyint(a);
 }
 
 INLINE double f64_copysign(double a, double b) {
@@ -304,6 +309,11 @@ void runtime_init() {
     populate_globals();
     switch_into_runtime();
     populate_memory();
+
+    // Rounding always is round-to-nearest ties-to-even, in correspondence with IEEE 754-2019
+    // https://webassembly.github.io/spec/core/exec/numerics.html#floating-point-operations
+    int rc = fesetround(FE_TONEAREST);
+    awsm_assert(rc == 0);
 
     runtime_heap_base = wasmg___heap_base;
     if (runtime_heap_base == 0) {
