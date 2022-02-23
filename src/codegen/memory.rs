@@ -17,6 +17,9 @@ use crate::codegen::function::compile_function;
 use crate::codegen::type_conversions::wasm_func_type_to_llvm_type;
 use crate::codegen::ModuleCtx;
 
+// https://webassembly.github.io/spec/core/valid/types.html#memory-types
+const MAX_WEBASSEMBLY_PAGES: u32 = u32::pow(2, 16);
+
 // We add in globals to tell the runtime how much memory to allocate and startup
 // (And what the max amount of allocated memory should be)
 pub fn add_memory_size_globals(ctx: &ModuleCtx, limits: &ResizableLimits) {
@@ -26,7 +29,7 @@ pub fn add_memory_size_globals(ctx: &ModuleCtx, limits: &ResizableLimits) {
         .add_global_variable("starting_pages", limits.initial.compile(ctx.llvm_ctx));
     starting_pages_global.set_constant(true);
 
-    let maximum: u32 = limits.maximum.unwrap_or(0);
+    let maximum: u32 = limits.maximum.unwrap_or(MAX_WEBASSEMBLY_PAGES);
     let max_pages_global = ctx
         .llvm_module
         .add_global_variable("max_pages", maximum.compile(ctx.llvm_ctx));
