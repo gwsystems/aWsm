@@ -6,6 +6,9 @@ void* memory      = NULL;
 u32   memory_size = 0;
 
 void alloc_linear_memory() {
+    if (starting_pages == 0 && max_pages == 0)
+        return;
+
     // Map 4gb + PAGE_SIZE of memory that will fault when accessed
     // We allocate the extra page so that reads off the end will also fail
     memory = mmap(NULL, (1LL << 32) + WASM_PAGE_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);

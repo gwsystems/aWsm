@@ -301,6 +301,7 @@ void* allocate_n_bytes_ptr(u32 n) {
 
 // If we are using runtime globals, we need to populate them
 WEAK void populate_globals() {}
+WEAK void populate_memory() {}
 
 void runtime_init() {
     alloc_linear_memory();

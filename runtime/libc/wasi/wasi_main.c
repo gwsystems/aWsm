@@ -15,6 +15,8 @@ void* current_wasi_context;
 /* Code that actually runs the wasm code */
 IMPORT void wasmf__start(void);
 
+WEAK void wasmf__start() {}
+
 /**
  * @brief Lifecycle function that runs at end at termination of WebAssembly module. Suitable for logging and cleanup
  */

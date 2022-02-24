@@ -6,6 +6,7 @@ use llvm::Function as LLVMFunction;
 use llvm::Module as LLVMModule;
 
 use wasmparser::FuncType;
+use wasmparser::ResizableLimits;
 
 use crate::Opt;
 
@@ -77,7 +78,7 @@ pub fn process_to_llvm(
     }
 
     // We need to insert runtime stubs, because code generation will call them for certain instructions
-    insert_runtime_stubs(opt, &*llvm_ctx, &*llvm_module);
+    // insert_runtime_stubs(opt, &*llvm_ctx, &*llvm_module);
 
     // Wasm globals have a natural mapping to llvm globals
     let globals = insert_globals(&opt, llvm_ctx, llvm_module, wasm_module.globals);
@@ -102,14 +103,21 @@ pub fn process_to_llvm(
         globals: globals.as_slice(),
     };
 
-    // We assume there is only one relevent memory
-    assert_eq!(wasm_module.memories.len(), 1);
-
-    // The runtime needs to know how big the memory is/can be
-    add_memory_size_globals(&module_ctx, &wasm_module.memories[0].limits);
-
-    // Which we then need to initialize the data
-    generate_memory_initialization_stub(&module_ctx, wasm_module.data_initializers);
+    if wasm_module.memories.len() > 1 {
+        error!("aWsm does not support the Multiple Memories proposal.");
+        exit(1);
+    } else if wasm_module.memories.len() == 1 {
+        // The runtime needs to know how big the memory is/can be
+        add_memory_size_globals(&module_ctx, &wasm_module.memories[0].limits);
+        // Which we then need to initialize the data
+        generate_memory_initialization_stub(&module_ctx, wasm_module.data_initializers);
+    } else {
+        let no_mem = ResizableLimits {
+            initial: 0,
+            maximum: Some(0),
+        };
+        add_memory_size_globals(&module_ctx, &no_mem);
+    }
 
     if wasm_module.tables.len() > 0 {
         // Assume there is at most one relevant table

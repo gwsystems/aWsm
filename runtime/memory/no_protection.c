@@ -4,6 +4,9 @@ void* memory;
 u32   memory_size;
 
 void alloc_linear_memory() {
+    if (starting_pages == 0 && max_pages == 0)
+        return;
+
     memory      = calloc(starting_pages, WASM_PAGE_SIZE);
     memory_size = starting_pages * WASM_PAGE_SIZE;
 }
