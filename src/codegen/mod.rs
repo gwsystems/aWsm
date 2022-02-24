@@ -78,7 +78,7 @@ pub fn process_to_llvm(
     }
 
     // We need to insert runtime stubs, because code generation will call them for certain instructions
-    // insert_runtime_stubs(opt, &*llvm_ctx, &*llvm_module);
+    insert_runtime_stubs(opt, &*llvm_ctx, &*llvm_module);
 
     // Wasm globals have a natural mapping to llvm globals
     let globals = insert_globals(&opt, llvm_ctx, llvm_module, wasm_module.globals);
