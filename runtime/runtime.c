@@ -280,7 +280,7 @@ INLINE double f64_copysign(double a, double b) {
     return copysign(a, b);
 }
 
-INLINE void awsm_abi__trap_unreachable() {
+__attribute__((noreturn)) void awsm_abi__trap_unreachable() {
     fprintf(stderr, "WebAssembly control flow unexpectedly reached unreachable instruction\n");
     exit(EXIT_FAILURE);
 }
