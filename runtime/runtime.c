@@ -280,6 +280,11 @@ INLINE double f64_copysign(double a, double b) {
     return copysign(a, b);
 }
 
+INLINE void awsm_abi__trap_unreachable() {
+    fprintf(stderr, "WebAssembly control flow unexpectedly reached unreachable instruction\n");
+    exit(EXIT_FAILURE);
+}
+
 // We want to have some allocation logic here, so we can use it to implement libc
 WEAK u32 wasmg___heap_base = 0;
 u32      runtime_heap_base;
