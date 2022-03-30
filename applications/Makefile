@@ -39,6 +39,9 @@ dist/armstrong-numbers.awsm: dist/armstrong-numbers.bc armstrong-numbers/main.c 
 dist/bank-account.awsm: dist/bank-account.bc bank-account/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
 	${CC} -pthread -ldl -lm -O3 -flto -g ${RUNTIME_INCLUDES} $^ -o $@
 
+dist/collatz-conjecture.awsm: dist/collatz-conjecture.bc collatz-conjecture/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
+	${CC} -pthread -ldl -lm -O3 -flto -g ${RUNTIME_INCLUDES} $^ -o $@
+
 dist/%.awsm: dist/%.bc ${WASI_CPATH}
 	${CC} -pthread -ldl -lm -O3 -flto -g ${RUNTIME_INCLUDES} $^ -o $@
 
