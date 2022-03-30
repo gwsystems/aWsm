@@ -1,5 +1,3 @@
-#include <stdbool.h>
-
 #include "../../runtime/runtime.h"
 
 IMPORT int wasmf_open(void);
