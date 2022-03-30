@@ -4,6 +4,12 @@ void* memory;
 u32   memory_size;
 
 void alloc_linear_memory() {
+    if (starting_pages == 0) {
+        memory_size = 0;
+        awsm_assert(max_pages == 0);
+        return;
+    }
+
     for (u32 i = 0; i < starting_pages; i++) {
         expand_memory();
     }

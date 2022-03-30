@@ -7,14 +7,14 @@ AWSMFLAGS= --inline-constant-globals
 RUNTIME_PATH=../runtime
 RUNTIME_INCLUDES=-I${RUNTIME_PATH}/libc/wasi/include -I${RUNTIME_PATH}/thirdparty/dist/include
 
-RUNTIME_CPATH+=${RUNTIME_PATH}/runtime.c
-RUNTIME_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_main.c
-RUNTIME_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_backing.c
-RUNTIME_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_impl_uvwasi.c
-RUNTIME_CPATH+=${RUNTIME_PATH}/libc/env.c
-RUNTIME_CPATH+=${RUNTIME_PATH}/memory/64bit_nix.c
-RUNTIME_CPATH+=${RUNTIME_PATH}/thirdparty/dist/lib/libuv_a.a
-RUNTIME_CPATH+=${RUNTIME_PATH}/thirdparty/dist/lib/libuvwasi_a.a
+WASI_CPATH+=${RUNTIME_PATH}/runtime.c
+WASI_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_main.c
+WASI_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_backing.c
+WASI_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_impl_uvwasi.c
+WASI_CPATH+=${RUNTIME_PATH}/libc/env.c
+WASI_CPATH+=${RUNTIME_PATH}/memory/64bit_nix.c
+WASI_CPATH+=${RUNTIME_PATH}/thirdparty/dist/lib/libuv_a.a
+WASI_CPATH+=${RUNTIME_PATH}/thirdparty/dist/lib/libuvwasi_a.a
 
 dist:
 	mkdir dist
@@ -33,7 +33,10 @@ dist/%.bc: ./wasm_apps/dist/%.wasm dist
 dist/%.ll: dist/%.bc
 	llvm-dis-12 $< -o $@
 
-dist/%.awsm: dist/%.bc ${RUNTIME_CPATH}
+dist/armstrong-numbers.awsm: dist/armstrong-numbers.bc armstrong-numbers/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
+	${CC} -pthread -ldl -lm -O3 -flto -g ${RUNTIME_INCLUDES} $^ -o $@
+
+dist/%.awsm: dist/%.bc ${WASI_CPATH}
 	${CC} -pthread -ldl -lm -O3 -flto -g ${RUNTIME_INCLUDES} $^ -o $@
 
 .PHONY: all.awsm

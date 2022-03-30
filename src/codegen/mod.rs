@@ -119,6 +119,12 @@ pub fn process_to_llvm(
                 maximum: Some(0),
             },
         );
+
+        // We shoudn't have any data initializers if we don't have a linear memory
+        assert_eq!(wasm_module.data_initializers.len(), 0);
+
+        // We still need to generate empty stubs for populate_memory
+        generate_memory_initialization_stub(&module_ctx, wasm_module.data_initializers);
     }
 
     if wasm_module.tables.len() > 0 {
