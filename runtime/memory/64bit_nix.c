@@ -6,11 +6,8 @@ void* memory      = NULL;
 u32   memory_size = 0;
 
 void alloc_linear_memory() {
-    if (starting_pages == 0) {
-        memory_size = 0;
-        awsm_assert(max_pages == 0);
-        return;
-    }
+    awsm_assert(starting_pages > 0);
+    awsm_assert(max_pages > 0);
 
     // Map 4gb + PAGE_SIZE of memory that will fault when accessed
     // We allocate the extra page so that reads off the end will also fail
