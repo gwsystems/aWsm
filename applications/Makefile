@@ -48,6 +48,9 @@ dist/darts.awsm: dist/darts.bc darts/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_
 dist/difference-of-squares.awsm: dist/difference-of-squares.bc difference-of-squares/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
 	${CC} -lm -O3 -flto $^ -o $@
 
+dist/grains.awsm: dist/grains.bc grains/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
+	${CC} -lm -O3 -flto $^ -o $@
+
 dist/%.awsm: dist/%.bc ${WASI_CPATH}
 	${CC} -pthread -ldl -lm -O3 -flto -g ${RUNTIME_INCLUDES} $^ -o $@
 
