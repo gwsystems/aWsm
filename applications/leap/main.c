@@ -13,13 +13,13 @@ IMPORT bool wasmf_isLeap(int year);
 int main(int argc, char* argv[]) {
     runtime_init();
 
-    assert(!wasmf_isLeap(2015));
-    assert(!wasmf_isLeap(1970));
-    assert(wasmf_isLeap(1996));
-    assert(wasmf_isLeap(1960));
-    assert(!wasmf_isLeap(2100));
-    assert(!wasmf_isLeap(1900));
-    assert(wasmf_isLeap(2000));
-    assert(wasmf_isLeap(2400));
-    assert(!wasmf_isLeap(1800));
+    awsm_assert(!wasmf_isLeap(2015));
+    awsm_assert(!wasmf_isLeap(1970));
+    awsm_assert(wasmf_isLeap(1996));
+    awsm_assert(wasmf_isLeap(1960));
+    awsm_assert(!wasmf_isLeap(2100));
+    awsm_assert(!wasmf_isLeap(1900));
+    awsm_assert(wasmf_isLeap(2000));
+    awsm_assert(wasmf_isLeap(2400));
+    awsm_assert(!wasmf_isLeap(1800));
 }

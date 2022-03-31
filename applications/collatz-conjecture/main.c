@@ -11,12 +11,12 @@ IMPORT int wasmf_steps(int number);
 int main(int argc, char* argv[]) {
     runtime_init();
 
-    assert(wasmf_steps(1) == 0);
-    assert(wasmf_steps(16) == 4);
-    assert(wasmf_steps(12) == 9);
-    assert(wasmf_steps(1000000) == 152);
+    awsm_assert(wasmf_steps(1) == 0);
+    awsm_assert(wasmf_steps(16) == 4);
+    awsm_assert(wasmf_steps(12) == 9);
+    awsm_assert(wasmf_steps(1000000) == 152);
 
     // number <= 0 triggers error
-    assert(wasmf_steps(0) == -1);
-    assert(wasmf_steps(-15) == -1);
+    awsm_assert(wasmf_steps(0) == -1);
+    awsm_assert(wasmf_steps(-15) == -1);
 }

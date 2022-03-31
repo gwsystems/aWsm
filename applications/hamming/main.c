@@ -38,13 +38,13 @@ uint32_t compute(char* first, char* second) {
 int main(int argc, char* argv[]) {
     runtime_init();
 
-    assert(compute("A", "A") == 0);
-    assert(compute("G", "T") == 1);
+    awsm_assert(compute("A", "A") == 0);
+    awsm_assert(compute("G", "T") == 1);
 
-    assert(compute("GGACTGAAATCTG", "GGACTGAAATCTG") == 0);
-    assert(compute("GGACGGATTCTG", "AGGACGGATTCT") == 9);
-    assert(compute("AATG", "AAA") == -1);
-    assert(compute("ATA", "AGTG") == -1);
-    assert(compute("", "G") == -1);
-    assert(compute("G", "") == -1);
+    awsm_assert(compute("GGACTGAAATCTG", "GGACTGAAATCTG") == 0);
+    awsm_assert(compute("GGACGGATTCTG", "AGGACGGATTCT") == 9);
+    awsm_assert(compute("AATG", "AAA") == -1);
+    awsm_assert(compute("ATA", "AGTG") == -1);
+    awsm_assert(compute("", "G") == -1);
+    awsm_assert(compute("G", "") == -1);
 }
