@@ -54,6 +54,9 @@ dist/grains.awsm: dist/grains.bc grains/main.c ${RUNTIME_PATH}/runtime.c ${RUNTI
 dist/hamming.awsm: dist/hamming.bc hamming/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
 	${CC} -lm -O3 -flto $^ -o $@
 
+dist/binary-search.awsm: dist/binary-search.bc binary-search/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
+	${CC} -lm -O3 -flto $^ -o $@
+
 dist/%.awsm: dist/%.bc ${WASI_CPATH}
 	${CC} -pthread -ldl -lm -O3 -flto -g ${RUNTIME_INCLUDES} $^ -o $@
 
