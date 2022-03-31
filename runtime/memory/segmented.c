@@ -42,6 +42,9 @@ inline static void reset_seg_registers() {
 }
 
 void alloc_linear_memory() {
+    awsm_assert(starting_pages > 0);
+    awsm_assert(max_pages > 0);
+
     memory      = calloc(starting_pages, WASM_PAGE_SIZE);
     memory_size = starting_pages * WASM_PAGE_SIZE;
 

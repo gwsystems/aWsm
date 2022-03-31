@@ -285,6 +285,7 @@ WEAK u32 wasmg___heap_base = 0;
 u32      runtime_heap_base;
 
 u32 allocate_n_bytes(u32 n) {
+    awsm_assert(memory_size > 0);
     u32 res = runtime_heap_base;
     runtime_heap_base += n;
     while (memory_size < runtime_heap_base) {
@@ -295,6 +296,7 @@ u32 allocate_n_bytes(u32 n) {
 }
 
 void* allocate_n_bytes_ptr(u32 n) {
+    awsm_assert(memory_size > 0);
     u32 addr = allocate_n_bytes(n);
     return get_memory_ptr_for_runtime(addr, n);
 }
@@ -303,7 +305,10 @@ void* allocate_n_bytes_ptr(u32 n) {
 WEAK void populate_globals() {}
 
 void runtime_init() {
-    alloc_linear_memory();
+    if (likely(starting_pages > 0)) {
+        alloc_linear_memory();
+    }
+
     populate_table();
     switch_out_of_runtime();
     populate_globals();

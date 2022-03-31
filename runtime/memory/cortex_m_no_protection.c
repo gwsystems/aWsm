@@ -13,6 +13,9 @@ u32 cortex_mem_size = MEM_SIZE;
 int printf_(const char* format, ...);
 
 void alloc_linear_memory() {
+    awsm_assert(starting_pages > 0);
+    awsm_assert(max_pages > 0);
+
     //    printf_("8 = (%d %d) 16 = (%d %d) 32 = (%d %d) 64 = (%d %d)\n", sizeof(u8), sizeof(i8), sizeof(u16),
     //    sizeof(i16), sizeof(u32), sizeof(i32), sizeof(u64), sizeof(i64)); printf_("pages %d\n", (int)
     //    starting_pages);
