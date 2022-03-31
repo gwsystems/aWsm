@@ -1,5 +1,11 @@
 #include "../../runtime/runtime.h"
 
+/* Bank Account
+ * Description at https://exercism.org/tracks/wasm/exercises/bank-account
+ * Asserts based on
+ * https://github.com/exercism/wasm/blob/main/exercises/practice/bank-account/bank-account.spec.js
+ */
+
 IMPORT int wasmf_open(void);
 IMPORT int wasmf_close(void);
 IMPORT int wasmf_deposit(int);

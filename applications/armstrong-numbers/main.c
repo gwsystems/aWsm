@@ -2,6 +2,12 @@
 
 #include "../../runtime/runtime.h"
 
+/* Armstrong Numbers
+ * Description at https://exercism.org/tracks/wasm/exercises/armstrong-numbers
+ * Asserts based on
+ * https://github.com/exercism/wasm/blob/main/exercises/practice/armstrong-numbers/armstrong-numbers.spec.js
+ */
+
 IMPORT bool wasmf_isArmstrongNumber(int);
 
 int main(int argc, char* argv[]) {
