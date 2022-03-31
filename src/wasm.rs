@@ -33,6 +33,7 @@ pub struct WasmModule {
     pub functions: Vec<Function>,
     pub function_name_maps: HashMap<u32, FunctionNameMap>,
     pub function_names: HashSet<String>,
+    pub start_function: Option<u32>,
 
     pub memories: Vec<MemoryType>,
     pub data_initializers: Vec<DataInitializer>,
@@ -835,7 +836,7 @@ enum ProcessState {
         memory_id: u32,
         offset_expression: Vec<Instruction>,
     },
-
+    StartSection,
     TableElementSection,
     TableElementEntry {
         table_id: u32,
@@ -870,6 +871,7 @@ impl WasmModule {
             types: Vec::new(),
             globals: Vec::new(),
             functions: Vec::new(),
+            start_function: None,
             tables: Vec::new(),
             table_initializers: Vec::new(),
             memories: Vec::new(),
@@ -968,6 +970,7 @@ impl WasmModule {
                 SectionCode::Data => ProcessState::DataSection,
                 SectionCode::Element => ProcessState::TableElementSection,
                 SectionCode::Global => ProcessState::GlobalSection,
+                SectionCode::Start => ProcessState::StartSection,
                 SectionCode::Custom { name, kind } => ProcessState::CustomSection {
                     name: Vec::from(name.as_bytes()),
                     kind,
@@ -1081,6 +1084,17 @@ impl WasmModule {
                 &ParserState::EndSection => return ProcessState::Outer,
                 e => panic!("Custom Section Parsing Error {:?}", e),
             }
+        }
+    }
+
+    fn process_start_section(&mut self, p: &mut Parser) -> ProcessState {
+        match p.read() {
+            &ParserState::StartSectionEntry(start_fn_idx) => {
+                self.start_function = Some(start_fn_idx);
+                ProcessState::StartSection
+            }
+            &ParserState::EndSection => ProcessState::Outer,
+            e => panic!("Have not implemented type section state {:?}", e),
         }
     }
 
@@ -1499,6 +1513,7 @@ impl WasmModule {
         loop {
             s = match s {
                 ProcessState::Outer => self.process_outer_section(p),
+                ProcessState::StartSection => self.process_start_section(p),
                 ProcessState::TypeSection => self.process_type_section(p),
                 ProcessState::ImportSection => self.process_import_section(p),
                 ProcessState::FunctionSection => self.process_function_section(p),

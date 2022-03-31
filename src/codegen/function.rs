@@ -4,7 +4,9 @@ use std::mem;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use llvm::Builder;
+use llvm::Compile;
 use llvm::Function;
+use llvm::FunctionType;
 use llvm::Value;
 use llvm::{BasicBlock, Sub};
 
@@ -219,6 +221,22 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
         Some(v) => builder.build_ret(v),
         None => builder.build_ret_void(),
     };
+}
+
+pub fn generate_start_stub(ctx: &ModuleCtx, start_fn_idx: Option<u32>) {
+    if let Some(idx) = start_fn_idx {
+        println!("Should start {}", idx);
+    }
+    // The runtime assumes the existence of a setup_memory function that sets up the memory
+    // We provide this, by compiling it here
+    let setup_function = ctx.llvm_module.add_function(
+        "awsm_abi__start_fn",
+        FunctionType::new(<()>::get_type(ctx.llvm_ctx), &[]).to_super(),
+    );
+    let bb = setup_function.append("entry");
+    let b = Builder::new(ctx.llvm_ctx);
+    b.position_at_end(bb);
+    b.build_ret_void();
 }
 
 // NOTE: Handle loop at the call site by inserting phi instructions immediately
