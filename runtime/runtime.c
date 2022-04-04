@@ -328,5 +328,8 @@ void runtime_init() {
         runtime_heap_base = memory_size;
     }
 
+    // The start component of a module declares the function index of a start function that is automatically invoked
+    // when the module is instantiated, after tables and memories have been initialized.
+    // https://webassembly.github.io/spec/core/syntax/modules.html#start-function
     awsm_abi__start_fn();
 }

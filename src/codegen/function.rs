@@ -4,9 +4,7 @@ use std::mem;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use llvm::Builder;
-use llvm::Compile;
 use llvm::Function;
-use llvm::FunctionType;
 use llvm::Value;
 use llvm::{BasicBlock, Sub};
 
@@ -17,7 +15,6 @@ use crate::codegen::breakout::BreakoutTarget;
 use crate::codegen::type_conversions::wasm_type_to_zeroed_value;
 use crate::codegen::ModuleCtx;
 
-use crate::wasm::Function::Implemented;
 use crate::wasm::ImplementedFunction;
 
 pub struct FunctionCtx<'a> {
@@ -222,50 +219,6 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
         Some(v) => builder.build_ret(v),
         None => builder.build_ret_void(),
     };
-}
-
-pub fn generate_start_stub(ctx: &ModuleCtx, start_fn_idx: Option<u32>) {
-    if let Some(idx) = start_fn_idx {
-        let (_, func) = &ctx.functions[idx as usize];
-
-        match func {
-            Implemented { f } => {
-                if let Some(start_function_type) = &f.ty {
-                    if start_function_type.params.len() > 0 {
-                        panic!("Expected start function to not take parameters");
-                    }
-                } else {
-                    panic!("Expected start function to have type");
-                }
-
-                let setup_function = ctx.llvm_module.add_function(
-                    "awsm_abi__start_fn",
-                    FunctionType::new(<()>::get_type(ctx.llvm_ctx), &[]).to_super(),
-                );
-                let bb = setup_function.append("entry");
-                let b = Builder::new(ctx.llvm_ctx);
-                b.position_at_end(bb);
-                b.build_call(
-                    ctx.llvm_module.get_function(&f.generated_name).unwrap(),
-                    &[],
-                );
-
-                b.build_ret_void();
-            }
-            _ => {
-                panic!("Expected start function to be locally implemented");
-            }
-        }
-    } else {
-        let setup_function = ctx.llvm_module.add_function(
-            "awsm_abi__start_fn",
-            FunctionType::new(<()>::get_type(ctx.llvm_ctx), &[]).to_super(),
-        );
-        let bb = setup_function.append("entry");
-        let b = Builder::new(ctx.llvm_ctx);
-        b.position_at_end(bb);
-        b.build_ret_void();
-    }
 }
 
 // NOTE: Handle loop at the call site by inserting phi instructions immediately

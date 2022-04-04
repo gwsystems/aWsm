@@ -20,7 +20,9 @@ mod breakout;
 
 mod function;
 use self::function::compile_function;
-use self::function::generate_start_stub;
+
+mod start;
+use self::start::generate_start_stub;
 
 mod globals;
 use self::globals::insert_globals;
