@@ -62,7 +62,9 @@ pub fn wasm_func_type_to_llvm_type<'a>(
     f_type: &wasmparser::FuncType,
 ) -> &'a llvm::Type {
     let return_count = f_type.returns.len();
-    assert!(return_count <= 1);
+    if return_count > 1 {
+        panic!("aWsm does not support multiple return values");
+    }
     let return_type = if return_count == 0 {
         <()>::get_type(ctx)
     } else {
