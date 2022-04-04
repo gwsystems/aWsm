@@ -60,6 +60,9 @@ dist/binary-search.awsm: dist/binary-search.bc binary-search/main.c ${RUNTIME_PA
 dist/leap.awsm: dist/leap.bc leap/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
 	${CC} -lm -O3 -flto $^ -o $@
 
+dist/start.awsm: dist/start.bc start/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
+	${CC} -lm -O3 -flto $^ -o $@
+
 dist/triangle.awsm: dist/triangle.bc triangle/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
 	${CC} -lm -O3 -flto $^ -o $@
 

@@ -304,6 +304,9 @@ void* allocate_n_bytes_ptr(u32 n) {
 // If we are using runtime globals, we need to populate them
 WEAK void populate_globals() {}
 
+// If a function is registered using the (start) instruction, call it
+WEAK void awsm_abi__start_fn() {}
+
 void runtime_init() {
     if (likely(starting_pages > 0)) {
         alloc_linear_memory();
@@ -324,4 +327,6 @@ void runtime_init() {
     if (runtime_heap_base == 0) {
         runtime_heap_base = memory_size;
     }
+
+    awsm_abi__start_fn();
 }
