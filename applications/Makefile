@@ -63,6 +63,9 @@ dist/leap.awsm: dist/leap.bc leap/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PAT
 dist/triangle.awsm: dist/triangle.bc triangle/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
 	${CC} -lm -O3 -flto $^ -o $@
 
+dist/unreachable.awsm: dist/unreachable.bc unreachable/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
+	${CC} -lm -O3 -flto $^ -o $@
+
 dist/%.awsm: dist/%.bc ${WASI_CPATH}
 	${CC} -pthread -ldl -lm -O3 -flto -g ${RUNTIME_INCLUDES} $^ -o $@
 

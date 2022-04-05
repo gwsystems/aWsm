@@ -356,7 +356,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 block_terminated = true;
             }
             Instruction::Unreachable => {
-                let trap_call = get_stub_function(m_ctx, TRAP);
+                let trap_call = get_stub_function(m_ctx, TRAP_UNREACHABLE);
                 b.build_call(trap_call, &[]);
                 b.build_unreachable();
                 block_terminated = true;

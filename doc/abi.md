@@ -29,19 +29,19 @@ The two columns represent the state of the resulting LLVM bitcode when the "fast
 
 ### [Control Instructions](https://webassembly.github.io/spec/core/syntax/instructions.html#control-instructions)
 
-| instruction    | "fast unsafe" enabled              | "fast unsafe" disabled             |
-| -------------- | ---------------------------------- | ---------------------------------- |
-| block / end    | codegen                            | codegen                            |
-| br             | codegen                            | codegen                            |
-| br_if          | codegen                            | codegen                            |
-| br_table       | codegen                            | codegen                            |
-| call           | codegen                            | codegen                            |
-| call_indirect  | extern (`get_function_from_table`) | extern (`get_function_from_table`) |
-| if / else /end | codegen                            | codegen                            |
-| loop / end     | codegen                            | codegen                            |
-| nop            | codegen                            | codegen                            |
-| return         | codegen                            | codegen                            |
-| unreachable    | intrinsic ([llvm.trap][llvm-trap]) | intrinsic ([llvm.trap][llvm-trap]) |
+| instruction    | "fast unsafe" enabled                 | "fast unsafe" disabled                |
+| -------------- | ------------------------------------- | ------------------------------------- |
+| block / end    | codegen                               | codegen                               |
+| br             | codegen                               | codegen                               |
+| br_if          | codegen                               | codegen                               |
+| br_table       | codegen                               | codegen                               |
+| call           | codegen                               | codegen                               |
+| call_indirect  | extern (`get_function_from_table`)    | extern (`get_function_from_table`)    |
+| if / else /end | codegen                               | codegen                               |
+| loop / end     | codegen                               | codegen                               |
+| nop            | codegen                               | codegen                               |
+| return         | codegen                               | codegen                               |
+| unreachable    | extern (`awsm_abi__trap_unreachable`) | extern (`awsm_abi__trap_unreachable`) |
 
 ### [Reference instructions](https://webassembly.github.io/spec/core/syntax/instructions.html#reference-instructions)
 
