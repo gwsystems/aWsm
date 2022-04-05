@@ -1,3 +1,4 @@
 environ_vm
 environ.bc
 environ.wasm
+environ.wat

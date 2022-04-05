@@ -6,6 +6,7 @@ use llvm::Function as LLVMFunction;
 use llvm::Module as LLVMModule;
 
 use wasmparser::FuncType;
+use wasmparser::ResizableLimits;
 
 use crate::Opt;
 
@@ -102,14 +103,29 @@ pub fn process_to_llvm(
         globals: globals.as_slice(),
     };
 
-    // We assume there is only one relevent memory
-    assert_eq!(wasm_module.memories.len(), 1);
+    if wasm_module.memories.len() > 0 {
+        // We do not support multiple memories
+        assert_eq!(wasm_module.memories.len(), 1);
 
-    // The runtime needs to know how big the memory is/can be
-    add_memory_size_globals(&module_ctx, &wasm_module.memories[0].limits);
+        // The runtime needs to know how big the memory is/can be
+        add_memory_size_globals(&module_ctx, &wasm_module.memories[0].limits);
+        // Which we then need to initialize the data
+        generate_memory_initialization_stub(&module_ctx, wasm_module.data_initializers);
+    } else {
+        add_memory_size_globals(
+            &module_ctx,
+            &ResizableLimits {
+                initial: 0,
+                maximum: Some(0),
+            },
+        );
 
-    // Which we then need to initialize the data
-    generate_memory_initialization_stub(&module_ctx, wasm_module.data_initializers);
+        // We shoudn't have any data initializers if we don't have a linear memory
+        assert_eq!(wasm_module.data_initializers.len(), 0);
+
+        // We still need to generate empty stubs for populate_memory
+        generate_memory_initialization_stub(&module_ctx, wasm_module.data_initializers);
+    }
 
     if wasm_module.tables.len() > 0 {
         // Assume there is at most one relevant table
