@@ -87,6 +87,8 @@ pub const F64_MAX: &str = "f64_max";
 pub const F64_MIN: &str = "f64_min";
 pub const F64_COPYSIGN: &str = "f64_copysign";
 
+pub const TRAP_UNREACHABLE: &str = "awsm_abi__trap_unreachable";
+
 // Intrinsic llvm functions
 pub const I32_CTPOP: &str = "llvm.ctpop.i32";
 pub const I64_CTPOP: &str = "llvm.ctpop.i64";
@@ -102,8 +104,6 @@ pub const F64_FABS: &str = "llvm.fabs.f64";
 
 pub const F32_SQRT: &str = "llvm.sqrt.f32";
 pub const F64_SQRT: &str = "llvm.sqrt.f64";
-
-pub const TRAP: &str = "llvm.trap";
 
 // TODO: Rewrite this using macros, because this is just gross
 pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
@@ -455,7 +455,10 @@ pub fn insert_runtime_stubs(opt: &Opt, ctx: &LLVMCtx, m: &LLVMModule) {
         .to_super(),
     );
 
-    m.add_function(TRAP, FunctionType::new(<()>::get_type(ctx), &[]).to_super());
+    m.add_function(
+        TRAP_UNREACHABLE,
+        FunctionType::new(<()>::get_type(ctx), &[]).to_super(),
+    );
 }
 
 pub fn get_stub_function<'a>(m_ctx: &'a ModuleCtx, name: &str) -> &'a Function {
