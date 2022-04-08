@@ -3,6 +3,7 @@ use std::ptr;
 use llvm::ffi::prelude::LLVMTypeRef;
 use llvm::Compile;
 use llvm::Context;
+use llvm::StructType;
 use llvm::Sub;
 
 pub fn llvm_type_to_wasm_type(ctx: &Context, ty: &llvm::Type) -> wasmparser::Type {
@@ -62,10 +63,14 @@ pub fn wasm_func_type_to_llvm_type<'a>(
     f_type: &wasmparser::FuncType,
 ) -> &'a llvm::Type {
     let return_count = f_type.returns.len();
-    if return_count > 1 {
-        panic!("aWsm does not support multiple return values");
-    }
-    let return_type = if return_count == 0 {
+    let return_type = if return_count > 1 {
+        let rets: Vec<&llvm::Type> = f_type
+            .returns
+            .into_iter()
+            .map(|e| wasm_type_to_llvm_type(ctx, *e))
+            .collect();
+        StructType::new(ctx, &*rets.into_boxed_slice(), false).to_super()
+    } else if return_count == 0 {
         <()>::get_type(ctx)
     } else {
         wasm_type_to_llvm_type(ctx, f_type.returns[0])
