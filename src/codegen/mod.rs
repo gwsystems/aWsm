@@ -21,6 +21,9 @@ mod breakout;
 mod function;
 use self::function::compile_function;
 
+mod start;
+use self::start::generate_start_stub;
+
 mod globals;
 use self::globals::insert_globals;
 use self::globals::GlobalValue;
@@ -126,6 +129,8 @@ pub fn process_to_llvm(
         // We still need to generate empty stubs for populate_memory
         generate_memory_initialization_stub(&module_ctx, wasm_module.data_initializers);
     }
+
+    generate_start_stub(&module_ctx, wasm_module.start_function);
 
     if wasm_module.tables.len() > 0 {
         // Assume there is at most one relevant table
