@@ -89,7 +89,7 @@ float  truncf(float x);
 #define UINT64_MAX (0xffffffffffffffff)
 #endif
 
-#define WASM_PAGE_SIZE (1024 * 64)
+#define WASM_PAGE_SIZE (0x1000)
 
 // The code generator compiles in the starting number of wasm pages, and the maximum number of pages
 // If we try and allocate more than max_pages, we should fault
@@ -128,7 +128,7 @@ INLINE void   set_f32(u32 offset, float);
 INLINE void   set_f64(u32 offset, double);
 
 i32 instruction_memory_size();
-i32 instruction_memory_grow();
+i32 instruction_memory_grow(i32);
 
 static inline void* get_memory_ptr_void(u32 offset, u32 bounds_check) {
     return (void*)get_memory_ptr_for_runtime(offset, bounds_check);

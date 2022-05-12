@@ -2,7 +2,7 @@ AWSMCC=../target/release/awsm
 CC=clang
 
 # Used by aWsm when compiling the *.wasm to *.bc
-AWSMFLAGS= --inline-constant-globals
+AWSMFLAGS=
 
 RUNTIME_PATH=../runtime
 RUNTIME_INCLUDES=-I${RUNTIME_PATH}/libc/wasi/include -I${RUNTIME_PATH}/thirdparty/dist/include
@@ -12,7 +12,7 @@ WASI_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_main.c
 WASI_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_backing.c
 WASI_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_impl_uvwasi.c
 WASI_CPATH+=${RUNTIME_PATH}/libc/env.c
-WASI_CPATH+=${RUNTIME_PATH}/memory/64bit_nix.c
+WASI_CPATH+=${RUNTIME_PATH}/memory/no_protection.c
 WASI_CPATH+=${RUNTIME_PATH}/thirdparty/dist/lib/libuv_a.a
 WASI_CPATH+=${RUNTIME_PATH}/thirdparty/dist/lib/libuvwasi_a.a
 
@@ -70,7 +70,7 @@ dist/unreachable.awsm: dist/unreachable.bc unreachable/main.c ${RUNTIME_PATH}/ru
 	${CC} -lm -O3 -flto $^ -o $@
 
 dist/%.awsm: dist/%.bc ${WASI_CPATH}
-	${CC} -pthread -ldl -lm -O3 -flto -g ${RUNTIME_INCLUDES} $^ -o $@
+	${CC} -pthread -ldl -lm -O0 -flto -g3 ${RUNTIME_INCLUDES} $^ -o $@
 
 .PHONY: all.awsm
 all.awsm: \

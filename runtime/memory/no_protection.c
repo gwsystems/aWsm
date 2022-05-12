@@ -11,27 +11,14 @@ void alloc_linear_memory() {
     memory_size = starting_pages * WASM_PAGE_SIZE;
 }
 
-void expand_memory() {
-    awsm_assert(memory_size / WASM_PAGE_SIZE < max_pages);
-
-    memory = realloc(memory, memory_size + WASM_PAGE_SIZE);
-    awsm_assert(memory);
-
-    char* mem_as_chars = memory;
-    memset(&mem_as_chars[memory_size], 0, WASM_PAGE_SIZE);
-    memory_size += WASM_PAGE_SIZE;
-}
-
 i32 instruction_memory_size() {
     return memory_size / WASM_PAGE_SIZE;
 }
 
 i32 instruction_memory_grow(i32 count) {
     i32 prev_size = instruction_memory_size();
-    for (int i = 0; i < count; i++) {
-        expand_memory();
-    }
-
+    memory        = realloc(memory, memory_size + (WASM_PAGE_SIZE * count));
+    memory_size += (WASM_PAGE_SIZE * count);
     return prev_size;
 }
 
