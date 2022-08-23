@@ -892,7 +892,10 @@ impl WasmModule {
             for (i, func) in m.functions.iter_mut().enumerate() {
                 if let Function::Implemented { f: _ } = func {
                     if let Some(function_name_map) = m.function_name_maps.get(&(i as u32)) {
-                        func.set_name("wasmf_internal_".to_string() + &function_name_map.name);
+                        let name_c_compliant = &function_name_map
+                            .name
+                            .replace(|c: char| !(c.is_alphanumeric() || c == '_'), "_");
+                        func.set_name("wasmf_internal_".to_string() + &name_c_compliant);
 
                         func.set_locals_name_map(function_name_map.locals.clone());
                     }
