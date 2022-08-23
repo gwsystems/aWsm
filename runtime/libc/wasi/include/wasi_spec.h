@@ -3,7 +3,7 @@
  * wasi_snapshot_preview1.witx and then hand modified for use in awsm. The
  * reason for this is that the original libc file was intended to be used
  * inside of programs that target wasm. As such, the WASI syscall signatures
- * differ from those that a WASI backed much actually implement.
+ * differ from those that a WASI backing might actually implement.
  *
  * For example, consider the path_create_directory syscall. In the auto-generated
  * file, the second argument is a traditional null-terminated C string.

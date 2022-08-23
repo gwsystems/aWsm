@@ -25,7 +25,7 @@ The file `wasi_main.c` is a simple example of a Unix process that initializes a 
 
 An example of this is SLEdge, which uses very different startup and execution logic based around the idea of serverless. In this repo, `wasi_main.c` registers an atexit handler because the backing functions for the WASI proc_exit syscall in wasi_impl_uvwasi and wasi_impl_minimal both directly call POSIX exit, exiting the parent process. This requires us to shift cleanup to an atexit handler. This approach does not work with SLEdge, because the runtime should outlive any sandbox and run the next sandbox on its runqueue when any single sandbox exits. 
 
-To deal with this, SLEdge wraps the call to the wasmf\_\_start entrypoint in setjmp and calls longjmp in the WASI prox_exit syscall. This only exits the sandbox and returns control flow to the runtime's parent process.
+To deal with this, SLEdge wraps the call to the wasmf\_\_start entrypoint in setjmp and calls longjmp in the WASI proc_exit syscall. This only exits the sandbox and returns control flow to the runtime's parent process.
 
 Assuming that rc and buf are globals, a minimal example of this might look as follows:
 
