@@ -69,12 +69,14 @@ pub fn process_to_llvm(
         match e {
             Export::Function { index, name } => {
                 // We namespace these, so they can't conflict with our actual native code
-                let name_c_compliant = name.replace(|c: char| !(c.is_alphanumeric() || c == '_'), "_");
+                let name_c_compliant =
+                    name.replace(|c: char| !(c.is_alphanumeric() || c == '_'), "_");
                 wasm_module.functions[index].set_name("wasmf_".to_string() + &name_c_compliant);
             }
             Export::Global { index, name } => {
                 // We namespace these, so they can't conflict with our actual native code
-                let name_c_compliant = name.replace(|c: char| !(c.is_alphanumeric() || c == '_'), "_");
+                let name_c_compliant =
+                    name.replace(|c: char| !(c.is_alphanumeric() || c == '_'), "_");
                 wasm_module.globals[index].set_name("wasmg_".to_string() + &name_c_compliant);
             }
             // Exporting memory is meaningless in our native embedding
