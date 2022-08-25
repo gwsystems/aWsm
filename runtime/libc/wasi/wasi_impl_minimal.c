@@ -94,7 +94,7 @@ void* wasi_context_init(wasi_options_t* options) {
     /* Copy the binary name minux the path as the first arg */
     strncpy(wasi_context->argv_buf, &options->argv[0][first_arg_offset], first_arg_len);
 
-    /* Copy the binary name minux the path as the first arg */
+    /* Copy the binary name minus the path as the first arg */
     for (int i = 1; i < options->argc; i++) {
         strncpy(&wasi_context->argv_buf[argv_buffer_offsets[i]], options->argv[i],
                 argv_buffer_offsets[i + 1] - argv_buffer_offsets[i]);

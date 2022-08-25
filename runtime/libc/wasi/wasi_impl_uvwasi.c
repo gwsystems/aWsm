@@ -35,13 +35,13 @@ void* wasi_context_init(wasi_options_t* options) {
     /* Pass through environment from host process */
     init_options.envp = options->envp;
 
-    /* Mount local directory as /home */
+    /* Mount local directory as /sandbox */
     init_options.preopenc                = 1;
     init_options.preopens                = calloc(1, sizeof(uvwasi_preopen_t));
     init_options.preopens[0].mapped_path = "/sandbox";
     init_options.preopens[0].real_path   = ".";
 
-    /* Initialize the sandbox */
+    /* Initialize the wasi_context */
     uvwasi_errno_t err = uvwasi_init(wasi_context, &init_options);
 
     free(init_options.argv);

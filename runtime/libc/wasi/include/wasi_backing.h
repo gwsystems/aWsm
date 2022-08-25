@@ -1,7 +1,7 @@
 #pragma once
 
 /* The functions in this header are responsible for swizzling and unswizzling wasm offsets and narrowing
- * arguments that were automatically zero-extended to 32-bits. The pass host pointers and proper wasm types
+ * arguments that were automatically zero-extended to 32-bits. They pass host pointers and proper wasm types
  * to a WASI backing.
  */
 

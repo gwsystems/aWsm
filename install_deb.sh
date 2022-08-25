@@ -38,7 +38,7 @@ $sudo apt install libc++-11-dev libc++abi-11-dev --yes
 
 # Install Binaryen
 # Clang uses Binaryen's wasm-opt utility to optimize WebAssembly
-sudo apt install binaryen --yes
+$sudo apt install binaryen --yes
 
 # Install Rust
 if [[ -x "$(command -v rustup)" ]]; then
