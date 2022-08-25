@@ -12,9 +12,9 @@ void env___cxa_pure_virtual() {
 
 // Region initialization helper function
 EXPORT void initialize_region(u32 offset, u32 data_count, char* data) {
-    awsm_assert(memory_size >= data_count);
-    awsm_assert(offset < memory_size - data_count);
-    //    awsm_assert(offset <= memory_size - data_count);
+    if (offset + data_count >= memory_size) {
+        instruction_memory_grow(offset + data_count - memory_size);
+    }
 
     // FIXME: Hack around segmented and unsegmented access
     memcpy(get_memory_ptr_for_runtime(offset, data_count), data, data_count);
@@ -288,23 +288,6 @@ __attribute__((noreturn)) void awsm_abi__trap_unreachable() {
 // We want to have some allocation logic here, so we can use it to implement libc
 WEAK u32 wasmg___heap_base = 0;
 u32      runtime_heap_base;
-
-u32 allocate_n_bytes(u32 n) {
-    awsm_assert(memory_size > 0);
-    u32 res = runtime_heap_base;
-    runtime_heap_base += n;
-    while (memory_size < runtime_heap_base) {
-        expand_memory();
-    }
-    printf("rhb %d\n", runtime_heap_base);
-    return res;
-}
-
-void* allocate_n_bytes_ptr(u32 n) {
-    awsm_assert(memory_size > 0);
-    u32 addr = allocate_n_bytes(n);
-    return get_memory_ptr_for_runtime(addr, n);
-}
 
 // If we are using runtime globals, we need to populate them
 WEAK void populate_globals() {}
