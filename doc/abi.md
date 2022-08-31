@@ -513,11 +513,11 @@ The `populate_globals` function assumes that runtime has implemented this interf
 
 The aWsm compiler expects a WebAssembly module to declare a single WebAssembly memory. Zero or multiple memories cause the compiler to panic. The compiler transforms the initial and max WebAssembly pages values provided in this WebAssembly instruction into the LLVM constant globals `starting_pages` and `max_pages`. If a max value is not provided, the value defaults to zero, which indicates that there is no cap.
 
-The compiler generates an initialization function for each defined segment in the format `init_memory_offset_0`, `init_memory_offset_1`, etc. **UNCLEAR WHAT THIS DOES**
+The compiler generates an initialization function for each defined segment in the format `init_memory_offset_0`, `init_memory_offset_1`, etc. They return the target offset where the associated segment should be copied into the Linear Memory, respectively.
 
 It also generates a `populate_memory` function, which:
 
-1. Calls the offset functions above to somehow get the target offset in the linear memory
+1. Calls the offset functions above to get the target offset in the linear memory
 2. generates globals at `init_vector_0`, `init_vector_1`, etc. containing to data segment we want to write to linear memory
 3. calls an undefined external symbol `initialize_region` for each offset/data pair to copy the data stored in `init_vector_0` to the target offset returned by `init_memory_offset_0`.
 
@@ -525,15 +525,15 @@ The net result is that `populate_memory` should copy all relevant data into the 
 
 ## Wasmception Entrypoint
 
-If a WebAssembly module is compiled using the wasmception (a libc that predates WASI), the runtime must also initialize libc manually by calling `wasmf___init_libc`. The entrypoint is then available at `wasmf_main`, which is directly called with arguments.
+If a WebAssembly module is compiled using wasmception (a libc that predates WASI), the runtime must also initialize libc manually by calling `wasmf___init_libc`. The entrypoint is then available at `wasmf_main`, which is directly called with arguments.
 
 ## WASI Entrypoint
 
-If a WebAssembly module is compiled using WASI, the runtime must initialize a WASI context with arguments and other options. This is expected to be present as a global in your runtime. This API for this depends on your WASI implementation. Once this is set, a runtime calls the entrypoint `_start`, which is exposed as `wasmf_start`.
+If a WebAssembly module is compiled using WASI, the runtime must initialize a WASI context with arguments and other options. This is expected to be present as a global in your runtime. This API for this depends on your WASI implementation. Once this is set, a runtime calls the entrypoint `_start`, which is exposed as `wasmf__start`.
 
 ## aWsm Application Binary Interface
 
-Based on the above information about how aWsm deals with WebAssembly instructions and initialization, it is clear that in order to be able to execute the LLVM bitcode emitted by aWsm, the \*.bc file needs to be linked with \*.c translation units or a library that implement the unresolved external symbols listed above. This set of external symbols constitutes an ABI (henceforth called the "aWsm ABI").
+Based on the above information about how aWsm deals with WebAssembly instructions and initialization, it is clear that in order to be able to execute the LLVM bitcode emitted by aWsm, the \*.bc file needs to be linked with \*.c translation units or a library that implements the unresolved external symbols listed above. This set of external symbols constitutes an ABI (henceforth called the "aWsm ABI").
 
 The following header contains all of the external symbols required of a supporting runtime library to provide the expected level of support outlined above. This ABI would expand to add support to new WebAssembly instructions.
 

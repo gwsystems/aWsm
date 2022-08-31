@@ -34,7 +34,7 @@ This picture depicts the aWsm pipeline.
 - Programming languages are compiled into Wasm, for example, using LLVM.
 - Wasm has a binary representation and (as depicted) a s-expr representation.
 - The aWsm compiler inputs binary Wasm, generates LLVM IR corresponding to the Wasm.
-- This IR is compiled with the runtime to generate the final object that exports `wasm_main` to execute in the broader application.
+- This IR is compiled with the runtime to generate the final object that exports `wasm__start` to execute in the broader application.
 
 In the Figure, we target Arm Cortex-M, and the yellow boxes emphasize how linear memory bounds checks transition throughout the process.
 
@@ -46,6 +46,7 @@ To enable this, the compiler generates LLVM IR that calls the runtime for common
 We rely on the Link-Time Optimization (LTO) of LLVM to remove the boundaries between executable and runtime.
 Similarly, indirect function calls (function pointer invocations) are implemented within the C of the runtime.
 
+[The following paragrapgh is outdated.]
 aWsm uses a [`musl`](https://musl.libc.org/) libc implementation (by default), and we interpose on the system calls by instead converting them to calls to the runtime.
 In this way, system calls can be sanitized, constrained, or transformed by the runtime.
 WASI support is of significant interest, but is not yet enabled.
