@@ -25,17 +25,18 @@ u32      runtime_heap_base;
 WEAK void awsm_abi__start_fn() {}
 
 #ifdef DYNAMIC_LINKING_WASM_SO
-void runtime_with_so_init(struct awsm_abi_symbols* abi, char *app_name) {
-    char *dl_path = getenv("AWSM_DLSO_PATH");
-    if(dl_path == NULL) {
+void runtime_with_so_init(struct awsm_abi_symbols* abi, char* app_name) {
+    char* dl_path = getenv("AWSM_DLSO_PATH");
+    if (dl_path == NULL) {
         char app_name_so[128];
-        strtok (app_name,".");
+        strtok(app_name, ".");
         sprintf(app_name_so, "%s.so", app_name);
         dl_path = app_name_so;
     }
 
     int ret = awsm_abi_symbols_init(abi, dl_path);
-    if (ret != 0) exit(ret);
+    if (ret != 0)
+        exit(ret);
 
     starting_pages = *abi->starting_pages;
     max_pages      = *abi->max_pages;
@@ -45,7 +46,8 @@ void runtime_with_so_init(struct awsm_abi_symbols* abi, char *app_name) {
     }
 
     abi->initialize_tables();
-    if (abi->initialize_globals) abi->initialize_globals();
+    if (abi->initialize_globals)
+        abi->initialize_globals();
     abi->initialize_memory();
 
     awsm_abi__start_fn();
