@@ -34,7 +34,8 @@ jobs:
 
     strategy:
       matrix:
-        libc: [wasmception, wasi-sdk]
+        libc: [wasi-sdk]
+#         libc: [wasmception, wasi-sdk]
 
     steps:
       - uses: actions/checkout@v2
