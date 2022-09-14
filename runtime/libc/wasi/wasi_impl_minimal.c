@@ -597,7 +597,7 @@ wasi_snapshot_preview1_backing_fd_pread(void* wasi_context, __wasi_fd_t fd, cons
  */
 __wasi_errno_t
 wasi_snapshot_preview1_backing_fd_prestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_prestat_t* prestat_retptr) {
-    return wasi_unsupported_syscall(__func__);
+    return __WASI_ERRNO_BADF;
 }
 
 /**

@@ -19,6 +19,17 @@
 
 IMPORT i32 wasmf_main(i32 a, i32 b);
 
+u32 allocate_n_bytes(u32 n) {
+    awsm_assert(memory_size > 0);
+    u32 res = runtime_heap_base;
+    runtime_heap_base += n;
+    while (memory_size < runtime_heap_base) {
+        expand_memory();
+    }
+    printf("rhb %d\n", runtime_heap_base);
+    return res;
+}
+
 int runtime_main(int argc, char** argv) {
     runtime_init();
 
