@@ -232,8 +232,8 @@ static inline int awsm_abi_symbols_init(struct awsm_abi_symbols* abi, const char
     }
 
     abi->starting_pages = dlsym(abi->handle, "starting_pages");
-    abi->max_pages = dlsym(abi->handle, "max_pages");
-    abi->globals_len = dlsym(abi->handle, "globals_len");
+    abi->max_pages      = dlsym(abi->handle, "max_pages");
+    abi->globals_len    = dlsym(abi->handle, "globals_len");
 done:
     return rc;
 dl_error:
@@ -243,11 +243,10 @@ dl_open_error:
     goto done;
 }
 
-void runtime_with_so_init(struct awsm_abi_symbols*, char *);
+void runtime_with_so_init(struct awsm_abi_symbols*, char*);
 
 #else
 
 void runtime_init();
 
 #endif
-
