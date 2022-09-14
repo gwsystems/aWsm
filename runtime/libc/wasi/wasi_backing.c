@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-/* In order to avoid making the wasi_backing a gaint macro, the header requires us to:
+/* In order to avoid making the wasi_backing a giant macro, the header requires us to:
  * 1. Declare externs to the symbols we want to map. This could be thread-local or global
  * 2. Declare macros CURRENT_MEMORY_BASE, CURRENT_MEMORY_SIZE, and CURRENT_WASI_CONTEXT
  *    with the value of the externs you declared
