@@ -23,8 +23,17 @@ void runtime_on_module_exit() {
     return;
 }
 
+#ifdef DYNAMIC_LINKING_WASM_SO
+u32 starting_pages, max_pages;
+#endif
+
 int main(int argc, char* argv[]) {
+#ifdef DYNAMIC_LINKING_WASM_SO
+    struct awsm_abi_symbols abi;
+    runtime_with_so_init(&abi, argv[0]);
+#else
     runtime_init();
+#endif
 
     /* Copy environ from process */
     extern char** environ;
@@ -42,6 +51,11 @@ int main(int argc, char* argv[]) {
 
     atexit(runtime_on_module_exit);
 
+#ifdef DYNAMIC_LINKING_WASM_SO
+    abi.entrypoint();
+#else
     wasmf__start();
+#endif
+
     exit(EXIT_SUCCESS);
 }
