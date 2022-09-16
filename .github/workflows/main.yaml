@@ -71,7 +71,7 @@ jobs:
       - name: Compile
         run: |
           cargo build --release
-          ls aWsm/target
+          ls ./target/
           which awsm
 
       # - name: Preliminary tests
