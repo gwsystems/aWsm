@@ -69,10 +69,10 @@ jobs:
       #   run: |
       #     make -C ./runtime/thirdparty install
 
-      # - name: Compile
-      #   run: |
-      #     cargo build --release
-      #     ls aWsm/target
+      - name: Compile
+        run: |
+          cargo build --release
+          ls aWsm/target
 
       # - name: Preliminary tests
       #   # note we skip code_benches; we run code_benches/run.py ourselves
