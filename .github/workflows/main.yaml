@@ -1,6 +1,6 @@
 # CI workflow
 name: test
-on: [push, pull_request]
+on: [push]
 
 env:
   # Rust equivalent of -Werror
@@ -34,22 +34,21 @@ jobs:
 
     strategy:
       matrix:
-        libc: [wasmception, wasi-sdk]
-
+        # libc: [wasmception, wasi-sdk]
+        libc: [wasi-sdk]
     steps:
       - uses: actions/checkout@v2
       - name: Install
         run: |
-          # sudo apt install binaryen --yes
-          # sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" bash $LLVM_VERSION
-          # sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
-          # sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
-          sudo apt install libc++-dev libc++abi-dev wabt --yes
+          sudo apt install binaryen --yes
+          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" bash $LLVM_VERSION
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
+          sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
+          # sudo apt install libc++-dev libc++abi-dev wabt --yes
           # not really sure why we need to modify this
           PATH=/usr/bin:$PATH
-          # llvm-config --version
-          wat2wasm --version
-          exit
+          which awsm
+          llvm-config --version
 
       - name: Get wasmception
         if: matrix.libc == 'wasmception'
@@ -58,55 +57,56 @@ jobs:
           mkdir -p wasmception
           tar xvfz wasmception.tar.gz -C wasmception
 
-      - name: Get wasi-sdk
-        if: matrix.libc == 'wasi-sdk'
-        run: |
-          wget $WASI_SDK_URL -O wasi-sdk.tar.gz
-          mkdir -p /opt/wasi-sdk
-          tar xvfz wasi-sdk.tar.gz --strip-components=1 -C /opt/wasi-sdk
+      # - name: Get wasi-sdk
+      #   if: matrix.libc == 'wasi-sdk'
+      #   run: |
+      #     wget $WASI_SDK_URL -O wasi-sdk.tar.gz
+      #     mkdir -p /opt/wasi-sdk
+      #     tar xvfz wasi-sdk.tar.gz --strip-components=1 -C /opt/wasi-sdk
 
-      - name: Install runtime dependencies (libuv, uvwasi)
-        if: matrix.libc == 'wasi-sdk'
-        run: |
-          make -C ./runtime/thirdparty install
+      # - name: Install runtime dependencies (libuv, uvwasi)
+      #   if: matrix.libc == 'wasi-sdk'
+      #   run: |
+      #     make -C ./runtime/thirdparty install
 
-      - name: Compile
-        run: |
-          cargo build --release
+      # - name: Compile
+      #   run: |
+      #     cargo build --release
+      #     ls aWsm/target
 
-      - name: Preliminary tests
-        # note we skip code_benches; we run code_benches/run.py ourselves
-        # to pass explicit flags
-        run: |
-          cargo test -- --skip code_benches
+      # - name: Preliminary tests
+      #   # note we skip code_benches; we run code_benches/run.py ourselves
+      #   # to pass explicit flags
+      #   run: |
+      #     cargo test -- --skip code_benches
 
-      # These tests assume WASI
-      - name: WebAssembly Specification Test Suite (uvwasi)
-        if: matrix.libc == 'wasi-sdk'
-        run: |
-          cd tests/wat && ./run.sh uvwasi
-      - name: WebAssembly Specification Test Suite (minimal)
-        if: matrix.libc == 'wasi-sdk'
-        run: |
-          cd tests/wat && ./run.sh minimal
-      - name: WebAssembly Specification Test Suite (wasmception)
-        if: matrix.libc == 'wasmception'
-        run: |
-          cd tests/wat && ./run.sh wasmception
-      - name: WASI Tests
-        if: matrix.libc == 'wasi-sdk'
-        run: |
-          make -C tests/wasi all
-          cd tests/wasi && bash ./run.sh
+      # # These tests assume WASI
+      # - name: WebAssembly Specification Test Suite (uvwasi)
+      #   if: matrix.libc == 'wasi-sdk'
+      #   run: |
+      #     cd tests/wat && ./run.sh uvwasi
+      # - name: WebAssembly Specification Test Suite (minimal)
+      #   if: matrix.libc == 'wasi-sdk'
+      #   run: |
+      #     cd tests/wat && ./run.sh minimal
+      # - name: WebAssembly Specification Test Suite (wasmception)
+      #   if: matrix.libc == 'wasmception'
+      #   run: |
+      #     cd tests/wat && ./run.sh wasmception
+      # - name: WASI Tests
+      #   if: matrix.libc == 'wasi-sdk'
+      #   run: |
+      #     make -C tests/wasi all
+      #     cd tests/wasi && bash ./run.sh
 
-      - name: Code benches
-        run: |
-          ./code_benches/run.py --debug --${{matrix.libc}} -o benchmarks.csv
+      # - name: Code benches
+      #   run: |
+      #     ./code_benches/run.py --debug --${{matrix.libc}} -o benchmarks.csv
 
-      - name: Results
-        run: cat benchmarks.csv
+      # - name: Results
+      #   run: cat benchmarks.csv
 
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{matrix.libc}}-benchmarks
-          path: benchmarks.csv
+      # - uses: actions/upload-artifact@v2
+      #   with:
+      #     name: ${{matrix.libc}}-benchmarks
+      #     path: benchmarks.csv
