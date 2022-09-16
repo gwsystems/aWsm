@@ -44,10 +44,9 @@ jobs:
           sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" bash $LLVM_VERSION
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
           sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
-          # sudo apt install libc++-dev libc++abi-dev wabt --yes
+          sudo apt install libc++-dev libc++abi-dev wabt --yes
           # not really sure why we need to modify this
           PATH=/usr/bin:$PATH
-          which awsm
           llvm-config --version
 
       - name: Get wasmception
@@ -57,22 +56,23 @@ jobs:
           mkdir -p wasmception
           tar xvfz wasmception.tar.gz -C wasmception
 
-      # - name: Get wasi-sdk
-      #   if: matrix.libc == 'wasi-sdk'
-      #   run: |
-      #     wget $WASI_SDK_URL -O wasi-sdk.tar.gz
-      #     mkdir -p /opt/wasi-sdk
-      #     tar xvfz wasi-sdk.tar.gz --strip-components=1 -C /opt/wasi-sdk
+      - name: Get wasi-sdk
+        if: matrix.libc == 'wasi-sdk'
+        run: |
+          wget $WASI_SDK_URL -O wasi-sdk.tar.gz
+          mkdir -p /opt/wasi-sdk
+          tar xvfz wasi-sdk.tar.gz --strip-components=1 -C /opt/wasi-sdk
 
-      # - name: Install runtime dependencies (libuv, uvwasi)
-      #   if: matrix.libc == 'wasi-sdk'
-      #   run: |
-      #     make -C ./runtime/thirdparty install
+      - name: Install runtime dependencies (libuv, uvwasi)
+        if: matrix.libc == 'wasi-sdk'
+        run: |
+          make -C ./runtime/thirdparty install
 
       - name: Compile
         run: |
           cargo build --release
           ls aWsm/target
+          which awsm
 
       # - name: Preliminary tests
       #   # note we skip code_benches; we run code_benches/run.py ourselves
