@@ -43,8 +43,7 @@ void expand_memory() {
 
 INLINE void check_bounds(u32 offset, u32 bounds_check) {
     // Due to how we setup memory for x86, the virtual memory mechanism will catch the error, if bounds < WASM_PAGE_SIZE
-    awsm_assert(bounds_check < WASM_PAGE_SIZE
-                || (memory_size > bounds_check && offset <= memory_size - bounds_check)); ////// why not offset ?
+    awsm_assert(bounds_check < WASM_PAGE_SIZE || (memory_size > bounds_check && offset <= memory_size - bounds_check));
 }
 
 INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check) {
