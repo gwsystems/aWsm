@@ -1,5 +1,11 @@
 AWSMCC=../target/release/awsm
 CC=clang
+ARCH=64bit_nix
+USE_DYLIB_SO=FALSE
+
+ifeq ($(USE_DYLIB_SO), TRUE)
+    _SO_EXT=_so
+endif
 
 # Used by aWsm when compiling the *.wasm to *.bc
 # No need for adding the --runtime-globals flag for just a single sandbox exec
@@ -9,13 +15,13 @@ RUNTIME_PATH=../runtime
 RUNTIME_UVWASI_INCLUDES=-I${RUNTIME_PATH}/libc/wasi/include -I${RUNTIME_PATH}/thirdparty/dist/include
 RUNTIME_MINIMAL_INCLUDES=-I${RUNTIME_PATH}/libc/wasi/include
 
-WASM_ABI_INSTRUCTIONS=${RUNTIME_PATH}/64bit_nix_abi.c
+WASM_INSTRUCTIONS=${RUNTIME_PATH}/wasm_instructions/common.c ${RUNTIME_PATH}/wasm_instructions/memory/${ARCH}.c
 
-WASI_COMMON_CPATH+=${RUNTIME_PATH}/memory/64bit_nix.c
-WASI_COMMON_CPATH+=${RUNTIME_PATH}/libc/env.c
+# WASI_COMMON_CPATH+=${RUNTIME_PATH}/libc/env.c # not necessary so far
+WASI_COMMON_CPATH+=${RUNTIME_PATH}/memory/${ARCH}.c
 WASI_COMMON_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_backing.c
 WASI_COMMON_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_main.c
-WASI_COMMON_CPATH+=${RUNTIME_PATH}/runtime.c
+WASI_COMMON_CPATH+=${RUNTIME_PATH}/runtime${_SO_EXT}.c
 
 WASI_MINIMAL_CPATH+=${WASI_COMMON_CPATH} ${RUNTIME_PATH}/libc/wasi/wasi_impl_minimal.c
 
@@ -40,13 +46,13 @@ dist/%.bc: ./wasm_apps/dist/%.wasm dist
 dist/%.ll: dist/%.bc
 	llvm-dis-12 $< -o $@
 
-dist/%.bc.mini.awsm: dist/%.bc ${WASM_ABI_INSTRUCTIONS} ${WASI_MINIMAL_CPATH}
+dist/%.bc.mini.awsm: dist/%.bc ${WASM_INSTRUCTIONS} ${WASI_MINIMAL_CPATH}
 	${CC} -lm -O3 -flto ${RUNTIME_MINIMAL_INCLUDES} $^ -o $@
 
-dist/%.bc.uvwasi.awsm: dist/%.bc ${WASM_ABI_INSTRUCTIONS} ${WASI_UVWASI_CPATH} ${WASI_UVWASI_LIBPATH}
+dist/%.bc.uvwasi.awsm: dist/%.bc ${WASM_INSTRUCTIONS} ${WASI_UVWASI_CPATH} ${WASI_UVWASI_LIBPATH}
 	${CC} -lm -O3 -flto -pthread -ldl ${RUNTIME_UVWASI_INCLUDES} $^ -o $@
 
-dist/%.so: dist/%.bc ${WASM_ABI_INSTRUCTIONS}
+dist/%.so: dist/%.bc ${WASM_INSTRUCTIONS}
 	${CC} -O3 -flto -shared -fPIC $^ -o $@
 
 # Before executing the following awsm, make sure the AWSM_DLSO_PATH shell variable is set showing the path to the .so file.

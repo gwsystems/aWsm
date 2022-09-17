@@ -12,48 +12,12 @@ void env___cxa_pure_virtual() {
     awsm_assert("env___cxa_pure_virtual" == 0);
 }
 
-__attribute__((noreturn)) void awsm_abi__trap_unreachable() {
-    fprintf(stderr, "WebAssembly control flow unexpectedly reached unreachable instruction\n");
-    exit(EXIT_FAILURE);
-}
-
 // We want to have some allocation logic here, so we can use it to implement libc
 WEAK u32 wasmg___heap_base = 0;
 u32      runtime_heap_base;
 
 // If a function is registered using the (start) instruction, call it
 WEAK void awsm_abi__start_fn() {}
-
-#ifdef DYNAMIC_LINKING_WASM_SO
-void runtime_with_so_init(struct awsm_abi_symbols* abi, char* app_name) {
-    char* dl_path = getenv("AWSM_DLSO_PATH");
-    if (dl_path == NULL) {
-        char app_name_so[128];
-        strtok(app_name, ".");
-        sprintf(app_name_so, "%s.so", app_name);
-        dl_path = app_name_so;
-    }
-
-    int ret = awsm_abi_symbols_init(abi, dl_path);
-    if (ret != 0)
-        exit(ret);
-
-    starting_pages = *abi->starting_pages;
-    max_pages      = *abi->max_pages;
-
-    if (likely(starting_pages > 0)) {
-        alloc_linear_memory();
-    }
-
-    abi->initialize_tables();
-    if (abi->initialize_globals)
-        abi->initialize_globals();
-    abi->initialize_memory();
-
-    awsm_abi__start_fn();
-}
-
-#else
 
 void runtime_init() {
     if (likely(starting_pages > 0)) {
@@ -81,5 +45,3 @@ void runtime_init() {
     // https://webassembly.github.io/spec/core/syntax/modules.html#start-function
     awsm_abi__start_fn();
 }
-
-#endif

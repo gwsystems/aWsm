@@ -322,7 +322,7 @@ def compile_wasm_to_executable(program, exe_postfix, memory_impl, unsafe_impls=F
     else:
         target_flag = "-target " + AWSM_TARGET
 
-    command = "clang -lm {target} {opt} {bc_file} {runtime}/runtime.c {backing} {runtime}/libc/env.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
+    command = "clang -lm {target} {opt} {bc_file} {runtime}/runtime.c {runtime}/wasm_instructions/common.c {runtime}/wasm_instructions/memory/{mem_impl} {backing} {runtime}/libc/env.c {runtime}/memory/{mem_impl} -o bin/{pname}_{postfix}"\
         .format(target=target_flag, opt=opt, bc_file=bc_file, pname=program.name, runtime=RUNTIME_PATH, backing=WASM_BACKING, mem_impl=memory_impl, postfix=exe_postfix)
     print(command)
     sp.check_call(command, shell=True, cwd=program.name)

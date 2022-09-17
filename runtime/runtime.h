@@ -173,80 +173,21 @@ void stub_init();
 // The runtime entrypoint must be called
 int runtime_main(int argc, char** argv);
 
-#ifdef DYNAMIC_LINKING_WASM_SO
-
-typedef void (*awsm_abi__init_globals_fn_t)(void);
-typedef void (*awsm_abi__init_mem_fn_t)(void);
-typedef void (*awsm_abi__init_tbl_fn_t)(void);
-typedef int32_t (*awsm_abi__entrypoint_fn_t)(void);
-typedef uint32_t (*awsm_abi__wasm_memory_starting_pages_fn_t)(void);
-typedef uint32_t (*awsm_abi__wasm_memory_max_pages_fn_t)(void);
-typedef uint32_t (*awsm_abi__wasm_memory_globals_len_fn_t)(void);
-
-struct awsm_abi_symbols {
-    void*                       handle;
-    awsm_abi__init_globals_fn_t initialize_globals;
-    awsm_abi__init_mem_fn_t     initialize_memory;
-    awsm_abi__init_tbl_fn_t     initialize_tables;
-    awsm_abi__entrypoint_fn_t   entrypoint;
-    uint32_t*                   starting_pages;
-    uint32_t*                   max_pages;
-    uint32_t*                   globals_len;
-};
-
-static inline int awsm_abi_symbols_init(struct awsm_abi_symbols* abi, const char* path) {
-    awsm_assert(abi != NULL);
-
-    int rc = 0;
-
-    abi->handle = dlopen(path, RTLD_LAZY | RTLD_DEEPBIND);
-    if (abi->handle == NULL) {
-        fprintf(stderr, "Failed to open %s with error: %s\n", path, dlerror());
-        goto dl_open_error;
-    };
-
-    /* Resolve the symbols in the dynamic library *.so file */
-    abi->entrypoint = (awsm_abi__entrypoint_fn_t)dlsym(abi->handle, "wasmf__start");
-    if (abi->entrypoint == NULL) {
-        fprintf(stderr, "Failed to resolve symbol %s in %s with error: %s\n", "wasmf__start", path, dlerror());
-        goto dl_error;
-    }
-
-    /*
-     * This symbol may or may not be present depending on whether the aWsm was
-     * run with the --runtime-globals flag. It is not clear what the proper
-     * configuration would be for SLEdge, so no validation is performed
-     */
-    abi->initialize_globals = (awsm_abi__init_globals_fn_t)dlsym(abi->handle, "populate_globals");
-
-    abi->initialize_memory = (awsm_abi__init_mem_fn_t)dlsym(abi->handle, "populate_memory");
-    if (abi->initialize_memory == NULL) {
-        fprintf(stderr, "Failed to resolve symbol %s in %s with error: %s\n", "populate_memory", path, dlerror());
-        goto dl_error;
-    }
-
-    abi->initialize_tables = (awsm_abi__init_tbl_fn_t)dlsym(abi->handle, "populate_table");
-    if (abi->initialize_tables == NULL) {
-        fprintf(stderr, "Failed to resolve symbol %s in %s with error: %s\n", "populate_table", path, dlerror());
-        goto dl_error;
-    }
-
-    abi->starting_pages = dlsym(abi->handle, "starting_pages");
-    abi->max_pages      = dlsym(abi->handle, "max_pages");
-    abi->globals_len    = dlsym(abi->handle, "globals_len");
-done:
-    return rc;
-dl_error:
-    dlclose(abi->handle);
-dl_open_error:
-    rc = -1;
-    goto done;
-}
-
-void runtime_with_so_init(struct awsm_abi_symbols*, char*);
-
-#else
-
 void runtime_init();
 
-#endif
+typedef void (*init_globals_fn_t)(void);
+typedef void (*init_mem_fn_t)(void);
+typedef void (*init_tbl_fn_t)(void);
+typedef int32_t (*entrypoint_fn_t)(void);
+
+struct dylib_handler {
+    void*             handle;
+    char*             app_path;
+    init_globals_fn_t initialize_globals;
+    init_mem_fn_t     initialize_memory;
+    init_tbl_fn_t     initialize_tables;
+    entrypoint_fn_t   entrypoint;
+    uint32_t*         starting_pages;
+    uint32_t*         max_pages;
+    uint32_t*         globals_len;
+};

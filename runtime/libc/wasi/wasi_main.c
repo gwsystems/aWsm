@@ -9,8 +9,8 @@
  * writing custom startup logic for other host environments and execution models.
  */
 
-void* current_wasi_context;
-
+void*                current_wasi_context;
+struct dylib_handler so_handler;
 
 /* Code that actually runs the wasm code */
 IMPORT void wasmf__start(void);
@@ -23,17 +23,10 @@ void runtime_on_module_exit() {
     return;
 }
 
-#ifdef DYNAMIC_LINKING_WASM_SO
-u32 starting_pages, max_pages;
-#endif
-
 int main(int argc, char* argv[]) {
-#ifdef DYNAMIC_LINKING_WASM_SO
-    struct awsm_abi_symbols abi;
-    runtime_with_so_init(&abi, argv[0]);
-#else
+    so_handler.app_path = argv[0];
+
     runtime_init();
-#endif
 
     /* Copy environ from process */
     extern char** environ;
@@ -51,11 +44,11 @@ int main(int argc, char* argv[]) {
 
     atexit(runtime_on_module_exit);
 
-#ifdef DYNAMIC_LINKING_WASM_SO
-    abi.entrypoint();
-#else
-    wasmf__start();
-#endif
+    if (so_handler.handle) {
+        so_handler.entrypoint();
+    } else {
+        wasmf__start();
+    }
 
     exit(EXIT_SUCCESS);
 }
