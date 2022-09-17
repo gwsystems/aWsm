@@ -3,6 +3,7 @@
     (import "wasi_snapshot_preview1" "proc_exit" 
 	(func $proc_exit (param i32)))
     (memory 1)
+    (export "memory" (memory 0))
 
     (func $f (param i32 i32 i32) (result i32) (i32.const -1))
     (type $sig (func (param i32 i32 i32) (result i32)))

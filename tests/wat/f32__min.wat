@@ -1,6 +1,7 @@
 (module
 	(import "wasi_snapshot_preview1" "proc_exit" (func $proc_exit (param i32)))
 	(memory 1)
+    (export "memory" (memory 0))
 
 	(func $min (export "min") (param $x f32) (param $y f32) (result f32) (f32.min (local.get $x) (local.get $y)))
 	

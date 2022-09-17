@@ -1,5 +1,6 @@
 (module
     (memory 1)
+	(export "memory" (memory 0))
 
     (func $break-inner (export "break-inner") (result i32)
         (local i32)

@@ -1,6 +1,7 @@
 (module
 	(import "wasi_snapshot_preview1" "proc_exit" (func $proc_exit (param i32)))
 	(memory 1)
+    (export "memory" (memory 0))
 
 	(func $i32.reinterpret_f32 (export "i32.reinterpret_f32") (param $x f32) (result i32) (i32.reinterpret_f32 (local.get $x)))
 

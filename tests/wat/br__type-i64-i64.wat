@@ -1,5 +1,6 @@
 (module
     (memory 1)
+    (export "memory" (memory 0))
 
 	(func $type-i64-i64 (export "type-i64-i64") (block (drop (i64.add (br 0)))))
 

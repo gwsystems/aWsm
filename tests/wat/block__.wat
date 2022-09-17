@@ -4,6 +4,7 @@
   (import "wasi_snapshot_preview1" "proc_exit" (func $proc_exit (param i32)))
   ;; Auxiliary definition
   (memory 1)
+  (export "memory" (memory 0))
 
   (func $dummy)
 

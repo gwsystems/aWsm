@@ -1,6 +1,7 @@
 (module
     (import "wasi_snapshot_preview1" "proc_exit" (func $proc_exit (param i32)))
     (memory 1)
+    (export "memory" (memory 0))
 
 	(func $type-i32-value (export "type-i32-value") (result i32)
 		(block (result i32) (i32.ctz (br_table 0 0 (i32.const 1) (i32.const 0))))

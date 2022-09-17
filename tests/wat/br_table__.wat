@@ -931,6 +931,7 @@
 	)
 	
 	(memory 1)
+    (export "memory" (memory 0))
 
 	(func $as-unary-operand (export "as-unary-operand") (result f32)
 		(block (result f32) (f32.neg (br_table 0 (f32.const 3.4) (i32.const 0))))

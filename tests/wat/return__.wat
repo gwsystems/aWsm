@@ -171,6 +171,8 @@
 	)
 
 	(memory 1)
+	(export "memory" (memory 0))
+
 	(func $as-load-address (export "as-load-address") (result f32)
 		(f32.load (return (f32.const 1.7)))
 	)

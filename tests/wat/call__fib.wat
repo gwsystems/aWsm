@@ -1,6 +1,7 @@
 (module
     (import "wasi_snapshot_preview1" "proc_exit" (func $proc_exit (param i32)))
     (memory 1)
+    (export "memory" (memory 0))
 
 	(func $fib (export "fib") (param i64) (result i64)
 		(if (result i64) (i64.le_u (local.get 0) (i64.const 1))

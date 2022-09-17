@@ -5,6 +5,7 @@
 
 (module
     (memory 1)
+    (export "memory" (memory 0))
 
     (func (export "_start") (result i32)
         block

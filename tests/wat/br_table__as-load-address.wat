@@ -1,6 +1,7 @@
 (module
     (import "wasi_snapshot_preview1" "proc_exit" (func $proc_exit (param i32)))
     (memory 1)
+    (export "memory" (memory 0))
 
 	(func $as-load-address (export "as-load-address") (result f32)
 		(block (result f32) (f32.load (br_table 0 (f32.const 1.7) (i32.const 1))))
