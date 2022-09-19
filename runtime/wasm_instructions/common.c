@@ -5,16 +5,14 @@ __attribute__((noreturn)) __attribute__((always_inline)) void awsm_abi__trap_unr
     exit(EXIT_FAILURE);
 }
 
-#pragma region Instantiation
 /* Instantiation */
 
 // If we are using runtime globals, we need to populate them
 WEAK void populate_globals() {}
 
-/* End Instantiation */
-#pragma endregion
+/* End of Instantiation */
 
-#pragma region Memory_Instructions
+
 /* Memory Instructions:*/
 
 INLINE i32 instruction_memory_size() {
@@ -36,9 +34,9 @@ INLINE void initialize_region(u32 offset, u32 data_count, char* data) {
 }
 
 /* End of Memory Instructions:*/
-#pragma endregion
 
-#pragma region Table_Instructions
+
+/* Table Instructions:*/
 
 INLINE void add_function_to_table(u32 idx, u32 type_id, char* pointer) {
     awsm_assert(idx < INDIRECT_TABLE_SIZE);
@@ -51,13 +49,11 @@ INLINE void clear_table() {
     }
 }
 
-#pragma endregion
+/* End of Table Instructions:*/
 
-#pragma region Numeric_Instructions
 
-// The below functions are for implementing WASM instructions
+/* Numeric Instructions:*/
 
-// ROTL and ROTR helper functions
 INLINE u32 rotl_u32(u32 n, u32 c_u32) {
     // WASM requires a modulus here (usually a single bitwise op, but it means we need no assert)
     unsigned int       c    = c_u32 % (CHAR_BIT * sizeof(n));
@@ -303,4 +299,3 @@ INLINE double f64_copysign(double a, double b) {
 }
 
 /* End of Numeric Instructions */
-#pragma endregion
