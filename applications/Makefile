@@ -1,11 +1,6 @@
 AWSMCC=../target/release/awsm
 CC=clang
 ARCH=64bit_nix
-USE_DYLIB_SO=FALSE
-
-ifeq ($(USE_DYLIB_SO), TRUE)
-    _SO_EXT=_so
-endif
 
 # Used by aWsm when compiling the *.wasm to *.bc
 # No need for adding the --runtime-globals flag for just a single sandbox exec
@@ -21,9 +16,9 @@ WASM_INSTRUCTIONS=${RUNTIME_PATH}/wasm_instructions/common.c ${RUNTIME_PATH}/was
 WASI_COMMON_CPATH+=${RUNTIME_PATH}/memory/${ARCH}.c
 WASI_COMMON_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_backing.c
 WASI_COMMON_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_main.c
-WASI_COMMON_CPATH+=${RUNTIME_PATH}/runtime${_SO_EXT}.c
+WASI_COMMON_CPATH+=${RUNTIME_PATH}/runtime.c
 
-WASI_MINIMAL_CPATH+=${WASI_COMMON_CPATH} ${RUNTIME_PATH}/libc/wasi/wasi_impl_minimal.c
+WASI_MINIMAL_CPATH=${WASI_COMMON_CPATH} ${RUNTIME_PATH}/libc/wasi/wasi_impl_minimal.c
 
 WASI_UVWASI_CPATH=${WASI_COMMON_CPATH} ${RUNTIME_PATH}/libc/wasi/wasi_impl_uvwasi.c
 WASI_UVWASI_LIBPATH+=${RUNTIME_PATH}/thirdparty/dist/lib/libuv_a.a
@@ -57,8 +52,9 @@ dist/%.so: dist/%.bc ${WASM_INSTRUCTIONS}
 
 # Before executing the following awsm, make sure the AWSM_DLSO_PATH shell variable is set showing the path to the .so file.
 # e.g. AWSM_DLSO_PATH=./app.so
-dist/%.so.mini.awsm: dist ${WASI_MINIMAL_CPATH} 
-	${CC} ${RUNTIME_MINIMAL_INCLUDES} ${CFLAGS} -DDYNAMIC_LINKING_WASM_SO -Wl,--export-dynamic -ldl -lm $(filter-out $<,$^) -o $@
+dist/%.so.mini.awsm: dist
+	$(eval WASI_SO_MINIMAL_CPATH= $(subst runtime.c,runtime_so.c,$(WASI_MINIMAL_CPATH)))
+	${CC} ${RUNTIME_MINIMAL_INCLUDES} ${CFLAGS} -Wl,--export-dynamic -ldl -lm ${WASI_SO_MINIMAL_CPATH}  -o $@
 
 # UVWASI version does not work now, since libuv_a.a and libuvwai_a.a were NOT complied with -fPIC option
 # dist/%.so.uvwasi.awsm: ${WASI_UVWASI_CPATH}
