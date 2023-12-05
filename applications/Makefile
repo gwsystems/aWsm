@@ -33,6 +33,9 @@ dist/%.bc: ./wasm_apps/dist/%.wasm dist
 dist/%.ll: dist/%.bc
 	llvm-dis-12 $< -o $@
 
+dist/%.awsm: dist/%.bc ${WASI_CPATH}
+	${CC} -pthread -ldl -lm -O3 -flto -g ${RUNTIME_INCLUDES} $^ -o $@
+
 dist/armstrong-numbers.awsm: dist/armstrong-numbers.bc armstrong-numbers/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
 	${CC} -lm -O3 -flto $^ -o $@
 
@@ -68,9 +71,6 @@ dist/triangle.awsm: dist/triangle.bc triangle/main.c ${RUNTIME_PATH}/runtime.c $
 
 dist/unreachable.awsm: dist/unreachable.bc unreachable/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
 	${CC} -lm -O3 -flto $^ -o $@
-
-dist/%.awsm: dist/%.bc ${WASI_CPATH}
-	${CC} -pthread -ldl -lm -O3 -flto -g ${RUNTIME_INCLUDES} $^ -o $@
 
 .PHONY: all.awsm
 all.awsm: \
@@ -138,6 +138,7 @@ all.awsm: \
 	dist/trap_divzero.awsm \
 	dist/stack_overflow.awsm \
 	dist/license_plate_detection.awsm \
+	dist/cnn_face_detection.awsm \
 	dist/gps_ekf.awsm \
 	# dist/app_nn.out \
 	# dist/custom_libjpeg.awsm \
@@ -241,6 +242,10 @@ bench/resize_image.awsm.csv: dist/resize_image.awsm bench
 	hyperfine -w 10 --export-csv $@ \
 		-n $(subst dist/,,$<) './$< <wasm_apps/sod/samples/plate.jpg'
 
+bench/cnn_face_detection.awsm.csv: dist/cnn_face_detection.awsm bench
+	hyperfine -w 10 --export-csv $@ \
+		-n $(subst dist/,,$<) './$< <wasm_apps/sod/samples/cnn_faces.jpg'
+
 bench/traps.awsm.csv: bench dist/traps.awsm
 	hyperfine -N -w 10 --export-csv $@ \
 		-n $(subst dist/,,$<) 'echo "0" | ./$<'
@@ -310,6 +315,7 @@ BENCHMARKS= \
 	bench/pb_stencils_jacobi_2d.csv \
 	bench/license_plate_detection.csv \
 	bench/resize_image.csv \
+	bench/cnn_face_detection.csv \
 	bench/traps.csv
 
 # Disabled due to various reasons
