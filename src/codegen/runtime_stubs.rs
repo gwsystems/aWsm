@@ -73,18 +73,10 @@ pub const U64_REM: &str = "u64_rem";
 pub const I64_DIV: &str = "i64_div";
 pub const I64_REM: &str = "i64_rem";
 
-pub const F32_FLOOR: &str = "f32_floor";
-pub const F32_CEIL: &str = "f32_ceil";
 pub const F32_NEAREST: &str = "f32_nearest";
-pub const F32_MAX: &str = "f32_max";
-pub const F32_MIN: &str = "f32_min";
 pub const F32_COPYSIGN: &str = "f32_copysign";
 
-pub const F64_FLOOR: &str = "f64_floor";
-pub const F64_CEIL: &str = "f64_ceil";
 pub const F64_NEAREST: &str = "f64_nearest";
-pub const F64_MAX: &str = "f64_max";
-pub const F64_MIN: &str = "f64_min";
 pub const F64_COPYSIGN: &str = "f64_copysign";
 
 pub const TRAP_UNREACHABLE: &str = "awsm_abi__trap_unreachable";
@@ -99,8 +91,20 @@ pub const I64_CLZ: &str = "llvm.ctlz.i64";
 pub const I32_CTZ: &str = "llvm.cttz.i32";
 pub const I64_CTZ: &str = "llvm.cttz.i64";
 
+pub const F32_CEIL: &str = "llvm.ceil.f32";
+pub const F64_CEIL: &str = "llvm.ceil.f64";
+
+pub const F32_FLOOR: &str = "llvm.floor.f32";
+pub const F64_FLOOR: &str = "llvm.floor.f64";
+
 pub const F32_FABS: &str = "llvm.fabs.f32";
 pub const F64_FABS: &str = "llvm.fabs.f64";
+
+pub const F32_MAX: &str = "llvm.maxnum.f32";
+pub const F64_MAX: &str = "llvm.maxnum.f64";
+
+pub const F32_MIN: &str = "llvm.minnum.f32";
+pub const F64_MIN: &str = "llvm.minnum.f64";
 
 pub const F32_SQRT: &str = "llvm.sqrt.f32";
 pub const F64_SQRT: &str = "llvm.sqrt.f64";

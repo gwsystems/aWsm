@@ -70,139 +70,140 @@ The two columns represent the state of the resulting LLVM bitcode when the "fast
 
 ### [Numeric Instructions](https://webassembly.github.io/spec/core/syntax/instructions.html#numeric-instructions)
 
-| instruction         | "fast unsafe" enabled                    | "fast unsafe" disabled                   |
-| ------------------- | ---------------------------------------- | ---------------------------------------- |
-| i32.add             | codegen                                  | codegen                                  |
-| i32.and             | codegen                                  | codegen                                  |
-| i32.clz             | intrinsic ([llvm.ctlz.i32][llvm-ctlz])   | intrinsic ([llvm.ctlz.i32][llvm-ctlz])   |
-| i32.const           | codegen                                  | codegen                                  |
-| i32.ctz             | intrinsic ([llvm.cttz.i32][llvm-ctlz])   | intrinsic ([llvm.cttz.i32][llvm-ctlz])   |
-| i32.div_s           | codegen                                  | extern (`i32_div`)                       |
-| i32.div_u           | codegen                                  | extern (`u32_div`)                       |
-| i32.eq              | codegen                                  | codegen                                  |
-| i32.eqz             | codegen                                  | codegen                                  |
-| i32.extend8_s       | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i32.extend16_s      | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i32.ge_s            | codegen                                  | codegen                                  |
-| i32.gt_s            | codegen                                  | codegen                                  |
-| i32.le_s            | codegen                                  | codegen                                  |
-| i32.lt_s            | codegen                                  | codegen                                  |
-| i32.mul             | codegen                                  | codegen                                  |
-| i32.ne              | codegen                                  | codegen                                  |
-| i32.or              | codegen                                  | codegen                                  |
-| i32.popcnt          | intrinsic ([llvm.ctpop.i32][llvm-ctpop]) | intrinsic ([llvm.ctpop.i32][llvm-ctpop]) |
-| i32.reinterpret_f32 | codegen                                  | codegen                                  |
-| i32.rem_s           | codegen                                  | extern (`i32_rem`)                       |
-| i32.rem_u           | codegen                                  | extern (`u32_rem`)                       |
-| i32.rotl            | extern (`rotl_u32`)                      | extern (`rotl_u32`)                      |
-| i32.rotr            | extern (`rotr_u32`)                      | extern (`rotr_u32`)                      |
-| i32.shl             | codegen                                  | codegen                                  |
-| i32.shr_s           | codegen                                  | codegen                                  |
-| i32.shr_u           | codegen                                  | codegen                                  |
-| i32.sub             | codegen                                  | codegen                                  |
-| i32.trunc_f32_s     | codegen                                  | extern (`i32_trunc_f32`)                 |
-| i32.trunc_f32_u     | codegen                                  | extern (`u32_trunc_f32`)                 |
-| i32.trunc_f64_s     | codegen                                  | extern (`i32_trunc_f64`)                 |
-| i32.trunc_f64_u     | codegen                                  | extern (`u32_trunc_f64`)                 |
-| i32.trunc_sat_f32_s | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i32.trunc_sat_f32_u | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i32.trunc_sat_f64_s | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i32.trunc_sat_f64_u | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i32.wrap_i64        | codegen                                  | codegen                                  |
-| i32.xor             | codegen                                  | codegen                                  |
-| i64.add             | codegen                                  | codegen                                  |
-| i64.and             | codegen                                  | codegen                                  |
-| i64.clz             | intrinsic ([llvm.ctlz.i64][llvm-ctlz])   | intrinsic ([llvm.ctlz.i64][llvm-ctlz])   |
-| i64.const           | codegen                                  | codegen                                  |
-| i64.ctz             | intrinsic ([llvm.cttz.i64][llvm-ctlz])   | intrinsic ([llvm.cttz.i64][llvm-ctlz])   |
-| i64.div_s           | codegen                                  | extern (`i64_div`)                       |
-| i64.div_u           | codegen                                  | extern (`u64_div`)                       |
-| i64.eq              | codegen                                  | codegen                                  |
-| i64.eqz             | codegen                                  | codegen                                  |
-| i64.extend_i32_s    | codegen                                  | codegen                                  |
-| i64.extend_i32_u    | codegen                                  | codegen                                  |
-| i64.extend8_s       | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i64.extend16_s      | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i64.extend32_s      | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i64.ge_u            | codegen                                  | codegen                                  |
-| i64.gt_u            | codegen                                  | codegen                                  |
-| i64.le_u            | codegen                                  | codegen                                  |
-| i64.lt_u            | codegen                                  | codegen                                  |
-| i64.mul             | codegen                                  | codegen                                  |
-| i64.ne              | codegen                                  | codegen                                  |
-| i64.or              | codegen                                  | codegen                                  |
-| i64.popcnt          | intrinsic ([llvm.ctpop.i64][llvm-ctpop]) | intrinsic ([llvm.ctpop.i64][llvm-ctpop]) |
-| i64.reinterpret_f64 | codegen                                  | codegen                                  |
-| i64.rem_s           | codegen                                  | extern (`i64_rem`)                       |
-| i64.rem_u           | codegen                                  | extern (`u64_rem`)                       |
-| i64.rotl            | extern (`rotl_u64`)                      | extern (`rotl_u64`)                      |
-| i64.rotr            | extern (`rotr_u64`)                      | extern (`rotr_u64`)                      |
-| i64.shl             | codegen                                  | codegen                                  |
-| i64.shr_u           | codegen                                  | codegen                                  |
-| i64.shr_s           | codegen                                  | codegen                                  |
-| i64.sub             | codegen                                  | codegen                                  |
-| i64.trunc_f32_s     | extern (`i64_trunc_f32`)                 | extern (`i64_trunc_f32`)                 |
-| i64.trunc_f32_u     | extern (`u64_trunc_f32`)                 | extern (`u64_trunc_f32`)                 |
-| i64.trunc_f64_s     | extern (`i64_trunc_f64`)                 | extern (`i64_trunc_f64`)                 |
-| i64.trunc_f64_u     | extern (`u64_trunc_f64`)                 | extern (`u64_trunc_f64`)                 |
-| i64.trunc_sat_f32_s | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i64.trunc_sat_f32_u | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i64.trunc_sat_f64_s | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i64.trunc_sat_f64_u | **UNSUPPORTED**                          | **UNSUPPORTED**                          |
-| i64.xor             | codegen                                  | codegen                                  |
-| f32.abs             | intrinsic ([llvm.fabs.f32][llvm-fabs])   | intrinsic ([llvm.fabs.f32][llvm-fabs])   |
-| f32.add             | codegen                                  | codegen                                  |
-| f32.ceil            | extern (`f32_ceil`)                      | extern (`f32_ceil`)                      |
-| f32.const           | codegen                                  | codegen                                  |
-| f32.convert.i32_s   | codegen                                  | codegen                                  |
-| f32.convert.i32_u   | codegen                                  | codegen                                  |
-| f32.convert.i64_s   | codegen                                  | codegen                                  |
-| f32.convert.i64_u   | codegen                                  | codegen                                  |
-| f32.copysign        | extern (`f32_copysign`)                  | extern (`f32_copysign`)                  |
-| f32.demote_f64      | codegen                                  | codegen                                  |
-| f32.div             | codegen                                  | codegen                                  |
-| f32.eq              | codegen                                  | codegen                                  |
-| f32.floor           | extern (`f32_floor`)                     | extern (`f32_floor`)                     |
-| f32.ge              | codegen                                  | codegen                                  |
-| f32.gt              | codegen                                  | codegen                                  |
-| f32.le              | codegen                                  | codegen                                  |
-| f32.lt              | codegen                                  | codegen                                  |
-| f32.max             | extern (`f32_max`)                       | extern (`f32_max`)                       |
-| f32.min             | extern (`f32_min`)                       | extern (`f32_min`)                       |
-| f32.mul             | codegen                                  | codegen                                  |
-| f32.ne              | codegen                                  | codegen                                  |
-| f32.nearest         | extern (`f32_nearest`)                   | extern (`f32_nearest`)                   |
-| f32.neg             | codegen                                  | codegen                                  |
-| f32.reinterpret_i32 | codegen                                  | codegen                                  |
-| f32.sqrt            | intrinsic ([llvm.sqrt.f32][llvm-sqrt])   | intrinsic ([llvm.sqrt.f32][llvm-sqrt])   |
-| f32.sub             | codegen                                  | codegen                                  |
-| f32.trunc           | extern (`f32_trunc_f32`)                 | extern (`f32_trunc_f32`)                 |
-| f64.abs             | intrinsic ([llvm.fabs.f64][llvm-fabs])   | intrinsic ([llvm.fabs.f64][llvm-fabs])   |
-| f64.add             | codegen                                  | codegen                                  |
-| f64.ceil            | extern (`f64_ceil`)                      | extern (`f64_ceil`)                      |
-| f64.const           | codegen                                  | codegen                                  |
-| f64.convert.i32_s   | codegen                                  | codegen                                  |
-| f64.convert.i32_u   | codegen                                  | codegen                                  |
-| f64.convert.i64_s   | codegen                                  | codegen                                  |
-| f64.convert.i64_u   | codegen                                  | codegen                                  |
-| f64.div             | codegen                                  | codegen                                  |
-| f64.eq              | codegen                                  | codegen                                  |
-| f64.floor           | extern (`f64_floor`)                     | extern (`f64_floor`)                     |
-| f64.ge              | codegen                                  | codegen                                  |
-| f64.gt              | codegen                                  | codegen                                  |
-| f64.le              | codegen                                  | codegen                                  |
-| f64.lt              | codegen                                  | codegen                                  |
-| f64.max             | extern (`f64_max`)                       | extern (`f64_max`)                       |
-| f64.min             | extern (`f64_min`)                       | extern (`f64_min`)                       |
-| f64.mul             | codegen                                  | codegen                                  |
-| f64.ne              | codegen                                  | codegen                                  |
-| f64.nearest         | extern (`f64_nearest`)                   | extern (`f64_nearest`)                   |
-| f64.neg             | codegen                                  | codegen                                  |
-| f64.promote_f32     | codegen                                  | codegen                                  |
-| f64.reinterpret_i64 | codegen                                  | codegen                                  |
-| f64.sqrt            | intrinsic ([llvm.sqrt.f64][llvm-sqrt])   | intrinsic ([llvm.sqrt.f64][llvm-sqrt])   |
-| f64.sub             | codegen                                  | codegen                                  |
-| f64.trunc           | extern (`f64_trunc_f64`)                 | extern (`f64_trunc_f64`)                 |
+| instruction         | "fast unsafe" enabled                      | "fast unsafe" disabled                     |
+| ------------------- | ------------------------------------------ | ------------------------------------------ |
+| i32.add             | codegen                                    | codegen                                    |
+| i32.and             | codegen                                    | codegen                                    |
+| i32.clz             | intrinsic ([llvm.ctlz.i32][llvm-ctlz])     | intrinsic ([llvm.ctlz.i32][llvm-ctlz])     |
+| i32.const           | codegen                                    | codegen                                    |
+| i32.ctz             | intrinsic ([llvm.cttz.i32][llvm-ctlz])     | intrinsic ([llvm.cttz.i32][llvm-ctlz])     |
+| i32.div_s           | codegen                                    | extern (`i32_div`)                         |
+| i32.div_u           | codegen                                    | extern (`u32_div`)                         |
+| i32.eq              | codegen                                    | codegen                                    |
+| i32.eqz             | codegen                                    | codegen                                    |
+| i32.extend8_s       | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i32.extend16_s      | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i32.ge_s            | codegen                                    | codegen                                    |
+| i32.gt_s            | codegen                                    | codegen                                    |
+| i32.le_s            | codegen                                    | codegen                                    |
+| i32.lt_s            | codegen                                    | codegen                                    |
+| i32.mul             | codegen                                    | codegen                                    |
+| i32.ne              | codegen                                    | codegen                                    |
+| i32.or              | codegen                                    | codegen                                    |
+| i32.popcnt          | intrinsic ([llvm.ctpop.i32][llvm-ctpop])   | intrinsic ([llvm.ctpop.i32][llvm-ctpop])   |
+| i32.reinterpret_f32 | codegen                                    | codegen                                    |
+| i32.rem_s           | codegen                                    | extern (`i32_rem`)                         |
+| i32.rem_u           | codegen                                    | extern (`u32_rem`)                         |
+| i32.rotl            | extern (`rotl_u32`)                        | extern (`rotl_u32`)                        |
+| i32.rotr            | extern (`rotr_u32`)                        | extern (`rotr_u32`)                        |
+| i32.shl             | codegen                                    | codegen                                    |
+| i32.shr_s           | codegen                                    | codegen                                    |
+| i32.shr_u           | codegen                                    | codegen                                    |
+| i32.sub             | codegen                                    | codegen                                    |
+| i32.trunc_f32_s     | codegen                                    | extern (`i32_trunc_f32`)                   |
+| i32.trunc_f32_u     | codegen                                    | extern (`u32_trunc_f32`)                   |
+| i32.trunc_f64_s     | codegen                                    | extern (`i32_trunc_f64`)                   |
+| i32.trunc_f64_u     | codegen                                    | extern (`u32_trunc_f64`)                   |
+| i32.trunc_sat_f32_s | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i32.trunc_sat_f32_u | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i32.trunc_sat_f64_s | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i32.trunc_sat_f64_u | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i32.wrap_i64        | codegen                                    | codegen                                    |
+| i32.xor             | codegen                                    | codegen                                    |
+| i64.add             | codegen                                    | codegen                                    |
+| i64.and             | codegen                                    | codegen                                    |
+| i64.clz             | intrinsic ([llvm.ctlz.i64][llvm-ctlz])     | intrinsic ([llvm.ctlz.i64][llvm-ctlz])     |
+| i64.const           | codegen                                    | codegen                                    |
+| i64.ctz             | intrinsic ([llvm.cttz.i64][llvm-ctlz])     | intrinsic ([llvm.cttz.i64][llvm-ctlz])     |
+| i64.div_s           | codegen                                    | extern (`i64_div`)                         |
+| i64.div_u           | codegen                                    | extern (`u64_div`)                         |
+| i64.eq              | codegen                                    | codegen                                    |
+| i64.eqz             | codegen                                    | codegen                                    |
+| i64.extend_i32_s    | codegen                                    | codegen                                    |
+| i64.extend_i32_u    | codegen                                    | codegen                                    |
+| i64.extend8_s       | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i64.extend16_s      | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i64.extend32_s      | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i64.ge_u            | codegen                                    | codegen                                    |
+| i64.gt_u            | codegen                                    | codegen                                    |
+| i64.le_u            | codegen                                    | codegen                                    |
+| i64.lt_u            | codegen                                    | codegen                                    |
+| i64.mul             | codegen                                    | codegen                                    |
+| i64.ne              | codegen                                    | codegen                                    |
+| i64.or              | codegen                                    | codegen                                    |
+| i64.popcnt          | intrinsic ([llvm.ctpop.i64][llvm-ctpop])   | intrinsic ([llvm.ctpop.i64][llvm-ctpop])   |
+| i64.reinterpret_f64 | codegen                                    | codegen                                    |
+| i64.rem_s           | codegen                                    | extern (`i64_rem`)                         |
+| i64.rem_u           | codegen                                    | extern (`u64_rem`)                         |
+| i64.rotl            | extern (`rotl_u64`)                        | extern (`rotl_u64`)                        |
+| i64.rotr            | extern (`rotr_u64`)                        | extern (`rotr_u64`)                        |
+| i64.shl             | codegen                                    | codegen                                    |
+| i64.shr_u           | codegen                                    | codegen                                    |
+| i64.shr_s           | codegen                                    | codegen                                    |
+| i64.sub             | codegen                                    | codegen                                    |
+| i64.trunc_f32_s     | extern (`i64_trunc_f32`)                   | extern (`i64_trunc_f32`)                   |
+| i64.trunc_f32_u     | extern (`u64_trunc_f32`)                   | extern (`u64_trunc_f32`)                   |
+| i64.trunc_f64_s     | extern (`i64_trunc_f64`)                   | extern (`i64_trunc_f64`)                   |
+| i64.trunc_f64_u     | extern (`u64_trunc_f64`)                   | extern (`u64_trunc_f64`)                   |
+| i64.trunc_sat_f32_s | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i64.trunc_sat_f32_u | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i64.trunc_sat_f64_s | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i64.trunc_sat_f64_u | **UNSUPPORTED**                            | **UNSUPPORTED**                            |
+| i64.xor             | codegen                                    | codegen                                    |
+| f32.abs             | intrinsic ([llvm.fabs.f32][llvm-fabs])     | intrinsic ([llvm.fabs.f32][llvm-fabs])     |
+| f32.add             | codegen                                    | codegen                                    |
+| f32.ceil            | intrinsic ([llvm.ceil.f32][llvm-ceil])     | intrinsic ([llvm.ceil.f32][llvm-ceil])     |
+| f32.const           | codegen                                    | codegen                                    |
+| f32.convert.i32_s   | codegen                                    | codegen                                    |
+| f32.convert.i32_u   | codegen                                    | codegen                                    |
+| f32.convert.i64_s   | codegen                                    | codegen                                    |
+| f32.convert.i64_u   | codegen                                    | codegen                                    |
+| f32.copysign        | extern (`f32_copysign`)                    | extern (`f32_copysign`)                    |
+| f32.demote_f64      | codegen                                    | codegen                                    |
+| f32.div             | codegen                                    | codegen                                    |
+| f32.eq              | codegen                                    | codegen                                    |
+| f32.floor           | intrinsic ([llvm.floor.f32][llvm-floor])   | intrinsic ([llvm.floor.f32][llvm-floor])   |
+| f32.ge              | codegen                                    | codegen                                    |
+| f32.gt              | codegen                                    | codegen                                    |
+| f32.le              | codegen                                    | codegen                                    |
+| f32.lt              | codegen                                    | codegen                                    |
+| f32.max             | intrinsic ([llvm.maxnum.f32][llvm-maxnum]) | intrinsic ([llvm.maxnum.f32][llvm-maxnum]) |
+| f32.min             | intrinsic ([llvm.minnum.f32][llvm-minnum]) | intrinsic ([llvm.minnum.f32][llvm-minnum]) |
+| f32.mul             | codegen                                    | codegen                                    |
+| f32.ne              | codegen                                    | codegen                                    |
+| f32.nearest         | extern (`f32_nearest`)                     | extern (`f32_nearest`)                     |
+| f32.neg             | codegen                                    | codegen                                    |
+| f32.reinterpret_i32 | codegen                                    | codegen                                    |
+| f32.sqrt            | intrinsic ([llvm.sqrt.f32][llvm-sqrt])     | intrinsic ([llvm.sqrt.f32][llvm-sqrt])     |
+| f32.sub             | codegen                                    | codegen                                    |
+| f32.trunc           | extern (`f32_trunc_f32`)                   | extern (`f32_trunc_f32`)                   |
+| f64.abs             | intrinsic ([llvm.fabs.f64][llvm-fabs])     | intrinsic ([llvm.fabs.f64][llvm-fabs])     |
+| f64.add             | codegen                                    | codegen                                    |
+| f64.ceil            | intrinsic ([llvm.ceil.f64][llvm-ceil])     | intrinsic ([llvm.ceil.f64][llvm-ceil])     |
+| f64.const           | codegen                                    | codegen                                    |
+| f64.convert.i32_s   | codegen                                    | codegen                                    |
+| f64.convert.i32_u   | codegen                                    | codegen                                    |
+| f64.convert.i64_s   | codegen                                    | codegen                                    |
+| f64.convert.i64_u   | codegen                                    | codegen                                    |
+| f64.div             | codegen                                    | codegen                                    |
+| f64.eq              | codegen                                    | codegen                                    |
+| f64.floor           | intrinsic ([llvm.floor.f64][llvm-floor])   | intrinsic ([llvm.floor.f64][llvm-floor])   |
+| f64.ge              | codegen                                    | codegen                                    |
+| f64.gt              | codegen                                    | codegen                                    |
+| f64.le              | codegen                                    | codegen                                    |
+| f64.lt              | codegen                                    | codegen                                    |
+| f64.max             | intrinsic ([llvm.maxnum.f64][llvm-maxnum]) | intrinsic ([llvm.maxnum.f64][llvm-maxnum]) |
+| f64.min             | intrinsic ([llvm.minnum.f64][llvm-minnum]) | intrinsic ([llvm.minnum.f64][llvm-minnum]) |
+| f64.min             | extern (`f64_min`)                         | extern (`f64_min`)                         |
+| f64.mul             | codegen                                    | codegen                                    |
+| f64.ne              | codegen                                    | codegen                                    |
+| f64.nearest         | extern (`f64_nearest`)                     | extern (`f64_nearest`)                     |
+| f64.neg             | codegen                                    | codegen                                    |
+| f64.promote_f32     | codegen                                    | codegen                                    |
+| f64.reinterpret_i64 | codegen                                    | codegen                                    |
+| f64.sqrt            | intrinsic ([llvm.sqrt.f64][llvm-sqrt])     | intrinsic ([llvm.sqrt.f64][llvm-sqrt])     |
+| f64.sub             | codegen                                    | codegen                                    |
+| f64.trunc           | extern (`f64_trunc_f64`)                   | extern (`f64_trunc_f64`)                   |
 
 ### [Memory Instructions](https://webassembly.github.io/spec/core/syntax/instructions.html#memory-instructions)
 
@@ -457,10 +458,14 @@ The two columns represent the state of the resulting LLVM bitcode when the "fast
 | f64x2.sub                     | **UNSUPPORTED**       | **UNSUPPORTED**        |
 | f64x2.trunc                   | **UNSUPPORTED**       | **UNSUPPORTED**        |
 
+[llvm-ceil]: https://llvm.org/docs/LangRef.html#llvm-ceil-intrinsic
 [llvm-ctlz]: https://llvm.org/docs/LangRef.html#llvm-ctlz-intrinsic
 [llvm-ctlz]: https://llvm.org/docs/LangRef.html#llvm-ctlz-intrinsic
 [llvm-ctpop]: https://llvm.org/docs/LangRef.html#llvm-ctpop-intrinsic
 [llvm-fabs]: https://llvm.org/docs/LangRef.html#llvm-fabs-intrinsic
+[llvm-floor]: https://llvm.org/docs/LangRef.html#llvm-floor-intrinsic
+[llvm-maxnum]: https://llvm.org/docs/LangRef.html#llvm-maxnum-intrinsic
+[llvm-minnum]: https://llvm.org/docs/LangRef.html#llvm-minnum-intrinsic
 [llvm-sqrt]: https://llvm.org/docs/LangRef.html#llvm-sqrt-intrinsic
 [llvm-trap]: https://llvm.org/docs/LangRef.html#llvm-trap-intrinsic
 
@@ -602,28 +607,12 @@ int64_t i64_trunc_f32(float f);
 int64_t i64_trunc_f64(double f);
 /* i64.trunc_f64_u */
 uint64_t u64_trunc_f64(double f);
-/* f32.ceil */
-float f32_ceil(float a);
 /* f32.copysign */
 float f32_copysign(float a, float b);
-/* f32.floor  */
-float f32_floor(float a);
-/* f32.max */
-float f32_max(float a, float b);
-/* f32.min */
-float f32_min(float a, float b);
 /* f32.nearest */
 float f32_nearest(float a);
 /* f32.trunc */
 float f32_trunc_f32(float f);
-/* f64.ceil */
-double f64_ceil(double a);
-/* f64.floor */
-double f64_floor(double a);
-/* f64.max */
-double f64_max(double a, double b);
-/* f64.min */
-double f64_min(double a, double b);
 /* f64.nearest */
 double f64_nearest(double a)
 /* f64.trunc */
