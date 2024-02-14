@@ -18,7 +18,7 @@ env:
 # job control
 jobs:
   format:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Clang Format
@@ -29,7 +29,7 @@ jobs:
         run: cargo fmt -- --check
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: always()
 
     strategy:

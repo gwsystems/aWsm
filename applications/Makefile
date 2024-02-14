@@ -41,6 +41,9 @@ dist/%.bc: ./wasm_apps/dist/%.wasm dist
 dist/%.ll: dist/%.bc
 	llvm-dis-12 $< -o $@
 
+# By default choose the bc.mini.awsm mode:
+dist/%.awsm: dist/%.bc.mini.awsm ;
+
 dist/%.bc.mini.awsm: dist/%.bc ${WASM_INSTRUCTIONS} ${WASI_MINIMAL_CPATH}
 	${CC} -lm -O3 -flto ${RUNTIME_MINIMAL_INCLUDES} $^ -o $@
 
@@ -57,7 +60,7 @@ dist/%.so.mini.awsm: dist
 	${CC} ${RUNTIME_MINIMAL_INCLUDES} ${CFLAGS} -Wl,--export-dynamic -ldl -lm ${WASI_SO_MINIMAL_CPATH}  -o $@
 
 # UVWASI version does not work now, since libuv_a.a and libuvwai_a.a were NOT complied with -fPIC option
-# dist/%.so.uvwasi.awsm: ${WASI_UVWASI_CPATH}
+# dist/%.so.uvwasi.awsm: dist ${WASI_UVWASI_CPATH}
 # 	${CC} ${RUNTIME_UVWASI_INCLUDES} -pthread -D_GNU_SOURCE ${CFLAGS} ${LDFLAGS_UVWASI_so} $^ -o $@
 
 dist/armstrong-numbers.awsm: dist/armstrong-numbers.bc armstrong-numbers/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
@@ -163,6 +166,7 @@ all.awsm: \
 	dist/trap_divzero.awsm \
 	dist/stack_overflow.awsm \
 	dist/license_plate_detection.awsm \
+	dist/cnn_face_detection.awsm \
 	dist/gps_ekf.awsm \
 	# dist/app_nn.out \
 	# dist/custom_libjpeg.awsm \
@@ -266,6 +270,10 @@ bench/resize_image.awsm.csv: dist/resize_image.awsm bench
 	hyperfine -w 10 --export-csv $@ \
 		-n $(subst dist/,,$<) './$< <wasm_apps/sod/samples/plate.jpg'
 
+bench/cnn_face_detection.awsm.csv: dist/cnn_face_detection.awsm bench
+	hyperfine -w 10 --export-csv $@ \
+		-n $(subst dist/,,$<) './$< <wasm_apps/sod/samples/cnn_faces.jpg'
+
 bench/traps.awsm.csv: bench dist/traps.awsm
 	hyperfine -N -w 10 --export-csv $@ \
 		-n $(subst dist/,,$<) 'echo "0" | ./$<'
@@ -335,6 +343,7 @@ BENCHMARKS= \
 	bench/pb_stencils_jacobi_2d.csv \
 	bench/license_plate_detection.csv \
 	bench/resize_image.csv \
+	bench/cnn_face_detection.csv \
 	bench/traps.csv
 
 # Disabled due to various reasons
