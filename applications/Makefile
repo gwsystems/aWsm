@@ -53,9 +53,9 @@ dist/%.bc.uvwasi.awsm: dist/%.bc ${WASM_INSTRUCTIONS} ${WASI_UVWASI_CPATH} ${WAS
 dist/%.so: dist/%.bc ${WASM_INSTRUCTIONS}
 	${CC} -O3 -flto -shared -fPIC $^ -o $@
 
-# Before executing the following awsm, make sure the AWSM_DLSO_PATH shell variable is set showing the path to the .so file.
-# e.g. AWSM_DLSO_PATH=./app.so
-dist/%.so.mini.awsm: dist
+# When executing the following binary, make sure the shell variable SO_PATH is set showing the path to the .so file.
+# e.g. SO_PATH=./fibonacci.so awsm_so_runtime.out
+dist/awsm_so_runtime.out: dist
 	$(eval WASI_SO_MINIMAL_CPATH= $(subst runtime.c,runtime_so.c,$(WASI_MINIMAL_CPATH)))
 	${CC} ${RUNTIME_MINIMAL_INCLUDES} ${CFLAGS} -Wl,--export-dynamic -ldl -lm ${WASI_SO_MINIMAL_CPATH}  -o $@
 

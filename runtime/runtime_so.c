@@ -26,6 +26,8 @@ static inline int dylib_handler_init(struct dylib_handler* handler, const char* 
     handler->handle = dlopen(path, RTLD_LAZY | RTLD_DEEPBIND);
     if (handler->handle == NULL) {
         fprintf(stderr, "Failed to open %s with error: %s\n", path, dlerror());
+        fprintf(stderr, "Either provide a \"lib.so\" file in the same dir "
+                        "or provide a path such as: SO_PATH=./app_name.so\n");
         goto dl_open_error;
     }
 
@@ -68,12 +70,10 @@ dl_open_error:
 }
 
 void runtime_init() {
-    char* dl_path = getenv("AWSM_DLSO_PATH");
+    char* dl_path = getenv("SO_PATH");
     if (dl_path == NULL) {
-        char dl_path_from_app_path[128];
-        strtok(so_handler.app_path, ".");
-        sprintf(dl_path_from_app_path, "%s.so", so_handler.app_path);
-        dl_path = dl_path_from_app_path;
+        /* If no explicit path is provided, then look for lib.so in the same folder */
+        dl_path = "./lib.so";
     }
 
     int ret = dylib_handler_init(&so_handler, dl_path);
