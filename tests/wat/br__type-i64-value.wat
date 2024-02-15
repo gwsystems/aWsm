@@ -1,5 +1,6 @@
 (module
 	(memory 1)
+    (export "memory" (memory 0))
 
 	(func $type-i64-value (export "type-i64-value") (result i64)
 		(block (result i64) (i64.ctz (br 0 (i64.const 2))))

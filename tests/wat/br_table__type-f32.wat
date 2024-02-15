@@ -1,5 +1,6 @@
 (module
     (memory 1)
+    (export "memory" (memory 0))
 
 	(func $type-f32 (export "type-f32")
 		(block (drop (f32.neg (br_table 0 0 (i32.const 0)))))

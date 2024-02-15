@@ -9,8 +9,8 @@
  * writing custom startup logic for other host environments and execution models.
  */
 
-void* current_wasi_context;
-
+void*                current_wasi_context;
+struct dylib_handler so_handler;
 
 /* Code that actually runs the wasm code */
 IMPORT void wasmf__start(void);
@@ -24,6 +24,8 @@ void runtime_on_module_exit() {
 }
 
 int main(int argc, char* argv[]) {
+    so_handler.app_path = argv[0];
+
     runtime_init();
 
     /* Copy environ from process */
@@ -42,6 +44,11 @@ int main(int argc, char* argv[]) {
 
     atexit(runtime_on_module_exit);
 
-    wasmf__start();
+    if (so_handler.handle) {
+        so_handler.entrypoint();
+    } else {
+        wasmf__start();
+    }
+
     exit(EXIT_SUCCESS);
 }

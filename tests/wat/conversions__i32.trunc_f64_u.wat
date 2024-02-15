@@ -1,6 +1,7 @@
 (module
 	(import "wasi_snapshot_preview1" "proc_exit" (func $proc_exit (param i32)))
 	(memory 1)
+    (export "memory" (memory 0))
 
 	(func $i32.trunc_f64_u (export "i32.trunc_f64_u") (param $x f64) (result i32) (i32.trunc_f64_u (local.get $x)))
 

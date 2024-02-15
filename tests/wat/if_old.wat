@@ -5,7 +5,7 @@
     (memory 1)
     (export "memory" (memory 0))
 
-    (table $tbl 0 anyfunc)
+    (table $tbl 0 funcref)
 
     (data (i32.const 8) "panic\n")
 

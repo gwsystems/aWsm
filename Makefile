@@ -11,9 +11,13 @@ submodules:
 	git submodule update --init --recursive
 
 # aWsm: the WebAssembly to LLVM bitcode compiler
-.PHONY: awsm
-awsm: 
+.PHONY: awsm/release
+awsm/release: 
 	cargo build --release
+
+.PHONY: awsm/debug
+awsm/debug: 
+	cargo build
 
 .PHONY: awsm.clean
 awsm.clean:

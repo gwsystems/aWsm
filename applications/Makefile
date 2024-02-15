@@ -1,20 +1,28 @@
 AWSMCC=../target/release/awsm
 CC=clang
+ARCH=64bit_nix
 
 # Used by aWsm when compiling the *.wasm to *.bc
+# No need for adding the --runtime-globals flag for just a single sandbox exec
 AWSMFLAGS= --inline-constant-globals
 
 RUNTIME_PATH=../runtime
-RUNTIME_INCLUDES=-I${RUNTIME_PATH}/libc/wasi/include -I${RUNTIME_PATH}/thirdparty/dist/include
+RUNTIME_UVWASI_INCLUDES=-I${RUNTIME_PATH}/libc/wasi/include -I${RUNTIME_PATH}/thirdparty/dist/include
+RUNTIME_MINIMAL_INCLUDES=-I${RUNTIME_PATH}/libc/wasi/include
 
-WASI_CPATH+=${RUNTIME_PATH}/runtime.c
-WASI_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_main.c
-WASI_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_backing.c
-WASI_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_impl_uvwasi.c
-WASI_CPATH+=${RUNTIME_PATH}/libc/env.c
-WASI_CPATH+=${RUNTIME_PATH}/memory/64bit_nix.c
-WASI_CPATH+=${RUNTIME_PATH}/thirdparty/dist/lib/libuv_a.a
-WASI_CPATH+=${RUNTIME_PATH}/thirdparty/dist/lib/libuvwasi_a.a
+WASM_INSTRUCTIONS=${RUNTIME_PATH}/wasm_instructions/common.c ${RUNTIME_PATH}/wasm_instructions/memory/${ARCH}.c
+
+# WASI_COMMON_CPATH+=${RUNTIME_PATH}/libc/env.c # not necessary so far
+WASI_COMMON_CPATH+=${RUNTIME_PATH}/memory/${ARCH}.c
+WASI_COMMON_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_backing.c
+WASI_COMMON_CPATH+=${RUNTIME_PATH}/libc/wasi/wasi_main.c
+WASI_COMMON_CPATH+=${RUNTIME_PATH}/runtime.c
+
+WASI_MINIMAL_CPATH=${WASI_COMMON_CPATH} ${RUNTIME_PATH}/libc/wasi/wasi_impl_minimal.c
+
+WASI_UVWASI_CPATH=${WASI_COMMON_CPATH} ${RUNTIME_PATH}/libc/wasi/wasi_impl_uvwasi.c
+WASI_UVWASI_LIBPATH+=${RUNTIME_PATH}/thirdparty/dist/lib/libuv_a.a
+WASI_UVWASI_LIBPATH+=${RUNTIME_PATH}/thirdparty/dist/lib/libuvwasi_a.a
 
 dist:
 	mkdir dist
@@ -33,8 +41,27 @@ dist/%.bc: ./wasm_apps/dist/%.wasm dist
 dist/%.ll: dist/%.bc
 	llvm-dis-12 $< -o $@
 
-dist/%.awsm: dist/%.bc ${WASI_CPATH}
-	${CC} -pthread -ldl -lm -O3 -flto -g ${RUNTIME_INCLUDES} $^ -o $@
+# By default choose the bc.mini.awsm mode:
+dist/%.awsm: dist/%.bc.mini.awsm ;
+
+dist/%.bc.mini.awsm: dist/%.bc ${WASM_INSTRUCTIONS} ${WASI_MINIMAL_CPATH}
+	${CC} -lm -O3 -flto ${RUNTIME_MINIMAL_INCLUDES} $^ -o $@
+
+dist/%.bc.uvwasi.awsm: dist/%.bc ${WASM_INSTRUCTIONS} ${WASI_UVWASI_CPATH} ${WASI_UVWASI_LIBPATH}
+	${CC} -lm -O3 -flto -pthread -ldl ${RUNTIME_UVWASI_INCLUDES} $^ -o $@
+
+dist/%.so: dist/%.bc ${WASM_INSTRUCTIONS}
+	${CC} -O3 -flto -shared -fPIC $^ -o $@
+
+# When executing the following binary, make sure the shell variable SO_PATH is set showing the path to the .so file.
+# e.g. SO_PATH=./fibonacci.so awsm_so_runtime.out
+dist/awsm_so_runtime.out: dist
+	$(eval WASI_SO_MINIMAL_CPATH= $(subst runtime.c,runtime_so.c,$(WASI_MINIMAL_CPATH)))
+	${CC} ${RUNTIME_MINIMAL_INCLUDES} ${CFLAGS} -Wl,--export-dynamic -ldl -lm ${WASI_SO_MINIMAL_CPATH}  -o $@
+
+# UVWASI version does not work now, since libuv_a.a and libuvwai_a.a were NOT complied with -fPIC option
+# dist/%.so.uvwasi.awsm: dist ${WASI_UVWASI_CPATH}
+# 	${CC} ${RUNTIME_UVWASI_INCLUDES} -pthread -D_GNU_SOURCE ${CFLAGS} ${LDFLAGS_UVWASI_so} $^ -o $@
 
 dist/armstrong-numbers.awsm: dist/armstrong-numbers.bc armstrong-numbers/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
 	${CC} -lm -O3 -flto $^ -o $@
@@ -71,6 +98,7 @@ dist/triangle.awsm: dist/triangle.bc triangle/main.c ${RUNTIME_PATH}/runtime.c $
 
 dist/unreachable.awsm: dist/unreachable.bc unreachable/main.c ${RUNTIME_PATH}/runtime.c ${RUNTIME_PATH}/memory/64bit_nix.c
 	${CC} -lm -O3 -flto $^ -o $@
+
 
 .PHONY: all.awsm
 all.awsm: \

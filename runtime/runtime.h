@@ -1,5 +1,7 @@
 #pragma once
 
+#include <dlfcn.h>
+
 #define EXPORT __attribute__((visibility("default")))
 #define IMPORT __attribute__((visibility("default")))
 
@@ -103,10 +105,12 @@ INLINE void switch_out_of_runtime();
 // The code generator also compiles in stubs that populate the linear memory and function table
 void populate_memory();
 void populate_table();
+void populate_globals();
 
 // memory/* provides these memory functions
 extern void* memory;
 extern u32   memory_size;
+extern u32   runtime_heap_base;
 
 void         alloc_linear_memory();
 void         expand_memory();
@@ -170,3 +174,20 @@ void stub_init();
 int runtime_main(int argc, char** argv);
 
 void runtime_init();
+
+typedef void (*init_globals_fn_t)(void);
+typedef void (*init_mem_fn_t)(void);
+typedef void (*init_tbl_fn_t)(void);
+typedef int32_t (*entrypoint_fn_t)(void);
+
+struct dylib_handler {
+    void*             handle;
+    char*             app_path;
+    init_globals_fn_t initialize_globals;
+    init_mem_fn_t     initialize_memory;
+    init_tbl_fn_t     initialize_tables;
+    entrypoint_fn_t   entrypoint;
+    uint32_t*         starting_pages;
+    uint32_t*         max_pages;
+    uint32_t*         globals_len;
+};

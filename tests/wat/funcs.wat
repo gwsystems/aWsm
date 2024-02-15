@@ -2,7 +2,7 @@
 	(import "wasi_snapshot_preview1" "proc_exit" (func $proc_exit (param i32)))
 	(memory 2)
 	(export "memory" (memory 0))
-	(table $tbl 0 anyfunc)
+	(table $tbl 0 funcref)
 
 	(func $secretFunc (result i32)
 		i32.const 5

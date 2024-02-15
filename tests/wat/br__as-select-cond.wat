@@ -1,5 +1,6 @@
 (module
     (memory 1)
+    (export "memory" (memory 0))
 
 	(func $as-select-cond (export "as-select-cond") (result i32)
 		(block (result i32)

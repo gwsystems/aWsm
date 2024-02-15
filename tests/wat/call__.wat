@@ -170,6 +170,7 @@
 	;; As parameter of control constructs and instructions
 
 	(memory 1)
+    (export "memory" (memory 0))
 
 	(func $as-select-first (export "as-select-first") (result i32)
 		(select (call $const-i32) (i32.const 2) (i32.const 3))

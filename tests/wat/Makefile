@@ -1,5 +1,6 @@
 ROOT_PATH:=$(shell cd ../.. && realpath .)
 RUNTIME_PATH:=${ROOT_PATH}/runtime
+ARCH=64bit_nix
 
 CC=clang
 OPTFLAGS=-O0 -g -flto
@@ -7,7 +8,9 @@ AWSM_CC:=${ROOT_PATH}/target/debug/awsm
 
 RUNTIME_CFILES+=${RUNTIME_PATH}/runtime.c
 RUNTIME_CFILES+=${RUNTIME_PATH}/libc/env.c
-RUNTIME_CFILES+=${RUNTIME_PATH}/memory/64bit_nix.c
+RUNTIME_CFILES+=${RUNTIME_PATH}/memory/${ARCH}.c
+
+WASM_INSTRUCTIONS=${RUNTIME_PATH}/wasm_instructions/common.c ${RUNTIME_PATH}/wasm_instructions/memory/${ARCH}.c
 
 WASMCEPTION_RUNTIME_CFILES=${RUNTIME_CFILES} ${RUNTIME_PATH}/libc/wasmception_backing.c
 
@@ -73,7 +76,7 @@ clean:
 	@wasmtime $^
 
 # Using wasmception backend
-%.wasmception.out: %.wasmception.bc ${WASMCEPTION_RUNTIME_CFILES}
+%.wasmception.out: %.wasmception.bc ${WASMCEPTION_RUNTIME_CFILES} ${WASM_INSTRUCTIONS}
 	@${CC} -lm ${OPTFLAGS} $^ -o $@
 
 # Using uvwasi backend
@@ -87,11 +90,11 @@ clean:
 	@echo "Installing uvwasi"
 	@make -C ../../runtime/thirdparty uvwasi.install
 
-%.uvwasi.out: %.bc ${UVWASI_CFILES} ${UVWASI_LIBS}
+%.uvwasi.out: %.bc ${UVWASI_CFILES} ${UVWASI_LIBS} ${WASM_INSTRUCTIONS}
 	@${CC} -pthread -ldl -lm ${OPTFLAGS} ${RUNTIME_CFLAGS} ${UVWASI_INCLUDES} $^ -o $@
 
-%.minimal.out: %.bc ${MINIMAL_CFILES} ../../runtime/thirdparty/dist/include
-	@${CC} -lm ${OPTFLAGS} ${RUNTIME_CFLAGS} ${MINIMAL_INCLUDES} ${MINIMAL_CFILES} $< -o $@
+%.minimal.out: %.bc ${MINIMAL_CFILES} ${WASM_INSTRUCTIONS}
+	@${CC} -lm ${OPTFLAGS} ${RUNTIME_CFLAGS} ${MINIMAL_INCLUDES} $^ -o $@
 
 .PHONY: uvwasi.out
 uvwasi.out: $(patsubst %.wat, %.uvwasi.out, $(wildcard *.wat))

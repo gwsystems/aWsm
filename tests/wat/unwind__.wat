@@ -3,6 +3,7 @@
 (module
     (import "wasi_snapshot_preview1" "proc_exit" (func $proc_exit (param i32)))
 	(memory 1)
+    (export "memory" (memory 0))
 
 	(func $func-unwind-by-unreachable (export "func-unwind-by-unreachable")
 		(i32.const 3) (i64.const 1) (unreachable)
