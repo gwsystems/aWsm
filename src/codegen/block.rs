@@ -138,7 +138,7 @@ pub fn compile_block<'a, 'b, 'c>(
                 let after_bb = f_ctx.generate_block();
 
                 // If the loop breaks out, it will go back to the top of the loop
-                let loop_breakout_target = BreakoutTarget::new_wrapped(inner_bb, None);
+                let loop_breakout_target = BreakoutTarget::new_wrapped(inner_bb, Vec::new());
                 breakout_stack.push(loop_breakout_target);
 
                 // If the loop terminates, it will come back to our outer basic block
