@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 int main(int argc, char** argv) {
     int    w, h, bit_num = 0;
