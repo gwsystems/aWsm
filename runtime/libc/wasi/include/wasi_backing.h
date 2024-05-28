@@ -48,7 +48,7 @@ uint32_t wasi_snapshot_preview1_args_get(__wasi_size_t argv_retoffset, __wasi_si
     }
 
     __wasi_size_t*      argv_retptr     = (__wasi_size_t*)get_memory_ptr_for_runtime(argv_retoffset,
-                                                                            WASI_SERDES_SIZE_size_t * argc);
+                                                                                     WASI_SERDES_SIZE_size_t * argc);
     const __wasi_size_t argv_buf_size   = wasi_context_get_argv_buf_size(CURRENT_WASI_CONTEXT);
     char*               argv_buf_retptr = get_memory_ptr_for_runtime(argv_buf_retoffset, argv_buf_size);
 
@@ -158,7 +158,7 @@ uint32_t wasi_snapshot_preview1_environ_get(__wasi_size_t env_retoffset, __wasi_
     }
 
     __wasi_size_t* env_retptr     = (__wasi_size_t*)get_memory_ptr_for_runtime(env_retoffset,
-                                                                           WASI_SERDES_SIZE_size_t * envc);
+                                                                               WASI_SERDES_SIZE_size_t * envc);
     char*          env_buf_retptr = get_memory_ptr_for_runtime(env_buf_retoffset, env_buf_size);
 
     rc = wasi_snapshot_preview1_backing_environ_get(CURRENT_WASI_CONTEXT, env_temp, env_buf_retptr);
@@ -894,10 +894,10 @@ uint32_t wasi_snapshot_preview1_poll_oneoff(__wasi_size_t in_baseoffset, __wasi_
     const __wasi_subscription_t* in_baseptr = (const __wasi_subscription_t*)
       get_memory_ptr_for_runtime(in_baseoffset, WASI_SERDES_SIZE_subscription_t * nsubscriptions);
     __wasi_event_t* out_baseptr    = (__wasi_event_t*)get_memory_ptr_for_runtime(out_baseoffset,
-                                                                              WASI_SERDES_SIZE_subscription_t
-                                                                                * nsubscriptions);
+                                                                                 WASI_SERDES_SIZE_subscription_t
+                                                                                   * nsubscriptions);
     __wasi_size_t*  nevents_retptr = (__wasi_size_t*)get_memory_ptr_for_runtime(nevents_retoffset,
-                                                                               WASI_SERDES_SIZE_size_t);
+                                                                                WASI_SERDES_SIZE_size_t);
 
     return (uint32_t)wasi_snapshot_preview1_backing_poll_oneoff(CURRENT_WASI_CONTEXT, in_baseptr, out_baseptr,
                                                                 nsubscriptions, nevents_retptr);

@@ -1,5 +1,6 @@
 CC=clang
 OPTFLAGS=-O3 -flto
+LLVM_VERSION=12
 
 # Assuming to be called from code_benches/app_tinycrypt directory
 ROOT_PATH:=$(shell cd ../.. && realpath .)
@@ -77,7 +78,7 @@ bin/app_tinycrypt_us.bc: bin/app_tinycrypt.wasm
 	@${AWSM_CC} -u $^ -o $@
 
 %.ll: %.bc
-	llvm-dis-12 $^ -o $@
+	llvm-dis-${LLVM_VERSION} $^ -o $@
 
 # Run unsafe code using the "No Protection" memory model
 bin/app_tinycrypt_np_us: bin/app_tinycrypt_us.bc ${RUNTIME_NP}

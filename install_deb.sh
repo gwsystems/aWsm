@@ -25,8 +25,14 @@ $sudo apt install lsb-release wget software-properties-common --yes
 $sudo apt install wabt --yes
 
 # Install LLVM build dependencies
+# Note, wasi-sdk versions do NOT match llvm versions, e.g. wasi-sdk-12 actually uses llvm-11 
 LLVM_VERSION=12
+WASI_SDK_VERSION=12
+CLANG_FORMAT_VERSION=13 # This is a better version for formatting
 $sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" bash $LLVM_VERSION
+
+$sudo apt install libc++-$LLVM_VERSION-dev libc++abi-$LLVM_VERSION-dev --yes
+$sudo apt install "clang-format-$CLANG_FORMAT_VERSION" --yes
 
 $sudo update-alternatives --remove-all clang
 $sudo update-alternatives --remove-all clang++
@@ -34,7 +40,7 @@ $sudo update-alternatives --remove-all llvm-config
 $sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
 $sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-$LLVM_VERSION 100
 $sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
-$sudo apt install libc++-11-dev libc++abi-11-dev --yes
+$sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-$CLANG_FORMAT_VERSION 100
 
 # Install Binaryen
 # Clang uses Binaryen's wasm-opt utility to optimize WebAssembly
@@ -65,10 +71,10 @@ cd .. || exit
 if [[ -n "${WASI_SDK_PATH}" ]] && [[ -x "${WASI_SDK_PATH}/bin/clang" ]]; then
 	echo "wasi-sdk detected"
 else
-	wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk_12.0_amd64.deb
-	# The Debian package installs WASI-SDK 12 to /opt/wasi-sdk
-	$sudo dpkg -i wasi-sdk_12.0_amd64.deb
-	rm -f wasi-sdk_12.0_amd64.deb
+	wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$WASI_SDK_VERSION/wasi-$WASI_SDK_VERSION.0_amd64.deb
+	# The Debian package installs WASI-SDK to /opt/wasi-sdk
+	$sudo dpkg -i wasi-sdk_$WASI_SDK_VERSION.0_amd64.deb
+	rm -f wasi-sdk_$WASI_SDK_VERSION.0_amd64.deb
 	echo 'export WASI_SDK_PATH="/opt/wasi-sdk/"' >> ~/.bashrc
 	source ~/.bashrc
 fi

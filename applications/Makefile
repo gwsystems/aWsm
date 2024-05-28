@@ -1,6 +1,7 @@
 AWSMCC=../target/release/awsm
 CC=clang
 ARCH=64bit_nix
+LLVM_VERSION=12
 
 # Used by aWsm when compiling the *.wasm to *.bc
 # No need for adding the --runtime-globals flag for just a single sandbox exec
@@ -39,7 +40,7 @@ dist/%.bc: ./wasm_apps/dist/%.wasm dist
 	${AWSMCC} ${AWSMFLAGS} $< -o $@
 
 dist/%.ll: dist/%.bc
-	llvm-dis-12 $< -o $@
+	llvm-dis-${LLVM_VERSION} $< -o $@
 
 # By default choose the bc.mini.awsm mode:
 dist/%.awsm: dist/%.bc.mini.awsm ;
