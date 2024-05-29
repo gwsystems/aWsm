@@ -25,6 +25,8 @@ jobs:
         run: |
           sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-$CLANG_FORMAT_VERSION main"
           sudo apt update
+          sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-$CLANG_FORMAT_VERSION main"
+          sudo apt update
           sudo apt install clang-format-$CLANG_FORMAT_VERSION --yes
           find runtime example_code -type f -print | grep -v runtime/libuv | grep -v runtime/uvwasi | grep --exclude-dir -i -E '^*.(c|h|ld|s)$' | xargs clang-format-$CLANG_FORMAT_VERSION -Werror -n -ferror-limit=0
       - name: Cargo Format
