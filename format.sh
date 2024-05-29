@@ -1,5 +1,7 @@
 #!/bin/bash
 
+CLANG_FORMAT_VERSION=13 # This is a better version for formatting
+
 utility="clang-format"
 utility_version="$("$utility" --version 2>/dev/null)" || {
 	echo "$utility not found in path!"
@@ -10,7 +12,7 @@ regex="version ([0-9]+).([0-9]+).([0-9]+)"
 declare -i major=0
 declare -i minor=0
 declare -i patch=0
-declare -i required_major=9
+declare -i required_major=$CLANG_FORMAT_VERSION
 declare -i required_minor=0
 declare -i required_patch=0
 
@@ -32,6 +34,6 @@ fi
 find runtime example_code -type f -print |
 	grep -v runtime/libuv |
 	grep -v runtime/uvwasi |
-	grep --exclude-dir -i -E '^*.(c|h|ld|s)$' | xargs clang-format-12 -i
+	grep --exclude-dir -i -E '^*.(c|h|ld|s)$' | xargs clang-format-$CLANG_FORMAT_VERSION -i
 
 cargo fmt

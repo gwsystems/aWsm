@@ -1,5 +1,6 @@
 CC=clang
 OPTFLAGS=-O3 -flto
+LLVM_VERSION=12
 
 # Assuming to be called from code_benches/custom_binarytrees directory
 ROOT_PATH:=$(shell cd ../.. && realpath .)
@@ -77,7 +78,7 @@ bin/custom_binarytrees_us.bc: bin/custom_binarytrees.wasm
 	@${AWSM_CC} -u $^ -o $@
 
 %.ll: %.bc
-	llvm-dis-12 $^ -o $@
+	llvm-dis-${LLVM_VERSION} $^ -o $@
 
 # Run unsafe code using the "No Protection" memory model
 bin/custom_binarytrees_np_us: bin/custom_binarytrees_us.bc ${RUNTIME_NP}

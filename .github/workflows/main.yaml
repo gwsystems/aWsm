@@ -7,9 +7,9 @@ env:
   RUSTFLAGS: --deny warnings
   # used during LLVM installation
   LLVM_VERSION: 12
+  WASI_SDK_VERSION: 12
+  CLANG_FORMAT_VERSION: 13
   # URLs for WebAssembly libcs
-  WASMCEPTION_URL: https://github.com/gwsystems/wasmception/releases/download/v0.2.0/wasmception-linux-x86_64-0.2.0.tar.gz
-  WASI_SDK_URL: https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk-12.0-linux.tar.gz
   LIBUV_URL: https://github.com/libuv/libuv/archive/refs/tags/v1.42.0.tar.gz
   UVWASI_URL: https://github.com/nodejs/uvwasi/archive/refs/tags/v0.0.11.tar.gz
   # Used by Makefiles that compile *.c to *.wasm
@@ -23,8 +23,11 @@ jobs:
       - uses: actions/checkout@v2
       - name: Clang Format
         run: |
-          sudo apt install clang-format-12 --yes
-          find runtime example_code -type f -print | grep -v runtime/libuv | grep -v runtime/uvwasi | grep --exclude-dir -i -E '^*.(c|h|ld|s)$' | xargs clang-format-12 -Werror -n -ferror-limit=0
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-$CLANG_FORMAT_VERSION main"
+          sudo apt update
+          sudo apt install clang-format-$CLANG_FORMAT_VERSION --yes
+          find runtime example_code -type f -print | grep -v runtime/libuv | grep -v runtime/uvwasi | grep --exclude-dir -i -E '^*.(c|h|ld|s)$' | xargs clang-format-$CLANG_FORMAT_VERSION -Werror -n -ferror-limit=0
       - name: Cargo Format
         run: cargo fmt -- --check
 
@@ -52,6 +55,7 @@ jobs:
       - name: Get wasmception
         if: matrix.libc == 'wasmception'
         run: |
+          WASMCEPTION_URL=https://github.com/gwsystems/wasmception/releases/download/v0.2.0/wasmception-linux-x86_64-0.2.0.tar.gz
           wget $WASMCEPTION_URL -O wasmception.tar.gz
           mkdir -p wasmception
           tar xvfz wasmception.tar.gz -C wasmception
@@ -59,6 +63,7 @@ jobs:
       - name: Get wasi-sdk
         if: matrix.libc == 'wasi-sdk'
         run: |
+          WASI_SDK_URL=https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$WASI_SDK_VERSION/wasi-sdk-$WASI_SDK_VERSION.0-linux.tar.gz
           wget $WASI_SDK_URL -O wasi-sdk.tar.gz
           mkdir -p /opt/wasi-sdk
           tar xvfz wasi-sdk.tar.gz --strip-components=1 -C /opt/wasi-sdk

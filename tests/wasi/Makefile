@@ -7,7 +7,7 @@ ARCH=64bit_nix
 # RUNTIME_CFLAGS += -DLOG_WASI
 
 
-# program.c => wasi-sdk-12 => program.wasm => aWsm => program.bc => clang => program (runtime baked in)
+# program.c => wasi-sdk => program.wasm => aWsm => program.bc => clang => program (runtime baked in)
 
 OBJ = $(patsubst c/%.c, vm/%_vm, $(wildcard c/*.c))
 all: ${OBJ}

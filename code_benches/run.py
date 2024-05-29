@@ -33,6 +33,8 @@ args = parser.parse_args()
 assert not (args.debug and args.release), "Both --debug and --release provided"
 assert not (args.wasi_sdk and args.wasmception), "Both --wask-sdk and --wasmception provided"
 
+WASI_SDK_VERSION = 12
+
 # Note: This is a major configuration option, you probably want to set this if you're doing anything non-trivial
 AWSM_TARGET = args.target
 # AWSM_TARGET = "thumbv7em-none-unknown-eabi"
@@ -97,9 +99,9 @@ WASI_SDK_LINKER_FLAGS = "-Wl,--allow-undefined,-z,stack-size={stack_size},--thre
 
 # download WASI-SDK if it is not in the expected path
 if sys.platform == "linux" or sys.platform == "linux2":
-    WASI_SDK_URL = "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk-12.0-linux.tar.gz"
+    WASI_SDK_URL = f"https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{WASI_SDK_VERSION}/wasi-sdk-{WASI_SDK_VERSION}.0-linux.tar.gz"
 elif sys.platform == "darwin":
-    WASI_SDK_URL = "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk-12.0-macos.tar.gz"
+    WASI_SDK_URL = f"https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{WASI_SDK_VERSION}/wasi-sdk-{WASI_SDK_VERSION}.0-macos.tar.gz"
 else:
     print("awsm supports Linux and Mac OS, saw {}".format(sys.platform))
     exit(1)
