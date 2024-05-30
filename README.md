@@ -180,9 +180,9 @@ The compiler can now be run via `awsm`
 
 1. [Install Rust](https://www.rust-lang.org/tools/install)
 2. [Install LLVM](http://releases.llvm.org/download.html)
-3. Link Your Clang Installation so `clang-9` and `llvm-config-9` are in your path aliased to `clang` and `llvm-config`. For example, the following commands accomplish this using `update-alternatives` after replacing LLVM_VERSION with the version returned you installed above (In *NIX systems, this can be confirmed with `ls /usr/bin/clang*`)
+3. Link Your Clang Installation so `clang-xx` and `llvm-config-xx` are in your path aliased to `clang` and `llvm-config`. For example, the following commands accomplish this using `update-alternatives` after replacing LLVM_VERSION with the version returned you installed above (In *NIX systems, this can be confirmed with `ls /usr/bin/clang*`)
 ```sh
-LLVM_VERSION=9
+LLVM_VERSION=13
 sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
 sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
 ```
