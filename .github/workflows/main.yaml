@@ -6,9 +6,8 @@ env:
   # Rust equivalent of -Werror
   RUSTFLAGS: --deny warnings
   # used during LLVM installation
-  LLVM_VERSION: 12
+  LLVM_VERSION: 13
   WASI_SDK_VERSION: 12
-  CLANG_FORMAT_VERSION: 13
   # URLs for WebAssembly libcs
   LIBUV_URL: https://github.com/libuv/libuv/archive/refs/tags/v1.42.0.tar.gz
   UVWASI_URL: https://github.com/nodejs/uvwasi/archive/refs/tags/v0.0.11.tar.gz
@@ -21,15 +20,16 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - name: Clang Format
+      - name: Install Clang Format
         run: |
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-$CLANG_FORMAT_VERSION main"
+          sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-$LLVM_VERSION main"
           sudo apt update
-          sudo apt install clang-format-$CLANG_FORMAT_VERSION --yes
-          find runtime example_code -type f -print | grep -v runtime/libuv | grep -v runtime/uvwasi | grep --exclude-dir -i -E '^*.(c|h|ld|s)$' | xargs clang-format-$CLANG_FORMAT_VERSION -Werror -n -ferror-limit=0
-      - name: Cargo Format
-        run: cargo fmt -- --check
+          sudo apt install clang-format-$LLVM_VERSION --yes
+      - name: Run Clang Format check
+        run: ./format.sh -d
+      - name: Run Cargo Format check
+        run: cargo fmt --check
 
   test:
     runs-on: ubuntu-20.04

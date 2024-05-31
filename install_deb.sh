@@ -26,21 +26,23 @@ $sudo apt install wabt --yes
 
 # Install LLVM build dependencies
 # Note, wasi-sdk versions do NOT match llvm versions, e.g. wasi-sdk-12 actually uses llvm-11 
-LLVM_VERSION=12
+LLVM_VERSION=13
 WASI_SDK_VERSION=12
-CLANG_FORMAT_VERSION=13 # This is a better version for formatting
 $sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" bash $LLVM_VERSION
 
 $sudo apt install libc++-$LLVM_VERSION-dev libc++abi-$LLVM_VERSION-dev --yes
-$sudo apt install "clang-format-$CLANG_FORMAT_VERSION" --yes
+$sudo apt install "clang-format-$LLVM_VERSION" --yes
 
+$sudo update-alternatives --remove-all llvm-dis
+$sudo update-alternatives --remove-all llvm-config
 $sudo update-alternatives --remove-all clang
 $sudo update-alternatives --remove-all clang++
-$sudo update-alternatives --remove-all llvm-config
+$sudo update-alternatives --remove-all clang-format
+$sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
+$sudo update-alternatives --install /usr/bin/llvm-dis llvm-dis /usr/bin/llvm-dis-$LLVM_VERSION 100
 $sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
 $sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-$LLVM_VERSION 100
-$sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
-$sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-$CLANG_FORMAT_VERSION 100
+$sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-$LLVM_VERSION 100
 
 # Install Binaryen
 # Clang uses Binaryen's wasm-opt utility to optimize WebAssembly
