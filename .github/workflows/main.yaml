@@ -26,6 +26,8 @@ jobs:
           sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-$LLVM_VERSION main"
           sudo apt update
           sudo apt install clang-format-$LLVM_VERSION --yes
+          sudo update-alternatives --remove-all clang-format
+          sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-$LLVM_VERSION 100
       - name: Run Clang Format check
         run: ./format.sh -d
       - name: Run Cargo Format check
@@ -41,12 +43,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Install
+      - name: Install LLVM
         run: |
           sudo apt install binaryen --yes
           sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" bash $LLVM_VERSION
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$LLVM_VERSION 100
           sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VERSION 100
+          sudo update-alternatives --install /usr/bin/llvm-dis llvm-dis /usr/bin/llvm-dis-$LLVM_VERSION 100
           sudo apt install libc++-dev libc++abi-dev wabt --yes
           # not really sure why we need to modify this
           PATH=/usr/bin:$PATH

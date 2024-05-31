@@ -1,7 +1,6 @@
 ROOT_PATH:=$(shell cd ../.. && realpath .)
 RUNTIME_PATH:=${ROOT_PATH}/runtime
 ARCH=64bit_nix
-LLVM_VERSION=12
 
 CC=clang
 OPTFLAGS=-O0 -g -flto
@@ -70,7 +69,7 @@ clean:
 	@RUST_BACKTRACE=1 ${AWSM_CC} $< -o $@ 1>$*.log 2>&1
 
 %.ll: %.bc
-	@llvm-dis-${LLVM_VERSION} $< -o $@
+	@llvm-dis $< -o $@
 
 .PHONY: %_wasmtime
 %_wasmtime: %.wasm
