@@ -33,143 +33,157 @@
  * TODO: Add file descriptors in support of preopens
  */
 typedef struct wasi_context_s {
-    __wasi_size_t argc;
-    char**        argv;
-    char*         argv_buf;
-    __wasi_size_t argv_buf_size;
-    __wasi_size_t envc;
-    char**        env;
-    char*         env_buf;
-    __wasi_size_t env_buf_size;
+	__wasi_size_t argc;
+	char        **argv;
+	char         *argv_buf;
+	__wasi_size_t argv_buf_size;
+	__wasi_size_t envc;
+	char        **env;
+	char         *env_buf;
+	__wasi_size_t env_buf_size;
 } wasi_context_t;
 
 /* Return abstract handle */
-void* wasi_context_init(wasi_options_t* options) {
-    /* TODO: Add default types */
-    awsm_assert(options != NULL);
-    awsm_assert(options->argv != NULL);
+void *
+wasi_context_init(wasi_options_t *options)
+{
+	/* TODO: Add default types */
+	awsm_assert(options != NULL);
+	awsm_assert(options->argv != NULL);
 
-    wasi_context_t* wasi_context = malloc(sizeof(wasi_context_t));
+	wasi_context_t *wasi_context = malloc(sizeof(wasi_context_t));
 
-    /* Strip path from first arg, calculating offset and length */
-    size_t first_arg_offset = 0;
-    size_t first_arg_len    = 0;
-    for (first_arg_offset = strlen(options->argv[0]); first_arg_offset > 0; first_arg_offset--) {
-        if (options->argv[0][first_arg_offset] == '/') {
-            first_arg_offset++;
-            break;
-        }
-    }
-    first_arg_len = strlen(options->argv[0]) - first_arg_offset;
+	/* Strip path from first arg, calculating offset and length */
+	size_t first_arg_offset = 0;
+	size_t first_arg_len    = 0;
+	for (first_arg_offset = strlen(options->argv[0]); first_arg_offset > 0; first_arg_offset--) {
+		if (options->argv[0][first_arg_offset] == '/') {
+			first_arg_offset++;
+			break;
+		}
+	}
+	first_arg_len = strlen(options->argv[0]) - first_arg_offset;
 
-    /* Calculate argument buffer size */
-    __wasi_size_t argv_buf_size = 0;
-    __wasi_size_t argv_buffer_offsets[options->argc + 1];
-    for (int i = 0; i < options->argc; i++) {
-        argv_buffer_offsets[i] = argv_buf_size;
-        if (i == 0) {
-            argv_buf_size += first_arg_len + 1;
-        } else {
-            argv_buf_size += strlen(options->argv[i]) + 1;
-        }
-    }
-    argv_buffer_offsets[options->argc] = argv_buf_size;
+	/* Calculate argument buffer size */
+	__wasi_size_t argv_buf_size = 0;
+	__wasi_size_t argv_buffer_offsets[options->argc + 1];
+	for (int i = 0; i < options->argc; i++) {
+		argv_buffer_offsets[i] = argv_buf_size;
+		if (i == 0) {
+			argv_buf_size += first_arg_len + 1;
+		} else {
+			argv_buf_size += strlen(options->argv[i]) + 1;
+		}
+	}
+	argv_buffer_offsets[options->argc] = argv_buf_size;
 
 
-    /* Allocate and copy argument sizes and offsets*/
-    wasi_context->argc = options->argc;
-    wasi_context->argv = calloc(options->argc + 1, sizeof(char*));
-    if (wasi_context->argv == NULL) {
-        fprintf(stderr, "Error allocating argv: %s", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+	/* Allocate and copy argument sizes and offsets*/
+	wasi_context->argc = options->argc;
+	wasi_context->argv = calloc(options->argc + 1, sizeof(char *));
+	if (wasi_context->argv == NULL) {
+		fprintf(stderr, "Error allocating argv: %s", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 
-    wasi_context->argv_buf_size = argv_buf_size;
-    wasi_context->argv_buf      = calloc(argv_buf_size, sizeof(char));
-    if (wasi_context->argv_buf == NULL) {
-        fprintf(stderr, "Error allocating argv_buf: %s", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+	wasi_context->argv_buf_size = argv_buf_size;
+	wasi_context->argv_buf      = calloc(argv_buf_size, sizeof(char));
+	if (wasi_context->argv_buf == NULL) {
+		fprintf(stderr, "Error allocating argv_buf: %s", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 
-    /* Copy the binary name minux the path as the first arg */
-    strncpy(wasi_context->argv_buf, &options->argv[0][first_arg_offset], first_arg_len);
+	/* Copy the binary name minux the path as the first arg */
+	strncpy(wasi_context->argv_buf, &options->argv[0][first_arg_offset], first_arg_len);
 
-    /* Copy the binary name minus the path as the first arg */
-    for (int i = 1; i < options->argc; i++) {
-        strncpy(&wasi_context->argv_buf[argv_buffer_offsets[i]], options->argv[i],
-                argv_buffer_offsets[i + 1] - argv_buffer_offsets[i]);
-    }
+	/* Copy the binary name minus the path as the first arg */
+	for (int i = 1; i < options->argc; i++) {
+		strncpy(&wasi_context->argv_buf[argv_buffer_offsets[i]], options->argv[i],
+		        argv_buffer_offsets[i + 1] - argv_buffer_offsets[i]);
+	}
 
-    /* Write argv pointers from argv_buffer_offsets */
-    for (int i = 0; i < options->argc; i++) {
-        wasi_context->argv[i] = &(wasi_context->argv_buf[argv_buffer_offsets[i]]);
-    }
+	/* Write argv pointers from argv_buffer_offsets */
+	for (int i = 0; i < options->argc; i++) {
+		wasi_context->argv[i] = &(wasi_context->argv_buf[argv_buffer_offsets[i]]);
+	}
 
-    /* Calculate env sizes */
-    __wasi_size_t envc         = 0;
-    __wasi_size_t env_buf_size = 0;
-    for (char** environ_cursor = (char**)options->envp; *environ_cursor != NULL; environ_cursor++) {
-        envc++;
-        env_buf_size += strlen(*environ_cursor) + 1;
-    }
-    wasi_context->envc = envc;
+	/* Calculate env sizes */
+	__wasi_size_t envc         = 0;
+	__wasi_size_t env_buf_size = 0;
+	for (char **environ_cursor = (char **)options->envp; *environ_cursor != NULL; environ_cursor++) {
+		envc++;
+		env_buf_size += strlen(*environ_cursor) + 1;
+	}
+	wasi_context->envc = envc;
 
-    /* Allocate env and env_buf */
-    wasi_context->env = calloc(envc, sizeof(char**));
-    if (wasi_context->env == NULL) {
-        fprintf(stderr, "Error allocating env: %s", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-    wasi_context->env_buf_size = env_buf_size;
-    wasi_context->env_buf      = calloc(env_buf_size, sizeof(char));
-    if (wasi_context->env_buf == NULL) {
-        fprintf(stderr, "Error allocating env_buf: %s", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+	/* Allocate env and env_buf */
+	wasi_context->env = calloc(envc, sizeof(char **));
+	if (wasi_context->env == NULL) {
+		fprintf(stderr, "Error allocating env: %s", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	wasi_context->env_buf_size = env_buf_size;
+	wasi_context->env_buf      = calloc(env_buf_size, sizeof(char));
+	if (wasi_context->env_buf == NULL) {
+		fprintf(stderr, "Error allocating env_buf: %s", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 
-    /* Write env and env_buf */
-    __wasi_size_t env_buf_written = 0;
-    for (int i = 0; i < envc; i++) {
-        wasi_context->env[i] = &(wasi_context->env_buf[env_buf_written]);
-        strcpy(wasi_context->env[i], options->envp[i]);
-        env_buf_written += (strlen(options->envp[i]) + 1);
-    }
+	/* Write env and env_buf */
+	__wasi_size_t env_buf_written = 0;
+	for (int i = 0; i < envc; i++) {
+		wasi_context->env[i] = &(wasi_context->env_buf[env_buf_written]);
+		strcpy(wasi_context->env[i], options->envp[i]);
+		env_buf_written += (strlen(options->envp[i]) + 1);
+	}
 
-    /* See Random */
-    srandom(time(NULL));
+	/* See Random */
+	srandom(time(NULL));
 
-    /* TODO: Preopens */
+	/* TODO: Preopens */
 
-    return wasi_context;
+	return wasi_context;
 }
 
-void wasi_context_destroy(void* wasi_context) {
-    free(((wasi_context_t*)wasi_context)->argv);
-    free(((wasi_context_t*)wasi_context)->argv_buf);
-    free(((wasi_context_t*)wasi_context)->env);
-    free(((wasi_context_t*)wasi_context)->env_buf);
-    free(wasi_context);
+void
+wasi_context_destroy(void *wasi_context)
+{
+	free(((wasi_context_t *)wasi_context)->argv);
+	free(((wasi_context_t *)wasi_context)->argv_buf);
+	free(((wasi_context_t *)wasi_context)->env);
+	free(((wasi_context_t *)wasi_context)->env_buf);
+	free(wasi_context);
 }
 
-__wasi_size_t wasi_context_get_argc(void* wasi_context) {
-    return ((wasi_context_t*)wasi_context)->argc;
+__wasi_size_t
+wasi_context_get_argc(void *wasi_context)
+{
+	return ((wasi_context_t *)wasi_context)->argc;
 }
 
 
-char** wasi_context_get_argv(void* wasi_context) {
-    return ((wasi_context_t*)wasi_context)->argv;
+char **
+wasi_context_get_argv(void *wasi_context)
+{
+	return ((wasi_context_t *)wasi_context)->argv;
 }
 
-__wasi_size_t wasi_context_get_argv_buf_size(void* wasi_context) {
-    return ((wasi_context_t*)wasi_context)->argv_buf_size;
+__wasi_size_t
+wasi_context_get_argv_buf_size(void *wasi_context)
+{
+	return ((wasi_context_t *)wasi_context)->argv_buf_size;
 }
 
-__wasi_size_t wasi_context_get_envc(void* wasi_context) {
-    return ((wasi_context_t*)wasi_context)->envc;
+__wasi_size_t
+wasi_context_get_envc(void *wasi_context)
+{
+	return ((wasi_context_t *)wasi_context)->envc;
 }
 
-__wasi_size_t wasi_context_get_env_buf_size(void* wasi_context) {
-    return ((wasi_context_t*)wasi_context)->env_buf_size;
+__wasi_size_t
+wasi_context_get_env_buf_size(void *wasi_context)
+{
+	return ((wasi_context_t *)wasi_context)->env_buf_size;
 }
 
 /* WASI API implementations */
@@ -180,89 +194,169 @@ __wasi_size_t wasi_context_get_env_buf_size(void* wasi_context) {
  * @param errno_
  * @return wasi_errno_t
  */
-static __wasi_errno_t wasi_fromerrno(int errno_) {
-    switch (errno_) {
-        case 0: return __WASI_ERRNO_SUCCESS;
-        case E2BIG: return __WASI_ERRNO_2BIG;
-        case EACCES: return __WASI_ERRNO_ACCES;
-        case EADDRINUSE: return __WASI_ERRNO_ADDRINUSE;
-        case EADDRNOTAVAIL: return __WASI_ERRNO_ADDRNOTAVAIL;
-        case EAFNOSUPPORT: return __WASI_ERRNO_AFNOSUPPORT;
-        case EAGAIN: return __WASI_ERRNO_AGAIN;
-        case EALREADY: return __WASI_ERRNO_ALREADY;
-        case EBADF: return __WASI_ERRNO_BADF;
-        case EBADMSG: return __WASI_ERRNO_BADMSG;
-        case EBUSY: return __WASI_ERRNO_BUSY;
-        case ECANCELED: return __WASI_ERRNO_CANCELED;
-        case ECHILD: return __WASI_ERRNO_CHILD;
-        case ECONNABORTED: return __WASI_ERRNO_CONNABORTED;
-        case ECONNREFUSED: return __WASI_ERRNO_CONNREFUSED;
-        case ECONNRESET: return __WASI_ERRNO_CONNRESET;
-        case EDEADLK: return __WASI_ERRNO_DEADLK;
-        case EDESTADDRREQ: return __WASI_ERRNO_DESTADDRREQ;
-        case EDOM: return __WASI_ERRNO_DOM;
-        case EDQUOT: return __WASI_ERRNO_DQUOT;
-        case EEXIST: return __WASI_ERRNO_EXIST;
-        case EFAULT: return __WASI_ERRNO_FAULT;
-        case EFBIG: return __WASI_ERRNO_FBIG;
-        case EHOSTUNREACH: return __WASI_ERRNO_HOSTUNREACH;
-        case EIDRM: return __WASI_ERRNO_IDRM;
-        case EILSEQ: return __WASI_ERRNO_ILSEQ;
-        case EINPROGRESS: return __WASI_ERRNO_INPROGRESS;
-        case EINTR: return __WASI_ERRNO_INTR;
-        case EINVAL: return __WASI_ERRNO_INVAL;
-        case EIO: return __WASI_ERRNO_IO;
-        case EISCONN: return __WASI_ERRNO_ISCONN;
-        case EISDIR: return __WASI_ERRNO_ISDIR;
-        case ELOOP: return __WASI_ERRNO_LOOP;
-        case EMFILE: return __WASI_ERRNO_MFILE;
-        case EMLINK: return __WASI_ERRNO_MLINK;
-        case EMSGSIZE: return __WASI_ERRNO_MSGSIZE;
-        case EMULTIHOP: return __WASI_ERRNO_MULTIHOP;
-        case ENAMETOOLONG: return __WASI_ERRNO_NAMETOOLONG;
-        case ENETDOWN: return __WASI_ERRNO_NETDOWN;
-        case ENETRESET: return __WASI_ERRNO_NETRESET;
-        case ENETUNREACH: return __WASI_ERRNO_NETUNREACH;
-        case ENFILE: return __WASI_ERRNO_NFILE;
-        case ENOBUFS: return __WASI_ERRNO_NOBUFS;
-        case ENODEV: return __WASI_ERRNO_NODEV;
-        case ENOENT: return __WASI_ERRNO_NOENT;
-        case ENOEXEC: return __WASI_ERRNO_NOEXEC;
-        case ENOLCK: return __WASI_ERRNO_NOLCK;
-        case ENOLINK: return __WASI_ERRNO_NOLINK;
-        case ENOMEM: return __WASI_ERRNO_NOMEM;
-        case ENOMSG: return __WASI_ERRNO_NOMSG;
-        case ENOPROTOOPT: return __WASI_ERRNO_NOPROTOOPT;
-        case ENOSPC: return __WASI_ERRNO_NOSPC;
-        case ENOSYS: return __WASI_ERRNO_NOSYS;
-        case ENOTCONN: return __WASI_ERRNO_NOTCONN;
-        case ENOTDIR: return __WASI_ERRNO_NOTDIR;
-        case ENOTEMPTY: return __WASI_ERRNO_NOTEMPTY;
-        case ENOTRECOVERABLE: return __WASI_ERRNO_NOTRECOVERABLE;
-        case ENOTSOCK: return __WASI_ERRNO_NOTSOCK;
-        case ENOTSUP: return __WASI_ERRNO_NOTSUP;
-        case ENOTTY: return __WASI_ERRNO_NOTTY;
-        case ENXIO: return __WASI_ERRNO_NXIO;
-        case EOVERFLOW: return __WASI_ERRNO_OVERFLOW;
-        case EOWNERDEAD: return __WASI_ERRNO_OWNERDEAD;
-        case EPERM: return __WASI_ERRNO_PERM;
-        case EPIPE: return __WASI_ERRNO_PIPE;
-        case EPROTO: return __WASI_ERRNO_PROTO;
-        case EPROTONOSUPPORT: return __WASI_ERRNO_PROTONOSUPPORT;
-        case EPROTOTYPE: return __WASI_ERRNO_PROTOTYPE;
-        case ERANGE: return __WASI_ERRNO_RANGE;
-        case EROFS: return __WASI_ERRNO_ROFS;
-        case ESPIPE: return __WASI_ERRNO_SPIPE;
-        case ESRCH: return __WASI_ERRNO_SRCH;
-        case ESTALE: return __WASI_ERRNO_STALE;
-        case ETIMEDOUT: return __WASI_ERRNO_TIMEDOUT;
-        case ETXTBSY: return __WASI_ERRNO_TXTBSY;
-        case EXDEV: return __WASI_ERRNO_XDEV;
-        default: fprintf(stderr, "wasi_fromerrno unexpectedly received: %s\n", strerror(errno_)); fflush(stderr);
-    }
+static __wasi_errno_t
+wasi_fromerrno(int errno_)
+{
+	switch (errno_) {
+	case 0:
+		return __WASI_ERRNO_SUCCESS;
+	case E2BIG:
+		return __WASI_ERRNO_2BIG;
+	case EACCES:
+		return __WASI_ERRNO_ACCES;
+	case EADDRINUSE:
+		return __WASI_ERRNO_ADDRINUSE;
+	case EADDRNOTAVAIL:
+		return __WASI_ERRNO_ADDRNOTAVAIL;
+	case EAFNOSUPPORT:
+		return __WASI_ERRNO_AFNOSUPPORT;
+	case EAGAIN:
+		return __WASI_ERRNO_AGAIN;
+	case EALREADY:
+		return __WASI_ERRNO_ALREADY;
+	case EBADF:
+		return __WASI_ERRNO_BADF;
+	case EBADMSG:
+		return __WASI_ERRNO_BADMSG;
+	case EBUSY:
+		return __WASI_ERRNO_BUSY;
+	case ECANCELED:
+		return __WASI_ERRNO_CANCELED;
+	case ECHILD:
+		return __WASI_ERRNO_CHILD;
+	case ECONNABORTED:
+		return __WASI_ERRNO_CONNABORTED;
+	case ECONNREFUSED:
+		return __WASI_ERRNO_CONNREFUSED;
+	case ECONNRESET:
+		return __WASI_ERRNO_CONNRESET;
+	case EDEADLK:
+		return __WASI_ERRNO_DEADLK;
+	case EDESTADDRREQ:
+		return __WASI_ERRNO_DESTADDRREQ;
+	case EDOM:
+		return __WASI_ERRNO_DOM;
+	case EDQUOT:
+		return __WASI_ERRNO_DQUOT;
+	case EEXIST:
+		return __WASI_ERRNO_EXIST;
+	case EFAULT:
+		return __WASI_ERRNO_FAULT;
+	case EFBIG:
+		return __WASI_ERRNO_FBIG;
+	case EHOSTUNREACH:
+		return __WASI_ERRNO_HOSTUNREACH;
+	case EIDRM:
+		return __WASI_ERRNO_IDRM;
+	case EILSEQ:
+		return __WASI_ERRNO_ILSEQ;
+	case EINPROGRESS:
+		return __WASI_ERRNO_INPROGRESS;
+	case EINTR:
+		return __WASI_ERRNO_INTR;
+	case EINVAL:
+		return __WASI_ERRNO_INVAL;
+	case EIO:
+		return __WASI_ERRNO_IO;
+	case EISCONN:
+		return __WASI_ERRNO_ISCONN;
+	case EISDIR:
+		return __WASI_ERRNO_ISDIR;
+	case ELOOP:
+		return __WASI_ERRNO_LOOP;
+	case EMFILE:
+		return __WASI_ERRNO_MFILE;
+	case EMLINK:
+		return __WASI_ERRNO_MLINK;
+	case EMSGSIZE:
+		return __WASI_ERRNO_MSGSIZE;
+	case EMULTIHOP:
+		return __WASI_ERRNO_MULTIHOP;
+	case ENAMETOOLONG:
+		return __WASI_ERRNO_NAMETOOLONG;
+	case ENETDOWN:
+		return __WASI_ERRNO_NETDOWN;
+	case ENETRESET:
+		return __WASI_ERRNO_NETRESET;
+	case ENETUNREACH:
+		return __WASI_ERRNO_NETUNREACH;
+	case ENFILE:
+		return __WASI_ERRNO_NFILE;
+	case ENOBUFS:
+		return __WASI_ERRNO_NOBUFS;
+	case ENODEV:
+		return __WASI_ERRNO_NODEV;
+	case ENOENT:
+		return __WASI_ERRNO_NOENT;
+	case ENOEXEC:
+		return __WASI_ERRNO_NOEXEC;
+	case ENOLCK:
+		return __WASI_ERRNO_NOLCK;
+	case ENOLINK:
+		return __WASI_ERRNO_NOLINK;
+	case ENOMEM:
+		return __WASI_ERRNO_NOMEM;
+	case ENOMSG:
+		return __WASI_ERRNO_NOMSG;
+	case ENOPROTOOPT:
+		return __WASI_ERRNO_NOPROTOOPT;
+	case ENOSPC:
+		return __WASI_ERRNO_NOSPC;
+	case ENOSYS:
+		return __WASI_ERRNO_NOSYS;
+	case ENOTCONN:
+		return __WASI_ERRNO_NOTCONN;
+	case ENOTDIR:
+		return __WASI_ERRNO_NOTDIR;
+	case ENOTEMPTY:
+		return __WASI_ERRNO_NOTEMPTY;
+	case ENOTRECOVERABLE:
+		return __WASI_ERRNO_NOTRECOVERABLE;
+	case ENOTSOCK:
+		return __WASI_ERRNO_NOTSOCK;
+	case ENOTSUP:
+		return __WASI_ERRNO_NOTSUP;
+	case ENOTTY:
+		return __WASI_ERRNO_NOTTY;
+	case ENXIO:
+		return __WASI_ERRNO_NXIO;
+	case EOVERFLOW:
+		return __WASI_ERRNO_OVERFLOW;
+	case EOWNERDEAD:
+		return __WASI_ERRNO_OWNERDEAD;
+	case EPERM:
+		return __WASI_ERRNO_PERM;
+	case EPIPE:
+		return __WASI_ERRNO_PIPE;
+	case EPROTO:
+		return __WASI_ERRNO_PROTO;
+	case EPROTONOSUPPORT:
+		return __WASI_ERRNO_PROTONOSUPPORT;
+	case EPROTOTYPE:
+		return __WASI_ERRNO_PROTOTYPE;
+	case ERANGE:
+		return __WASI_ERRNO_RANGE;
+	case EROFS:
+		return __WASI_ERRNO_ROFS;
+	case ESPIPE:
+		return __WASI_ERRNO_SPIPE;
+	case ESRCH:
+		return __WASI_ERRNO_SRCH;
+	case ESTALE:
+		return __WASI_ERRNO_STALE;
+	case ETIMEDOUT:
+		return __WASI_ERRNO_TIMEDOUT;
+	case ETXTBSY:
+		return __WASI_ERRNO_TXTBSY;
+	case EXDEV:
+		return __WASI_ERRNO_XDEV;
+	default:
+		fprintf(stderr, "wasi_fromerrno unexpectedly received: %s\n", strerror(errno_));
+		fflush(stderr);
+	}
 
-    awsm_assert(0);
-    return 0;
+	awsm_assert(0);
+	return 0;
 }
 
 /**
@@ -274,21 +368,22 @@ static __wasi_errno_t wasi_fromerrno(int errno_) {
  * @param argv_buf_retptr
  * @return __WASI_ERRNO_SUCCESS or WASI_EINVAL
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_args_get(void* wasi_context_raw, char** argv, char* argv_buf) {
-    if (wasi_context_raw == NULL || argv == NULL || argv_buf == NULL)
-        return __WASI_ERRNO_INVAL;
+__wasi_errno_t
+wasi_snapshot_preview1_backing_args_get(void *wasi_context_raw, char **argv, char *argv_buf)
+{
+	if (wasi_context_raw == NULL || argv == NULL || argv_buf == NULL) return __WASI_ERRNO_INVAL;
 
-    wasi_context_t* wasi_context = (wasi_context_t*)wasi_context_raw;
+	wasi_context_t *wasi_context = (wasi_context_t *)wasi_context_raw;
 
-    memcpy(argv_buf, wasi_context->argv_buf, wasi_context->argv_buf_size);
+	memcpy(argv_buf, wasi_context->argv_buf, wasi_context->argv_buf_size);
 
-    for (__wasi_size_t i = 0; i < wasi_context->argc; i++) {
-        __wasi_size_t offset = wasi_context->argv[i] - wasi_context->argv_buf;
-        argv[i]              = &argv_buf[wasi_context->argv[i] - wasi_context->argv_buf];
-    }
+	for (__wasi_size_t i = 0; i < wasi_context->argc; i++) {
+		__wasi_size_t offset = wasi_context->argv[i] - wasi_context->argv_buf;
+		argv[i]              = &argv_buf[wasi_context->argv[i] - wasi_context->argv_buf];
+	}
 
 
-    return __WASI_ERRNO_SUCCESS;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -299,16 +394,17 @@ __wasi_errno_t wasi_snapshot_preview1_backing_args_get(void* wasi_context_raw, c
  * @param argv_buf_len_retptr linear memory offset where we should write the length of the args buffer
  * @return __WASI_ERRNO_SUCCESS
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_args_sizes_get(void* wasi_context_raw, __wasi_size_t* argc_retptr,
-                                                             __wasi_size_t* argv_buf_len_retptr) {
-    if (wasi_context_raw == NULL || argc_retptr == NULL || argv_buf_len_retptr == NULL)
-        return __WASI_ERRNO_INVAL;
+__wasi_errno_t
+wasi_snapshot_preview1_backing_args_sizes_get(void *wasi_context_raw, __wasi_size_t *argc_retptr,
+                                              __wasi_size_t *argv_buf_len_retptr)
+{
+	if (wasi_context_raw == NULL || argc_retptr == NULL || argv_buf_len_retptr == NULL) return __WASI_ERRNO_INVAL;
 
-    wasi_context_t* wasi_context = (wasi_context_t*)wasi_context_raw;
+	wasi_context_t *wasi_context = (wasi_context_t *)wasi_context_raw;
 
-    *argc_retptr         = wasi_context->argc;
-    *argv_buf_len_retptr = wasi_context->argv_buf_size;
-    return __WASI_ERRNO_SUCCESS;
+	*argc_retptr         = wasi_context->argc;
+	*argv_buf_len_retptr = wasi_context->argv_buf_size;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -321,9 +417,10 @@ __wasi_errno_t wasi_snapshot_preview1_backing_args_sizes_get(void* wasi_context_
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_clock_res_get(void* wasi_context, __wasi_clockid_t id, __wasi_timestamp_t* res_retptr) {
-    /* similar to `clock_getres` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_clock_res_get(void *wasi_context, __wasi_clockid_t id, __wasi_timestamp_t *res_retptr)
+{
+	/* similar to `clock_getres` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -335,17 +432,16 @@ wasi_snapshot_preview1_backing_clock_res_get(void* wasi_context, __wasi_clockid_
  * @return __WASI_ERRNO_SUCCESS code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_clock_time_get(void* wasi_context_raw, __wasi_clockid_t clock_id,
-                                              __wasi_timestamp_t precision, __wasi_timestamp_t* time_retptr) {
-    struct timespec tp;
-    int             rc = clock_gettime(clock_id, &tp);
-    if (rc == -1) {
-        return wasi_fromerrno(errno);
-    }
+wasi_snapshot_preview1_backing_clock_time_get(void *wasi_context_raw, __wasi_clockid_t clock_id,
+                                              __wasi_timestamp_t precision, __wasi_timestamp_t *time_retptr)
+{
+	struct timespec tp;
+	int             rc = clock_gettime(clock_id, &tp);
+	if (rc == -1) { return wasi_fromerrno(errno); }
 
-    *time_retptr = (uint64_t)tp.tv_sec * 1000000000ULL + (uint64_t)tp.tv_nsec;
+	*time_retptr = (uint64_t)tp.tv_sec * 1000000000ULL + (uint64_t)tp.tv_nsec;
 
-    return __WASI_ERRNO_SUCCESS;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -357,18 +453,19 @@ wasi_snapshot_preview1_backing_clock_time_get(void* wasi_context_raw, __wasi_clo
  * @param environ_buf_baseretptr
  * @return __WASI_ERRNO_SUCCESS or WASI_EINVAL
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_environ_get(void* wasi_context_raw, char** environ, char* environ_buf) {
-    if (wasi_context_raw == NULL || environ == NULL || environ_buf == NULL)
-        return __WASI_ERRNO_INVAL;
+__wasi_errno_t
+wasi_snapshot_preview1_backing_environ_get(void *wasi_context_raw, char **environ, char *environ_buf)
+{
+	if (wasi_context_raw == NULL || environ == NULL || environ_buf == NULL) return __WASI_ERRNO_INVAL;
 
-    wasi_context_t* wasi_context = (wasi_context_t*)wasi_context_raw;
+	wasi_context_t *wasi_context = (wasi_context_t *)wasi_context_raw;
 
-    for (__wasi_size_t i = 0; i < wasi_context->envc; i++) {
-        environ[i] = wasi_context->env_buf + (wasi_context->env[i] - wasi_context->env_buf);
-    }
+	for (__wasi_size_t i = 0; i < wasi_context->envc; i++) {
+		environ[i] = wasi_context->env_buf + (wasi_context->env[i] - wasi_context->env_buf);
+	}
 
-    memcpy(environ_buf, wasi_context->env_buf, wasi_context->env_buf_size);
-    return __WASI_ERRNO_SUCCESS;
+	memcpy(environ_buf, wasi_context->env_buf, wasi_context->env_buf_size);
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -380,17 +477,18 @@ __wasi_errno_t wasi_snapshot_preview1_backing_environ_get(void* wasi_context_raw
  * written
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_environ_sizes_get(void* wasi_context_raw, __wasi_size_t* environ_len,
-                                                                __wasi_size_t* environ_buf_len) {
-    if (wasi_context_raw == NULL || environ_len == NULL || environ_buf_len == NULL)
-        return __WASI_ERRNO_INVAL;
+__wasi_errno_t
+wasi_snapshot_preview1_backing_environ_sizes_get(void *wasi_context_raw, __wasi_size_t *environ_len,
+                                                 __wasi_size_t *environ_buf_len)
+{
+	if (wasi_context_raw == NULL || environ_len == NULL || environ_buf_len == NULL) return __WASI_ERRNO_INVAL;
 
-    wasi_context_t* wasi_context = (wasi_context_t*)wasi_context_raw;
+	wasi_context_t *wasi_context = (wasi_context_t *)wasi_context_raw;
 
-    *environ_len     = wasi_context->envc;
-    *environ_buf_len = wasi_context->env_buf_size;
+	*environ_len     = wasi_context->envc;
+	*environ_buf_len = wasi_context->env_buf_size;
 
-    return __WASI_ERRNO_SUCCESS;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -402,10 +500,12 @@ __wasi_errno_t wasi_snapshot_preview1_backing_environ_sizes_get(void* wasi_conte
  * @param advice
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_advise(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t offset,
-                                                        __wasi_filesize_t len, __wasi_advice_t advice) {
-    /* similar to `posix_fadvise` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_advise(void *wasi_context, __wasi_fd_t fd, __wasi_filesize_t offset,
+                                         __wasi_filesize_t len, __wasi_advice_t advice)
+{
+	/* similar to `posix_fadvise` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -416,10 +516,12 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_advise(void* wasi_context, __wa
  * @param len The length of the area that is allocated.
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_allocate(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t offset,
-                                                          __wasi_filesize_t len) {
-    /* similar to `posix_fallocate` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_allocate(void *wasi_context, __wasi_fd_t fd, __wasi_filesize_t offset,
+                                           __wasi_filesize_t len)
+{
+	/* similar to `posix_fallocate` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 };
 
 /**
@@ -428,14 +530,14 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_allocate(void* wasi_context, __
  * @param fd
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_close(void* wasi_context, __wasi_fd_t fd) {
-    /* TODO: Sandbox fd in context */
-    int res = close(fd);
-    if (res == -1) {
-        return wasi_fromerrno(errno);
-    }
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_close(void *wasi_context, __wasi_fd_t fd)
+{
+	/* TODO: Sandbox fd in context */
+	int res = close(fd);
+	if (res == -1) { return wasi_fromerrno(errno); }
 
-    return __WASI_ERRNO_SUCCESS;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -444,14 +546,14 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_close(void* wasi_context, __was
  * @param fd
  * @return __WASI_ERRNO_SUCCESS, WASI_EBADF, WASI_EIO, WASI_ENOSPC, WASI_EROFS, WASI_EINVAL, WASI_ENOSPC, WASI_EDQUOT
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_datasync(void* wasi_context, __wasi_fd_t fd) {
-    /* TODO: Sandbox fd in context */
-    int res = fdatasync(fd);
-    if (res == -1) {
-        return wasi_fromerrno(errno);
-    }
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_datasync(void *wasi_context, __wasi_fd_t fd)
+{
+	/* TODO: Sandbox fd in context */
+	int res = fdatasync(fd);
+	if (res == -1) { return wasi_fromerrno(errno); }
 
-    return __WASI_ERRNO_SUCCESS;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -463,32 +565,31 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_datasync(void* wasi_context, __
  * WASI_ENAMETOOLONG, WASI_ENOTDIR, WASI_ENOENT, WASI_ENOMEM, or WASI_EOVERFLOW
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fd_fdstat_get(void* wasi_context, __wasi_fd_t fd, __wasi_fdstat_t* fdstat) {
-    /* TODO: Sandbox fd in context */
+wasi_snapshot_preview1_backing_fd_fdstat_get(void *wasi_context, __wasi_fd_t fd, __wasi_fdstat_t *fdstat)
+{
+	/* TODO: Sandbox fd in context */
 
-    struct stat stat;
-    int         res = fstat(fd, &stat);
-    if (res == -1) {
-        return wasi_fromerrno(errno);
-    }
-    int mode = stat.st_mode;
+	struct stat stat;
+	int         res = fstat(fd, &stat);
+	if (res == -1) { return wasi_fromerrno(errno); }
+	int mode = stat.st_mode;
 
-    int fl = fcntl(fd, F_GETFL);
-    if (fl < 0) {
-        return wasi_fromerrno(errno);
-    }
+	int fl = fcntl(fd, F_GETFL);
+	if (fl < 0) { return wasi_fromerrno(errno); }
 
-    fdstat->fs_filetype =
-      ((S_ISBLK(mode) ? __WASI_FILETYPE_BLOCK_DEVICE : 0) | (S_ISCHR(mode) ? __WASI_FILETYPE_CHARACTER_DEVICE : 0)
-       | (S_ISDIR(mode) ? __WASI_FILETYPE_DIRECTORY : 0) | (S_ISREG(mode) ? __WASI_FILETYPE_REGULAR_FILE : 0)
-       | (S_ISSOCK(mode) ? __WASI_FILETYPE_SOCKET_STREAM : 0) | (S_ISLNK(mode) ? __WASI_FILETYPE_SYMBOLIC_LINK : 0));
-    fdstat->fs_flags = (((fl & O_APPEND) ? __WASI_FDFLAGS_APPEND : 0) | ((fl & O_DSYNC) ? __WASI_FDFLAGS_DSYNC : 0)
-                        | ((fl & O_NONBLOCK) ? __WASI_FDFLAGS_NONBLOCK : 0)
-                        | ((fl & O_RSYNC) ? __WASI_FDFLAGS_RSYNC : 0) | ((fl & O_SYNC) ? __WASI_FDFLAGS_SYNC : 0));
-    fdstat->fs_rights_base       = 0; /* all rights */
-    fdstat->fs_rights_inheriting = 0; /* all rights */
+	fdstat->fs_filetype = ((S_ISBLK(mode) ? __WASI_FILETYPE_BLOCK_DEVICE : 0)
+	                       | (S_ISCHR(mode) ? __WASI_FILETYPE_CHARACTER_DEVICE : 0)
+	                       | (S_ISDIR(mode) ? __WASI_FILETYPE_DIRECTORY : 0)
+	                       | (S_ISREG(mode) ? __WASI_FILETYPE_REGULAR_FILE : 0)
+	                       | (S_ISSOCK(mode) ? __WASI_FILETYPE_SOCKET_STREAM : 0)
+	                       | (S_ISLNK(mode) ? __WASI_FILETYPE_SYMBOLIC_LINK : 0));
+	fdstat->fs_flags = (((fl & O_APPEND) ? __WASI_FDFLAGS_APPEND : 0) | ((fl & O_DSYNC) ? __WASI_FDFLAGS_DSYNC : 0)
+	                    | ((fl & O_NONBLOCK) ? __WASI_FDFLAGS_NONBLOCK : 0)
+	                    | ((fl & O_RSYNC) ? __WASI_FDFLAGS_RSYNC : 0) | ((fl & O_SYNC) ? __WASI_FDFLAGS_SYNC : 0));
+	fdstat->fs_rights_base       = 0; /* all rights */
+	fdstat->fs_rights_inheriting = 0; /* all rights */
 
-    return __WASI_ERRNO_SUCCESS;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -500,17 +601,16 @@ wasi_snapshot_preview1_backing_fd_fdstat_get(void* wasi_context, __wasi_fd_t fd,
  * WASI_EPERM
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fd_fdstat_set_flags(void* wasi_context, __wasi_fd_t fd, __wasi_fdflags_t fdflags) {
-    /* TODO: Sandbox fd in context */
+wasi_snapshot_preview1_backing_fd_fdstat_set_flags(void *wasi_context, __wasi_fd_t fd, __wasi_fdflags_t fdflags)
+{
+	/* TODO: Sandbox fd in context */
 
-    int flags = (((flags & __WASI_FDFLAGS_APPEND) ? O_APPEND : 0) | ((flags & __WASI_FDFLAGS_DSYNC) ? O_DSYNC : 0)
-                 | ((flags & __WASI_FDFLAGS_NONBLOCK) ? O_NONBLOCK : 0) | ((flags & __WASI_FDFLAGS_RSYNC) ? O_RSYNC : 0)
-                 | ((flags & __WASI_FDFLAGS_SYNC) ? O_SYNC : 0));
-    int err   = fcntl(fd, F_SETFL, fdflags);
-    if (err < 0) {
-        return wasi_fromerrno(errno);
-    }
-    return __WASI_ERRNO_SUCCESS;
+	int flags = (((flags & __WASI_FDFLAGS_APPEND) ? O_APPEND : 0) | ((flags & __WASI_FDFLAGS_DSYNC) ? O_DSYNC : 0)
+	             | ((flags & __WASI_FDFLAGS_NONBLOCK) ? O_NONBLOCK : 0)
+	             | ((flags & __WASI_FDFLAGS_RSYNC) ? O_RSYNC : 0) | ((flags & __WASI_FDFLAGS_SYNC) ? O_SYNC : 0));
+	int err   = fcntl(fd, F_SETFL, fdflags);
+	if (err < 0) { return wasi_fromerrno(errno); }
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -524,9 +624,10 @@ wasi_snapshot_preview1_backing_fd_fdstat_set_flags(void* wasi_context, __wasi_fd
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fd_fdstat_set_rights(void* wasi_context, __wasi_fd_t fd, __wasi_rights_t fs_rights_base,
-                                                    __wasi_rights_t fs_rights_inheriting) {
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_fd_fdstat_set_rights(void *wasi_context, __wasi_fd_t fd, __wasi_rights_t fs_rights_base,
+                                                    __wasi_rights_t fs_rights_inheriting)
+{
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -538,8 +639,9 @@ wasi_snapshot_preview1_backing_fd_fdstat_set_rights(void* wasi_context, __wasi_f
  */
 
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fd_filestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_filestat_t* filestat) {
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_fd_filestat_get(void *wasi_context, __wasi_fd_t fd, __wasi_filestat_t *filestat)
+{
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -550,9 +652,10 @@ wasi_snapshot_preview1_backing_fd_filestat_get(void* wasi_context, __wasi_fd_t f
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fd_filestat_set_size(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t size) {
-    /* similar to `ftruncate` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_fd_filestat_set_size(void *wasi_context, __wasi_fd_t fd, __wasi_filesize_t size)
+{
+	/* similar to `ftruncate` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -565,10 +668,11 @@ wasi_snapshot_preview1_backing_fd_filestat_set_size(void* wasi_context, __wasi_f
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fd_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_timestamp_t atim,
-                                                     __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags) {
-    /* similar to `futimens` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_fd_filestat_set_times(void *wasi_context, __wasi_fd_t fd, __wasi_timestamp_t atim,
+                                                     __wasi_timestamp_t mtim, __wasi_fstflags_t fst_flags)
+{
+	/* similar to `futimens` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -582,10 +686,11 @@ wasi_snapshot_preview1_backing_fd_filestat_set_times(void* wasi_context, __wasi_
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fd_pread(void* wasi_context, __wasi_fd_t fd, const __wasi_iovec_t* iovs, size_t iovs_len,
-                                        __wasi_filesize_t offset, __wasi_size_t* nread_retptr) {
-    /* similar to `preadv` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_fd_pread(void *wasi_context, __wasi_fd_t fd, const __wasi_iovec_t *iovs, size_t iovs_len,
+                                        __wasi_filesize_t offset, __wasi_size_t *nread_retptr)
+{
+	/* similar to `preadv` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -596,8 +701,9 @@ wasi_snapshot_preview1_backing_fd_pread(void* wasi_context, __wasi_fd_t fd, cons
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fd_prestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_prestat_t* prestat_retptr) {
-    return __WASI_ERRNO_BADF;
+wasi_snapshot_preview1_backing_fd_prestat_get(void *wasi_context, __wasi_fd_t fd, __wasi_prestat_t *prestat_retptr)
+{
+	return __WASI_ERRNO_BADF;
 }
 
 /**
@@ -608,9 +714,11 @@ wasi_snapshot_preview1_backing_fd_prestat_get(void* wasi_context, __wasi_fd_t fd
  * @param path_len The length of the buffer at path_retptr
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_prestat_dir_name(void* wasi_context, __wasi_fd_t fd, char* path,
-                                                                  __wasi_size_t path_len) {
-    return wasi_unsupported_syscall(__func__);
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_prestat_dir_name(void *wasi_context, __wasi_fd_t fd, char *path,
+                                                   __wasi_size_t path_len)
+{
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -625,10 +733,11 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_prestat_dir_name(void* wasi_con
  *
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fd_pwrite(void* wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t* iovs,
-                                         size_t iovs_len, __wasi_filesize_t offset, __wasi_size_t* nwritten_retptr) {
-    /* similar to `pwritev` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_fd_pwrite(void *wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t *iovs,
+                                         size_t iovs_len, __wasi_filesize_t offset, __wasi_size_t *nwritten_retptr)
+{
+	/* similar to `pwritev` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -641,22 +750,22 @@ wasi_snapshot_preview1_backing_fd_pwrite(void* wasi_context, __wasi_fd_t fd, con
  * @return __WASI_ERRNO_SUCCESS, WASI_EAGAIN, WASI_EWOULDBLOCK, WASI_EBADF, WASI_EFAULT, WASI_EINTR, WASI_EIO,
  * WASI_EISDIR, or others
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_read(void* wasi_context, __wasi_fd_t fd, const __wasi_iovec_t* iovs,
-                                                      size_t iovs_len, __wasi_size_t* nwritten_retptr) {
-    /* TODO: Should this use readv instead of read? */
-    __wasi_size_t sum = 0;
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_read(void *wasi_context, __wasi_fd_t fd, const __wasi_iovec_t *iovs, size_t iovs_len,
+                                       __wasi_size_t *nwritten_retptr)
+{
+	/* TODO: Should this use readv instead of read? */
+	__wasi_size_t sum = 0;
 
-    for (int i = 0; i < iovs_len; i++) {
-        ssize_t res = read(fd, iovs[i].buf, iovs[i].buf_len);
-        if (res == -1) {
-            return wasi_fromerrno(errno);
-        }
+	for (int i = 0; i < iovs_len; i++) {
+		ssize_t res = read(fd, iovs[i].buf, iovs[i].buf_len);
+		if (res == -1) { return wasi_fromerrno(errno); }
 
-        sum += res;
-    }
+		sum += res;
+	}
 
-    *nwritten_retptr = sum;
-    return __WASI_ERRNO_SUCCESS;
+	*nwritten_retptr = sum;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -678,9 +787,10 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_read(void* wasi_context, __wasi
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fd_readdir(void* wasi_context, __wasi_fd_t fd, uint8_t* buf, __wasi_size_t buf_len,
-                                          __wasi_dircookie_t cookie, __wasi_size_t* nwritten_retptr) {
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_fd_readdir(void *wasi_context, __wasi_fd_t fd, uint8_t *buf, __wasi_size_t buf_len,
+                                          __wasi_dircookie_t cookie, __wasi_size_t *nwritten_retptr)
+{
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -697,8 +807,10 @@ wasi_snapshot_preview1_backing_fd_readdir(void* wasi_context, __wasi_fd_t fd, ui
  * @param to the file descriptor to overwrite
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_renumber(void* wasi_context, __wasi_fd_t fd, __wasi_fd_t to) {
-    return wasi_unsupported_syscall(__func__);
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_renumber(void *wasi_context, __wasi_fd_t fd, __wasi_fd_t to)
+{
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -711,17 +823,16 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_renumber(void* wasi_context, __
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fd_seek(void* wasi_context, __wasi_fd_t fd, __wasi_filedelta_t file_offset,
-                                       __wasi_whence_t whence, __wasi_filesize_t* newoffset_retptr) {
-    /* TODO: Does whence differ from POSIX? */
-    off_t res = lseek(fd, (off_t)file_offset, whence);
+wasi_snapshot_preview1_backing_fd_seek(void *wasi_context, __wasi_fd_t fd, __wasi_filedelta_t file_offset,
+                                       __wasi_whence_t whence, __wasi_filesize_t *newoffset_retptr)
+{
+	/* TODO: Does whence differ from POSIX? */
+	off_t res = lseek(fd, (off_t)file_offset, whence);
 
-    if (res == -1) {
-        return wasi_fromerrno(errno);
-    }
+	if (res == -1) { return wasi_fromerrno(errno); }
 
-    *newoffset_retptr = res;
-    return __WASI_ERRNO_SUCCESS;
+	*newoffset_retptr = res;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -730,9 +841,11 @@ wasi_snapshot_preview1_backing_fd_seek(void* wasi_context, __wasi_fd_t fd, __was
  * @param fd
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_sync(void* wasi_context, __wasi_fd_t fd) {
-    /* similar to `fsync` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_sync(void *wasi_context, __wasi_fd_t fd)
+{
+	/* similar to `fsync` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -743,9 +856,10 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_sync(void* wasi_context, __wasi
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_fd_tell(void* wasi_context, __wasi_fd_t fd, __wasi_filesize_t* fileoffset_retptr) {
-    /* similar to `lseek(fd, 0, SEEK_CUR)` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_fd_tell(void *wasi_context, __wasi_fd_t fd, __wasi_filesize_t *fileoffset_retptr)
+{
+	/* similar to `lseek(fd, 0, SEEK_CUR)` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -758,21 +872,21 @@ wasi_snapshot_preview1_backing_fd_tell(void* wasi_context, __wasi_fd_t fd, __was
  * @return __WASI_ERRNO_SUCCESS, WASI_EAGAIN, WASI_EWOULDBLOCK, WASI_EBADF, WASI_EFAULT,
  * WASI_EFBIG, WASI_EINTR, WASI_EIO, WASI_ENOSPC, WASI_EPERM, WASI_EPIPE, or others
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_fd_write(void* wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t* iovs,
-                                                       size_t iovs_len, __wasi_size_t* nwritten_retptr) {
-    /* TODO: Should this use writev instead of write? */
-    __wasi_size_t sum = 0;
+__wasi_errno_t
+wasi_snapshot_preview1_backing_fd_write(void *wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t *iovs,
+                                        size_t iovs_len, __wasi_size_t *nwritten_retptr)
+{
+	/* TODO: Should this use writev instead of write? */
+	__wasi_size_t sum = 0;
 
-    for (int i = 0; i < iovs_len; i++) {
-        ssize_t res = write(fd, iovs[i].buf, iovs[i].buf_len);
-        if (res == -1) {
-            return wasi_fromerrno(errno);
-        }
-        sum += res;
-    }
-    *nwritten_retptr = sum;
+	for (int i = 0; i < iovs_len; i++) {
+		ssize_t res = write(fd, iovs[i].buf, iovs[i].buf_len);
+		if (res == -1) { return wasi_fromerrno(errno); }
+		sum += res;
+	}
+	*nwritten_retptr = sum;
 
-    return __WASI_ERRNO_SUCCESS;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -785,15 +899,15 @@ __wasi_errno_t wasi_snapshot_preview1_backing_fd_write(void* wasi_context, __was
  * WASI_EFAULT, WASI_EINVAL, WASI_ELOOP, WASI_EMLINK, WASI_ENAMETOOLONG,
  * WASI_ENOENT, WASI_ENOMEM, WASI_ENOSPC, WASI_ENOTDIR, WASI_EPERM, or WASI_EROFS
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_path_create_directory(void* wasi_context, __wasi_fd_t fd,
-                                                                    const char* path, __wasi_size_t path_len) {
-    /* TODO: Can we 100% guarantee that path is null terminated here? Likely not! */
-    int res = mkdirat(fd, path, 0777);
-    if (res == -1) {
-        return wasi_fromerrno(errno);
-    }
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_create_directory(void *wasi_context, __wasi_fd_t fd, const char *path,
+                                                     __wasi_size_t path_len)
+{
+	/* TODO: Can we 100% guarantee that path is null terminated here? Likely not! */
+	int res = mkdirat(fd, path, 0777);
+	if (res == -1) { return wasi_fromerrno(errno); }
 
-    return __WASI_ERRNO_SUCCESS;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -807,26 +921,25 @@ __wasi_errno_t wasi_snapshot_preview1_backing_path_create_directory(void* wasi_c
  * WASI_ENAMETOOLON, WASI_ENOENT, WASI_ENOENT, WASI_ENOMEM, WASI_ENOTDI, or WASI_EOVERFLOW
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_path_filestat_get(void* wasi_context, __wasi_fd_t fd, __wasi_lookupflags_t flags,
-                                                 const char* path, __wasi_size_t path_len,
-                                                 __wasi_filestat_t* const filestat) {
-    /* TODO: Can we 100% guarantee that path is null terminated here? Likely not! */
-    struct stat stat;
-    int         res = fstatat(fd, path, &stat, 0);
-    if (res == -1) {
-        return wasi_fromerrno(errno);
-    }
+wasi_snapshot_preview1_backing_path_filestat_get(void *wasi_context, __wasi_fd_t fd, __wasi_lookupflags_t flags,
+                                                 const char *path, __wasi_size_t path_len,
+                                                 __wasi_filestat_t *const filestat)
+{
+	/* TODO: Can we 100% guarantee that path is null terminated here? Likely not! */
+	struct stat stat;
+	int         res = fstatat(fd, path, &stat, 0);
+	if (res == -1) { return wasi_fromerrno(errno); }
 
-    filestat->dev      = stat.st_dev;
-    filestat->ino      = stat.st_ino;
-    filestat->filetype = stat.st_mode;
-    filestat->nlink    = stat.st_nlink;
-    filestat->size     = stat.st_size;
-    filestat->atim     = stat.st_atime;
-    filestat->mtim     = stat.st_mtime;
-    filestat->ctim     = stat.st_ctime;
+	filestat->dev      = stat.st_dev;
+	filestat->ino      = stat.st_ino;
+	filestat->filetype = stat.st_mode;
+	filestat->nlink    = stat.st_nlink;
+	filestat->size     = stat.st_size;
+	filestat->atim     = stat.st_atime;
+	filestat->mtim     = stat.st_mtime;
+	filestat->ctim     = stat.st_ctime;
 
-    return __WASI_ERRNO_SUCCESS;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -842,12 +955,13 @@ wasi_snapshot_preview1_backing_path_filestat_get(void* wasi_context, __wasi_fd_t
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_path_filestat_set_times(void* wasi_context, __wasi_fd_t fd, __wasi_lookupflags_t flags,
-                                                       const char* path, __wasi_size_t path_len,
+wasi_snapshot_preview1_backing_path_filestat_set_times(void *wasi_context, __wasi_fd_t fd, __wasi_lookupflags_t flags,
+                                                       const char *path, __wasi_size_t path_len,
                                                        __wasi_timestamp_t atim, __wasi_timestamp_t mtim,
-                                                       __wasi_fstflags_t fst_flags) {
-    /* similar to `utimensat` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+                                                       __wasi_fstflags_t fst_flags)
+{
+	/* similar to `utimensat` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -863,11 +977,12 @@ wasi_snapshot_preview1_backing_path_filestat_set_times(void* wasi_context, __was
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_path_link(void* wasi_context, __wasi_fd_t old_fd, __wasi_lookupflags_t old_flags,
-                                         const char* old_path, __wasi_size_t old_path_len, __wasi_fd_t new_fd,
-                                         const char* new_path, __wasi_size_t new_path_len) {
-    /* similar to `linkat` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_path_link(void *wasi_context, __wasi_fd_t old_fd, __wasi_lookupflags_t old_flags,
+                                         const char *old_path, __wasi_size_t old_path_len, __wasi_fd_t new_fd,
+                                         const char *new_path, __wasi_size_t new_path_len)
+{
+	/* similar to `linkat` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -901,33 +1016,33 @@ wasi_snapshot_preview1_backing_path_link(void* wasi_context, __wasi_fd_t old_fd,
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_path_open(void* wasi_context, __wasi_fd_t dirfd, __wasi_lookupflags_t dirflags,
-                                         const char* path, __wasi_size_t path_len, __wasi_oflags_t oflags,
+wasi_snapshot_preview1_backing_path_open(void *wasi_context, __wasi_fd_t dirfd, __wasi_lookupflags_t dirflags,
+                                         const char *path, __wasi_size_t path_len, __wasi_oflags_t oflags,
 
                                          __wasi_rights_t fs_rights_base, __wasi_rights_t fs_rights_inheriting,
-                                         __wasi_fdflags_t fdflags, __wasi_fd_t* fd) {
-    /* translate o_flags and fs_flags into flags and mode */
-    int flags = (((oflags & __WASI_OFLAGS_CREAT) ? O_CREAT : 0) | ((oflags & __WASI_OFLAGS_DIRECTORY) ? O_DIRECTORY : 0)
-                 | ((oflags & __WASI_OFLAGS_EXCL) ? O_EXCL : 0) | ((oflags & __WASI_OFLAGS_TRUNC) ? O_TRUNC : 0)
-                 | ((fdflags & __WASI_FDFLAGS_APPEND) ? O_APPEND : 0) | ((fdflags & __WASI_FDFLAGS_DSYNC) ? O_DSYNC : 0)
-                 | ((fdflags & __WASI_FDFLAGS_NONBLOCK) ? O_NONBLOCK : 0)
-                 | ((fdflags & __WASI_FDFLAGS_RSYNC) ? O_RSYNC : 0) | ((fdflags & __WASI_FDFLAGS_SYNC) ? O_SYNC : 0));
-    if ((fs_rights_base & __WASI_RIGHTS_FD_WRITE) && (fs_rights_base & __WASI_RIGHTS_FD_READ)) {
-        flags |= O_RDWR;
-    } else if (fs_rights_base & __WASI_RIGHTS_FD_WRITE) {
-        flags |= O_WRONLY;
-    } else if (fs_rights_base & __WASI_RIGHTS_FD_READ) {
-        flags |= O_RDONLY;
-    }
+                                         __wasi_fdflags_t fdflags, __wasi_fd_t *fd)
+{
+	/* translate o_flags and fs_flags into flags and mode */
+	int flags =
+	  (((oflags & __WASI_OFLAGS_CREAT) ? O_CREAT : 0) | ((oflags & __WASI_OFLAGS_DIRECTORY) ? O_DIRECTORY : 0)
+	   | ((oflags & __WASI_OFLAGS_EXCL) ? O_EXCL : 0) | ((oflags & __WASI_OFLAGS_TRUNC) ? O_TRUNC : 0)
+	   | ((fdflags & __WASI_FDFLAGS_APPEND) ? O_APPEND : 0) | ((fdflags & __WASI_FDFLAGS_DSYNC) ? O_DSYNC : 0)
+	   | ((fdflags & __WASI_FDFLAGS_NONBLOCK) ? O_NONBLOCK : 0) | ((fdflags & __WASI_FDFLAGS_RSYNC) ? O_RSYNC : 0)
+	   | ((fdflags & __WASI_FDFLAGS_SYNC) ? O_SYNC : 0));
+	if ((fs_rights_base & __WASI_RIGHTS_FD_WRITE) && (fs_rights_base & __WASI_RIGHTS_FD_READ)) {
+		flags |= O_RDWR;
+	} else if (fs_rights_base & __WASI_RIGHTS_FD_WRITE) {
+		flags |= O_WRONLY;
+	} else if (fs_rights_base & __WASI_RIGHTS_FD_READ) {
+		flags |= O_RDONLY;
+	}
 
-    int mode = 0644;
-    int rc   = openat(dirfd, path, flags, mode);
-    if (rc < 0) {
-        return wasi_fromerrno(errno);
-    }
+	int mode = 0644;
+	int rc   = openat(dirfd, path, flags, mode);
+	if (rc < 0) { return wasi_fromerrno(errno); }
 
-    *fd = rc;
-    return __WASI_ERRNO_SUCCESS;
+	*fd = rc;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -941,11 +1056,13 @@ wasi_snapshot_preview1_backing_path_open(void* wasi_context, __wasi_fd_t dirfd, 
  * @param nread_retptr The number of bytes placed in the buffer.
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_path_readlink(void* wasi_context, __wasi_fd_t fd, const char* path,
-                                                            __wasi_size_t path_len, uint8_t* buf, __wasi_size_t buf_len,
-                                                            __wasi_size_t* nread_retptr) {
-    /* similar to `readlinkat` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_readlink(void *wasi_context, __wasi_fd_t fd, const char *path,
+                                             __wasi_size_t path_len, uint8_t *buf, __wasi_size_t buf_len,
+                                             __wasi_size_t *nread_retptr)
+{
+	/* similar to `readlinkat` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -957,10 +1074,12 @@ __wasi_errno_t wasi_snapshot_preview1_backing_path_readlink(void* wasi_context, 
  * @param path_len
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_path_remove_directory(void* wasi_context, __wasi_fd_t fd,
-                                                                    const char* path, __wasi_size_t path_len) {
-    /* similar to `unlinkat(fd, path, AT_REMOVEDIR)` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_remove_directory(void *wasi_context, __wasi_fd_t fd, const char *path,
+                                                     __wasi_size_t path_len)
+{
+	/* similar to `unlinkat(fd, path, AT_REMOVEDIR)` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -972,11 +1091,13 @@ __wasi_errno_t wasi_snapshot_preview1_backing_path_remove_directory(void* wasi_c
  * @param new_path The destination path to which to rename the file or directory.
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_path_rename(void* wasi_context, __wasi_fd_t fd, const char* old_path,
-                                                          __wasi_size_t old_path_len, __wasi_fd_t new_fd,
-                                                          const char* new_path, __wasi_size_t new_path_len) {
-    /* similar to `renameat` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_rename(void *wasi_context, __wasi_fd_t fd, const char *old_path,
+                                           __wasi_size_t old_path_len, __wasi_fd_t new_fd, const char *new_path,
+                                           __wasi_size_t new_path_len)
+{
+	/* similar to `renameat` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -990,10 +1111,11 @@ __wasi_errno_t wasi_snapshot_preview1_backing_path_rename(void* wasi_context, __
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_path_symlink(void* wasi_context, const char* old_path, __wasi_size_t old_path_len,
-                                            __wasi_fd_t fd, const char* new_path, __wasi_size_t new_path_len) {
-    /* similar to `symlinkat` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_path_symlink(void *wasi_context, const char *old_path, __wasi_size_t old_path_len,
+                                            __wasi_fd_t fd, const char *new_path, __wasi_size_t new_path_len)
+{
+	/* similar to `symlinkat` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -1005,15 +1127,15 @@ wasi_snapshot_preview1_backing_path_symlink(void* wasi_context, const char* old_
  * @param path_len
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_path_unlink_file(void* wasi_context, __wasi_fd_t fd, const char* path,
-                                                               __wasi_size_t path_len) {
-    /* TODO: Path likely is not null terminated */
-    int res = unlinkat(fd, path, 0);
-    if (res == -1) {
-        return wasi_fromerrno(errno);
-    }
+__wasi_errno_t
+wasi_snapshot_preview1_backing_path_unlink_file(void *wasi_context, __wasi_fd_t fd, const char *path,
+                                                __wasi_size_t path_len)
+{
+	/* TODO: Path likely is not null terminated */
+	int res = unlinkat(fd, path, 0);
+	if (res == -1) { return wasi_fromerrno(errno); }
 
-    return __WASI_ERRNO_SUCCESS;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -1026,9 +1148,10 @@ __wasi_errno_t wasi_snapshot_preview1_backing_path_unlink_file(void* wasi_contex
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_poll_oneoff(void* wasi_context, const __wasi_subscription_t* in, __wasi_event_t* out,
-                                           __wasi_size_t nsubscriptions, __wasi_size_t* retptr0) {
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_poll_oneoff(void *wasi_context, const __wasi_subscription_t *in, __wasi_event_t *out,
+                                           __wasi_size_t nsubscriptions, __wasi_size_t *retptr0)
+{
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -1039,8 +1162,9 @@ wasi_snapshot_preview1_backing_poll_oneoff(void* wasi_context, const __wasi_subs
  * @param exitcode
  */
 __attribute__((noreturn)) void
-wasi_snapshot_preview1_backing_proc_exit(void* wasi_context, __wasi_exitcode_t exitcode) {
-    exit(exitcode);
+wasi_snapshot_preview1_backing_proc_exit(void *wasi_context, __wasi_exitcode_t exitcode)
+{
+	exit(exitcode);
 }
 
 /**
@@ -1049,9 +1173,11 @@ wasi_snapshot_preview1_backing_proc_exit(void* wasi_context, __wasi_exitcode_t e
  * @param sig The signal condition to trigger.
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_proc_raise(void* wasi_context, __wasi_signal_t sig) {
-    /* similar to `raise` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+__wasi_errno_t
+wasi_snapshot_preview1_backing_proc_raise(void *wasi_context, __wasi_signal_t sig)
+{
+	/* similar to `raise` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -1066,45 +1192,41 @@ __wasi_errno_t wasi_snapshot_preview1_backing_proc_raise(void* wasi_context, __w
  * @param buf_len The length of the buffer
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_random_get(void* wasi_context, uint8_t* buf, __wasi_size_t buf_len) {
-    static bool has_udev = true;
-    static bool did_seed = false;
+__wasi_errno_t
+wasi_snapshot_preview1_backing_random_get(void *wasi_context, uint8_t *buf, __wasi_size_t buf_len)
+{
+	static bool has_udev = true;
+	static bool did_seed = false;
 
-    if (!has_udev)
-        goto NO_UDEV;
+	if (!has_udev) goto NO_UDEV;
 
-    int urandom_fd = open("/dev/urandom", O_RDONLY);
-    if (urandom_fd < 0) {
-        has_udev = false;
-        goto NO_UDEV;
-    }
+	int urandom_fd = open("/dev/urandom", O_RDONLY);
+	if (urandom_fd < 0) {
+		has_udev = false;
+		goto NO_UDEV;
+	}
 
-    ssize_t nread = 0;
-    while (nread < buf_len) {
-        size_t rc = read(urandom_fd, buf, buf_len);
-        if (rc < 0)
-            goto ERR_READ;
-        nread += rc;
-    }
+	ssize_t nread = 0;
+	while (nread < buf_len) {
+		size_t rc = read(urandom_fd, buf, buf_len);
+		if (rc < 0) goto ERR_READ;
+		nread += rc;
+	}
 
-    close(urandom_fd);
-    return __WASI_ERRNO_SUCCESS;
+	close(urandom_fd);
+	return __WASI_ERRNO_SUCCESS;
 
 ERR_READ:
-    close(urandom_fd);
-    return wasi_fromerrno(errno);
+	close(urandom_fd);
+	return wasi_fromerrno(errno);
 NO_UDEV:
-    do {
-        __wasi_size_t buf_cursor = 0;
-        for (; (buf_len - buf_cursor) >= 4; buf_cursor += 4) {
-            *((int*)(buf + buf_cursor)) = random();
-        }
-        for (; buf_cursor < buf_len; buf_cursor += 1) {
-            *(buf + buf_cursor) = random() % UINT8_MAX;
-        }
-    } while (0);
+	do {
+		__wasi_size_t buf_cursor = 0;
+		for (; (buf_len - buf_cursor) >= 4; buf_cursor += 4) { *((int *)(buf + buf_cursor)) = random(); }
+		for (; buf_cursor < buf_len; buf_cursor += 1) { *(buf + buf_cursor) = random() % UINT8_MAX; }
+	} while (0);
 
-    return __WASI_ERRNO_SUCCESS;
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -1113,8 +1235,10 @@ NO_UDEV:
  *
  * @return __WASI_ERRNO_SUCCESS
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_sched_yield(void* wasi_context) {
-    return __WASI_ERRNO_SUCCESS;
+__wasi_errno_t
+wasi_snapshot_preview1_backing_sched_yield(void *wasi_context)
+{
+	return __WASI_ERRNO_SUCCESS;
 }
 
 /**
@@ -1130,11 +1254,12 @@ __wasi_errno_t wasi_snapshot_preview1_backing_sched_yield(void* wasi_context) {
  * @param message_nbytes_retptr Number of bytes stored in message flags.
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_sock_recv(void* wasi_context, __wasi_fd_t fd,
-                                                        const __wasi_iovec_t* ri_data, size_t ri_data_len,
-                                                        __wasi_riflags_t ri_flags, __wasi_size_t* ri_data_nbytes_retptr,
-                                                        __wasi_roflags_t* message_nbytes_retptr) {
-    return wasi_unsupported_syscall(__func__);
+__wasi_errno_t
+wasi_snapshot_preview1_backing_sock_recv(void *wasi_context, __wasi_fd_t fd, const __wasi_iovec_t *ri_data,
+                                         size_t ri_data_len, __wasi_riflags_t ri_flags,
+                                         __wasi_size_t *ri_data_nbytes_retptr, __wasi_roflags_t *message_nbytes_retptr)
+{
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -1150,9 +1275,10 @@ __wasi_errno_t wasi_snapshot_preview1_backing_sock_recv(void* wasi_context, __wa
  * @return status code
  */
 __wasi_errno_t
-wasi_snapshot_preview1_backing_sock_send(void* wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t* si_data,
-                                         size_t si_data_len, __wasi_siflags_t si_flags, __wasi_size_t* nsent_retptr) {
-    return wasi_unsupported_syscall(__func__);
+wasi_snapshot_preview1_backing_sock_send(void *wasi_context, __wasi_fd_t fd, const __wasi_ciovec_t *si_data,
+                                         size_t si_data_len, __wasi_siflags_t si_flags, __wasi_size_t *nsent_retptr)
+{
+	return wasi_unsupported_syscall(__func__);
 }
 
 /**
@@ -1162,7 +1288,9 @@ wasi_snapshot_preview1_backing_sock_send(void* wasi_context, __wasi_fd_t fd, con
  * @param how Which channels on the socket to shut down.
  * @return status code
  */
-__wasi_errno_t wasi_snapshot_preview1_backing_sock_shutdown(void* wasi_context, __wasi_fd_t fd, __wasi_sdflags_t how) {
-    /* similar to `shutdown` in POSIX. */
-    return wasi_unsupported_syscall(__func__);
+__wasi_errno_t
+wasi_snapshot_preview1_backing_sock_shutdown(void *wasi_context, __wasi_fd_t fd, __wasi_sdflags_t how)
+{
+	/* similar to `shutdown` in POSIX. */
+	return wasi_unsupported_syscall(__func__);
 }

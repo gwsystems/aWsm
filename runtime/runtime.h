@@ -15,16 +15,16 @@
 #include <assert.h>
 #define awsm_assert assert
 #else
-int printf_(const char* format, ...);
-#define awsm_assert(x)             \
-    do {                           \
-        if (!(x)) {                \
-            char msg[] = "" #x ""; \
-            printf_("%s\n", msg);  \
-            while (1)              \
-                ;                  \
-        }                          \
-    } while (0);
+int printf_(const char *format, ...);
+#define awsm_assert(x)                         \
+	do {                                   \
+		if (!(x)) {                    \
+			char msg[] = "" #x ""; \
+			printf_("%s\n", msg);  \
+			while (1)              \
+				;              \
+		}                              \
+	} while (0);
 #endif
 
 // Type alias's so I don't have to write uint32_t a million times
@@ -60,10 +60,10 @@ typedef unsigned long long u64;
 
 #define CORTEX_M
 
-void*  memcpy(void* dest, const void* src, size_t len);
-void*  memset(void* s, int c, size_t n);
-char*  strcpy(char* dest, const char* src);
-size_t strlen(const char* str);
+void  *memcpy(void *dest, const void *src, size_t len);
+void  *memset(void *s, int c, size_t n);
+char  *strcpy(char *dest, const char *src);
+size_t strlen(const char *str);
 
 double trunc(double x);
 float  truncf(float x);
@@ -108,14 +108,14 @@ void populate_table();
 void populate_globals();
 
 // memory/* provides these memory functions
-extern void* memory;
+extern void *memory;
 extern u32   memory_size;
 extern u32   runtime_heap_base;
 
 void         alloc_linear_memory();
 void         expand_memory();
 INLINE void  check_bounds(u32 offset, u32 bounds_check);
-INLINE char* get_memory_ptr_for_runtime(u32 offset, u32 bounds_check);
+INLINE char *get_memory_ptr_for_runtime(u32 offset, u32 bounds_check);
 
 INLINE i8   get_i8(u32 offset);
 INLINE i16  get_i16(u32 offset);
@@ -134,22 +134,24 @@ INLINE void   set_f64(u32 offset, double);
 i32 instruction_memory_size();
 i32 instruction_memory_grow();
 
-static inline void* get_memory_ptr_void(u32 offset, u32 bounds_check) {
-    return (void*)get_memory_ptr_for_runtime(offset, bounds_check);
+static inline void *
+get_memory_ptr_void(u32 offset, u32 bounds_check)
+{
+	return (void *)get_memory_ptr_for_runtime(offset, bounds_check);
 }
 
-static inline char* get_memory_string(u32 offset) {
-    char* naive_ptr = get_memory_ptr_for_runtime(offset, 1);
-    int   i         = 0;
-    while (1) {
-        // Keep bounds checking the waters over and over until we know it's safe (we find a terminating
-        // character)
-        char ith_element = get_memory_ptr_for_runtime(offset, i + 1)[i];
-        if (ith_element == '\0') {
-            return naive_ptr;
-        }
-        i++;
-    }
+static inline char *
+get_memory_string(u32 offset)
+{
+	char *naive_ptr = get_memory_ptr_for_runtime(offset, 1);
+	int   i         = 0;
+	while (1) {
+		// Keep bounds checking the waters over and over until we know it's safe (we find a terminating
+		// character)
+		char ith_element = get_memory_ptr_for_runtime(offset, i + 1)[i];
+		if (ith_element == '\0') { return naive_ptr; }
+		i++;
+	}
 }
 
 u32 allocate_n_bytes(u32 n);
@@ -159,19 +161,19 @@ u32 allocate_n_bytes(u32 n);
 #define INDIRECT_TABLE_SIZE 1024
 
 struct indirect_table_entry {
-    u32   type_id;
-    void* func_pointer;
+	u32   type_id;
+	void *func_pointer;
 };
 
 extern struct indirect_table_entry indirect_table[INDIRECT_TABLE_SIZE];
 
-INLINE char* get_function_from_table(u32 idx, u32 type_id);
+INLINE char *get_function_from_table(u32 idx, u32 type_id);
 
 // libc/* might need to do some setup for the libc setup
 void stub_init();
 
 // The runtime entrypoint must be called
-int runtime_main(int argc, char** argv);
+int runtime_main(int argc, char **argv);
 
 void runtime_init();
 
@@ -181,13 +183,13 @@ typedef void (*init_tbl_fn_t)(void);
 typedef int32_t (*entrypoint_fn_t)(void);
 
 struct dylib_handler {
-    void*             handle;
-    char*             app_path;
-    init_globals_fn_t initialize_globals;
-    init_mem_fn_t     initialize_memory;
-    init_tbl_fn_t     initialize_tables;
-    entrypoint_fn_t   entrypoint;
-    uint32_t*         starting_pages;
-    uint32_t*         max_pages;
-    uint32_t*         globals_len;
+	void	     *handle;
+	char	     *app_path;
+	init_globals_fn_t initialize_globals;
+	init_mem_fn_t     initialize_memory;
+	init_tbl_fn_t     initialize_tables;
+	entrypoint_fn_t   entrypoint;
+	uint32_t         *starting_pages;
+	uint32_t         *max_pages;
+	uint32_t         *globals_len;
 };

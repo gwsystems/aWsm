@@ -6,10 +6,14 @@
 
 IMPORT int imported_function(int arg);
 
-EXPORT int exported_function(int arg, uint64_t arg2, int arg3) {
-    return arg + arg2 + arg3;
+EXPORT int
+exported_function(int arg, uint64_t arg2, int arg3)
+{
+	return arg + arg2 + arg3;
 }
 
-void _start() {
-    printf("Hello %s", "World!");
+void
+_start()
+{
+	printf("Hello %s", "World!");
 }

@@ -12,93 +12,99 @@ WEAK u32 wasmg___heap_base = 0;
 u32      runtime_heap_base;
 
 // If a function is registered using the (start) instruction, call it
-WEAK void start_fn() {}
-WEAK void wasmf__start() {}
+WEAK void
+start_fn()
+{
+}
+WEAK void
+wasmf__start()
+{
+}
 
 extern struct dylib_handler so_handler;
 u32                         starting_pages, max_pages;
 
-static inline int dylib_handler_init(struct dylib_handler* handler, const char* path) {
-    awsm_assert(handler != NULL);
+static inline int
+dylib_handler_init(struct dylib_handler *handler, const char *path)
+{
+	awsm_assert(handler != NULL);
 
-    int rc = 0;
+	int rc = 0;
 
-    handler->handle = dlopen(path, RTLD_LAZY | RTLD_DEEPBIND);
-    if (handler->handle == NULL) {
-        fprintf(stderr, "Failed to open %s with error: %s\n", path, dlerror());
-        fprintf(stderr, "Either provide a \"lib.so\" file in the same dir "
-                        "or provide a path such as: SO_PATH=./app_name.so\n");
-        goto dl_open_error;
-    }
+	handler->handle = dlopen(path, RTLD_LAZY | RTLD_DEEPBIND);
+	if (handler->handle == NULL) {
+		fprintf(stderr, "Failed to open %s with error: %s\n", path, dlerror());
+		fprintf(stderr, "Either provide a \"lib.so\" file in the same dir "
+		                "or provide a path such as: SO_PATH=./app_name.so\n");
+		goto dl_open_error;
+	}
 
-    /* Resolve the symbols in the dynamic library *.so file */
-    handler->entrypoint = (entrypoint_fn_t)dlsym(handler->handle, "wasmf__start");
-    if (handler->entrypoint == NULL) {
-        fprintf(stderr, "Failed to resolve symbol %s in %s with error: %s\n", "wasmf__start", path, dlerror());
-        goto dl_error;
-    }
+	/* Resolve the symbols in the dynamic library *.so file */
+	handler->entrypoint = (entrypoint_fn_t)dlsym(handler->handle, "wasmf__start");
+	if (handler->entrypoint == NULL) {
+		fprintf(stderr, "Failed to resolve symbol %s in %s with error: %s\n", "wasmf__start", path, dlerror());
+		goto dl_error;
+	}
 
-    /*
-     * This symbol may or may not be present depending on whether the aWsm was
-     * run with the --runtime-globals flag. It is not clear what the proper
-     * configuration would be for SLEdge, so no validation is performed
-     */
-    handler->initialize_globals = (init_globals_fn_t)dlsym(handler->handle, "populate_globals");
+	/*
+	 * This symbol may or may not be present depending on whether the aWsm was
+	 * run with the --runtime-globals flag. It is not clear what the proper
+	 * configuration would be for SLEdge, so no validation is performed
+	 */
+	handler->initialize_globals = (init_globals_fn_t)dlsym(handler->handle, "populate_globals");
 
-    handler->initialize_memory = (init_mem_fn_t)dlsym(handler->handle, "populate_memory");
-    if (handler->initialize_memory == NULL) {
-        fprintf(stderr, "Failed to resolve symbol %s in %s with error: %s\n", "populate_memory", path, dlerror());
-        goto dl_error;
-    }
+	handler->initialize_memory = (init_mem_fn_t)dlsym(handler->handle, "populate_memory");
+	if (handler->initialize_memory == NULL) {
+		fprintf(stderr, "Failed to resolve symbol %s in %s with error: %s\n", "populate_memory", path,
+		        dlerror());
+		goto dl_error;
+	}
 
-    handler->initialize_tables = (init_tbl_fn_t)dlsym(handler->handle, "populate_table");
-    if (handler->initialize_tables == NULL) {
-        fprintf(stderr, "Failed to resolve symbol %s in %s with error: %s\n", "populate_table", path, dlerror());
-        goto dl_error;
-    }
+	handler->initialize_tables = (init_tbl_fn_t)dlsym(handler->handle, "populate_table");
+	if (handler->initialize_tables == NULL) {
+		fprintf(stderr, "Failed to resolve symbol %s in %s with error: %s\n", "populate_table", path,
+		        dlerror());
+		goto dl_error;
+	}
 
-    handler->starting_pages = dlsym(handler->handle, "starting_pages");
-    handler->max_pages      = dlsym(handler->handle, "max_pages");
-    handler->globals_len    = dlsym(handler->handle, "globals_len");
+	handler->starting_pages = dlsym(handler->handle, "starting_pages");
+	handler->max_pages      = dlsym(handler->handle, "max_pages");
+	handler->globals_len    = dlsym(handler->handle, "globals_len");
 done:
-    return rc;
+	return rc;
 dl_error:
-    dlclose(handler->handle);
+	dlclose(handler->handle);
 dl_open_error:
-    rc = -1;
-    goto done;
+	rc = -1;
+	goto done;
 }
 
-void runtime_init() {
-    char* dl_path = getenv("SO_PATH");
-    if (dl_path == NULL) {
-        /* If no explicit path is provided, then look for lib.so in the same folder */
-        dl_path = "./lib.so";
-    }
+void
+runtime_init()
+{
+	char *dl_path = getenv("SO_PATH");
+	if (dl_path == NULL) {
+		/* If no explicit path is provided, then look for lib.so in the same folder */
+		dl_path = "./lib.so";
+	}
 
-    int ret = dylib_handler_init(&so_handler, dl_path);
-    if (ret != 0)
-        exit(ret);
+	int ret = dylib_handler_init(&so_handler, dl_path);
+	if (ret != 0) exit(ret);
 
-    starting_pages = *so_handler.starting_pages;
-    max_pages      = *so_handler.max_pages;
+	starting_pages = *so_handler.starting_pages;
+	max_pages      = *so_handler.max_pages;
 
-    if (likely(starting_pages > 0)) {
-        alloc_linear_memory();
-    }
+	if (likely(starting_pages > 0)) { alloc_linear_memory(); }
 
-    so_handler.initialize_tables();
-    if (so_handler.initialize_globals)
-        so_handler.initialize_globals();
-    so_handler.initialize_memory();
+	so_handler.initialize_tables();
+	if (so_handler.initialize_globals) so_handler.initialize_globals();
+	so_handler.initialize_memory();
 
-    int rc = fesetround(FE_TONEAREST);
-    awsm_assert(rc == 0);
+	int rc = fesetround(FE_TONEAREST);
+	awsm_assert(rc == 0);
 
-    runtime_heap_base = wasmg___heap_base;
-    if (runtime_heap_base == 0) {
-        runtime_heap_base = memory_size;
-    }
+	runtime_heap_base = wasmg___heap_base;
+	if (runtime_heap_base == 0) { runtime_heap_base = memory_size; }
 
-    start_fn();
+	start_fn();
 }

@@ -1,8 +1,10 @@
 #include <stdio.h>
 
-void print_str(char* str);
+void print_str(char *str);
 
-int main() {
-    print_str("Hello World!\n");
-    return 0;
+int
+main()
+{
+	print_str("Hello World!\n");
+	return 0;
 }

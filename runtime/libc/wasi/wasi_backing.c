@@ -7,9 +7,9 @@
  * 3. Include the wasi_backing.h header
  */
 
-extern void*    memory;
+extern void    *memory;
 extern uint32_t memory_size;
-extern void*    current_wasi_context;
+extern void    *current_wasi_context;
 
 #define CURRENT_MEMORY_BASE  memory
 #define CURRENT_MEMORY_SIZE  memory_size

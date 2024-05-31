@@ -1,3 +1,5 @@
-int main() {
-    return sizeof(long double);
+int
+main()
+{
+	return sizeof(long double);
 }

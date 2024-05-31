@@ -19,43 +19,47 @@
 
 IMPORT i32 wasmf_main(i32 a, i32 b);
 
-u32 allocate_n_bytes(u32 n) {
-    awsm_assert(memory_size > 0);
-    u32 res = runtime_heap_base;
-    runtime_heap_base += n;
-    while (memory_size < runtime_heap_base) {
-        expand_memory();
-    }
-    printf("rhb %d\n", runtime_heap_base);
-    return res;
+u32
+allocate_n_bytes(u32 n)
+{
+	awsm_assert(memory_size > 0);
+	u32 res = runtime_heap_base;
+	runtime_heap_base += n;
+	while (memory_size < runtime_heap_base) { expand_memory(); }
+	printf("rhb %d\n", runtime_heap_base);
+	return res;
 }
 
-int runtime_main(int argc, char** argv) {
-    runtime_init();
+int
+runtime_main(int argc, char **argv)
+{
+	runtime_init();
 
-    u32  array_offset = allocate_n_bytes(argc * sizeof(i32));
-    u32* array_ptr    = get_memory_ptr_void(array_offset, argc * sizeof(i32));
-    for (int i = 0; i < argc; i++) {
-        size_t str_size   = strlen(argv[i]) + 1;
-        u32    str_offset = allocate_n_bytes(str_size);
-        char*  str_ptr    = get_memory_ptr_for_runtime(str_offset, str_size);
-        strcpy(str_ptr, argv[i]);
-        array_ptr[i] = str_offset;
-    }
+	u32  array_offset = allocate_n_bytes(argc * sizeof(i32));
+	u32 *array_ptr    = get_memory_ptr_void(array_offset, argc * sizeof(i32));
+	for (int i = 0; i < argc; i++) {
+		size_t str_size   = strlen(argv[i]) + 1;
+		u32    str_offset = allocate_n_bytes(str_size);
+		char  *str_ptr    = get_memory_ptr_for_runtime(str_offset, str_size);
+		strcpy(str_ptr, argv[i]);
+		array_ptr[i] = str_offset;
+	}
 
-    stub_init();
+	stub_init();
 
-    switch_out_of_runtime();
-    int ret = wasmf_main(argc, array_offset);
-    switch_into_runtime();
+	switch_out_of_runtime();
+	int ret = wasmf_main(argc, array_offset);
+	switch_into_runtime();
 
-    return ret;
+	return ret;
 }
 
-int main(int argc, char* argv[]) {
-    int rc = runtime_main(argc, argv);
-    printf("mem use = %d\n", (int)memory_size);
-    return rc;
+int
+main(int argc, char *argv[])
+{
+	int rc = runtime_main(argc, argv);
+	printf("mem use = %d\n", (int)memory_size);
+	return rc;
 }
 
 // What should we tell the child program its UID and GID are?
@@ -84,71 +88,77 @@ int main(int argc, char* argv[]) {
 #define AT_RANDOM        25
 
 // The symbol the binary gives us to init libc
-WEAK void wasmf___init_libc(i32 envp, i32 pn) {
-    return;
+WEAK void
+wasmf___init_libc(i32 envp, i32 pn)
+{
+	return;
 };
 
-void stub_init() {
-    // What program name will we put in the auxiliary vectors
-    char program_name[] = "wasm_program";
-    // Copy the program name into WASM accessible memory
-    u32 program_name_offset = allocate_n_bytes(sizeof(program_name));
-    strcpy(get_memory_ptr_for_runtime(program_name_offset, sizeof(program_name)), program_name);
+void
+stub_init()
+{
+	// What program name will we put in the auxiliary vectors
+	char program_name[] = "wasm_program";
+	// Copy the program name into WASM accessible memory
+	u32 program_name_offset = allocate_n_bytes(sizeof(program_name));
+	strcpy(get_memory_ptr_for_runtime(program_name_offset, sizeof(program_name)), program_name);
 
-    // The construction of this is:
-    // evn1, env2, ..., NULL, auxv_n1, auxv_1, auxv_n2, auxv_2 ..., NULL
-    i32 env_vec[] = {
-        // Env variables would live here, but we don't supply any
-        0,
-        // We supply only the bare minimum AUX vectors
-        AT_PAGESZ,
-        128,
-        AT_UID,
-        UID,
-        AT_EUID,
-        UID,
-        AT_GID,
-        GID,
-        AT_EGID,
-        GID,
-        AT_SECURE,
-        0,
-        AT_RANDOM,
-        (i32)rand(), // It's pretty stupid to use rand here, but w/e
-        0,
-    };
-    u32 env_vec_offset = allocate_n_bytes(sizeof(env_vec));
-    memcpy(get_memory_ptr_for_runtime(env_vec_offset, sizeof(env_vec)), env_vec, sizeof(env_vec));
+	// The construction of this is:
+	// evn1, env2, ..., NULL, auxv_n1, auxv_1, auxv_n2, auxv_2 ..., NULL
+	i32 env_vec[] = {
+	  // Env variables would live here, but we don't supply any
+	  0,
+	  // We supply only the bare minimum AUX vectors
+	  AT_PAGESZ,
+	  128,
+	  AT_UID,
+	  UID,
+	  AT_EUID,
+	  UID,
+	  AT_GID,
+	  GID,
+	  AT_EGID,
+	  GID,
+	  AT_SECURE,
+	  0,
+	  AT_RANDOM,
+	  (i32)rand(), // It's pretty stupid to use rand here, but w/e
+	  0,
+	};
+	u32 env_vec_offset = allocate_n_bytes(sizeof(env_vec));
+	memcpy(get_memory_ptr_for_runtime(env_vec_offset, sizeof(env_vec)), env_vec, sizeof(env_vec));
 
-    switch_out_of_runtime();
-    wasmf___init_libc(env_vec_offset, program_name_offset);
-    switch_into_runtime();
+	switch_out_of_runtime();
+	wasmf___init_libc(env_vec_offset, program_name_offset);
+	switch_into_runtime();
 }
 
 // Emulated syscall implementations
 
 // We define our own syscall numbers, because WASM uses x86_64 values even on systems that are not x86_64
 #define SYS_READ 0
-u32 wasm_read(i32 filedes, i32 buf_offset, i32 nbyte) {
-    char* buf = get_memory_ptr_void(buf_offset, nbyte);
-    i32   res = (i32)read(filedes, buf, nbyte);
+u32
+wasm_read(i32 filedes, i32 buf_offset, i32 nbyte)
+{
+	char *buf = get_memory_ptr_void(buf_offset, nbyte);
+	i32   res = (i32)read(filedes, buf, nbyte);
 
-    if (res == -1) {
-        return -errno;
-    } else {
-        return res;
-    }
+	if (res == -1) {
+		return -errno;
+	} else {
+		return res;
+	}
 }
 
 #define SYS_WRITE 1
-i32 wasm_write(i32 fd, i32 buf_offset, i32 buf_size) {
-    char* buf = get_memory_ptr_void(buf_offset, buf_size);
-    i32   res = (i32)write(fd, buf, buf_size);
+i32
+wasm_write(i32 fd, i32 buf_offset, i32 buf_size)
+{
+	char *buf = get_memory_ptr_void(buf_offset, buf_size);
+	i32   res = (i32)write(fd, buf, buf_size);
 
-    if (res == -1) {
-        return -errno;
-    }
-    return res;
+	if (res == -1) { return -errno; }
+	return res;
 }
 
 #define WO_RDONLY    00
@@ -169,87 +179,87 @@ i32 wasm_write(i32 fd, i32 buf_offset, i32 buf_size) {
 
 
 #define SYS_OPEN 2
-i32 wasm_open(i32 path_off, i32 flags, i32 mode) {
-    char* path = get_memory_string(path_off);
+i32
+wasm_open(i32 path_off, i32 flags, i32 mode)
+{
+	char *path = get_memory_string(path_off);
 
-    i32 modified_flags = 0;
+	i32 modified_flags = 0;
 
-    if (flags & WO_RDONLY) {
-        modified_flags |= O_RDONLY;
-        flags ^= WO_RDONLY;
-    }
+	if (flags & WO_RDONLY) {
+		modified_flags |= O_RDONLY;
+		flags ^= WO_RDONLY;
+	}
 
-    if (flags & WO_WRONLY) {
-        modified_flags |= O_WRONLY;
-        flags ^= WO_WRONLY;
-    }
+	if (flags & WO_WRONLY) {
+		modified_flags |= O_WRONLY;
+		flags ^= WO_WRONLY;
+	}
 
-    if (flags & WO_RDWR) {
-        modified_flags |= O_RDWR;
-        flags ^= WO_RDWR;
-    }
+	if (flags & WO_RDWR) {
+		modified_flags |= O_RDWR;
+		flags ^= WO_RDWR;
+	}
 
-    if (flags & WO_APPEND) {
-        modified_flags |= O_APPEND;
-        flags ^= WO_APPEND;
-    }
+	if (flags & WO_APPEND) {
+		modified_flags |= O_APPEND;
+		flags ^= WO_APPEND;
+	}
 
-    if (flags & WO_CREAT) {
-        modified_flags |= O_CREAT;
-        flags ^= WO_CREAT;
-    }
+	if (flags & WO_CREAT) {
+		modified_flags |= O_CREAT;
+		flags ^= WO_CREAT;
+	}
 
-    if (flags & WO_EXCL) {
-        modified_flags |= O_EXCL;
-        flags ^= WO_EXCL;
-    }
+	if (flags & WO_EXCL) {
+		modified_flags |= O_EXCL;
+		flags ^= WO_EXCL;
+	}
 
-    i32 res = (i32)open(path, modified_flags, mode);
+	i32 res = (i32)open(path, modified_flags, mode);
 
-    if (res == -1) {
-        return -errno;
-    }
-    return res;
+	if (res == -1) { return -errno; }
+	return res;
 }
 
 #define SYS_CLOSE 3
-i32 wasm_close(i32 fd) {
-    i32 res = (i32)close(fd);
+i32
+wasm_close(i32 fd)
+{
+	i32 res = (i32)close(fd);
 
-    if (res == -1) {
-        return -errno;
-    }
-    return res;
+	if (res == -1) { return -errno; }
+	return res;
 }
 
 // What the wasm stat structure looks like
 struct wasm_stat {
-    i64 st_dev;
-    u64 st_ino;
-    u32 st_nlink;
+	i64 st_dev;
+	u64 st_ino;
+	u32 st_nlink;
 
-    u32 st_mode;
-    u32 st_uid;
-    u32 st_gid;
-    u32 __pad0;
-    u64 st_rdev;
-    u64 st_size;
-    i32 st_blksize;
-    i64 st_blocks;
+	u32 st_mode;
+	u32 st_uid;
+	u32 st_gid;
+	u32 __pad0;
+	u64 st_rdev;
+	u64 st_size;
+	i32 st_blksize;
+	i64 st_blocks;
 
-    struct {
-        i32 tv_sec;
-        i32 tv_nsec;
-    } st_atim;
-    struct {
-        i32 tv_sec;
-        i32 tv_nsec;
-    } st_mtim;
-    struct {
-        i32 tv_sec;
-        i32 tv_nsec;
-    } st_ctim;
-    i32 __pad1[3];
+	struct {
+		i32 tv_sec;
+		i32 tv_nsec;
+	} st_atim;
+	struct {
+		i32 tv_sec;
+		i32 tv_nsec;
+	} st_mtim;
+	struct {
+		i32 tv_sec;
+		i32 tv_nsec;
+	} st_ctim;
+	i32 __pad1[3];
 };
 
 #define SYS_STAT 4
@@ -272,175 +282,183 @@ struct wasm_stat {
 //         u_long   st_gen;    /* file generation number */
 //     };
 
-i32 wasm_stat(u32 path_str_offset, i32 stat_offset) {
-    char*             path     = get_memory_string(path_str_offset);
-    struct wasm_stat* stat_ptr = get_memory_ptr_void(stat_offset, sizeof(struct wasm_stat));
+i32
+wasm_stat(u32 path_str_offset, i32 stat_offset)
+{
+	char	     *path     = get_memory_string(path_str_offset);
+	struct wasm_stat *stat_ptr = get_memory_ptr_void(stat_offset, sizeof(struct wasm_stat));
 
-    struct stat stat;
-    i32         res = lstat(path, &stat);
+	struct stat stat;
+	i32         res = lstat(path, &stat);
 
-    if (res == 0) {
-        *stat_ptr = (struct wasm_stat){
-            .st_dev     = stat.st_dev,
-            .st_ino     = stat.st_ino,
-            .st_nlink   = stat.st_nlink,
-            .st_mode    = stat.st_mode,
-            .st_uid     = stat.st_uid,
-            .st_gid     = stat.st_gid,
-            .st_rdev    = stat.st_rdev,
-            .st_size    = stat.st_size,
-            .st_blksize = stat.st_blksize,
-            .st_blocks  = stat.st_blocks,
-        };
+	if (res == 0) {
+		*stat_ptr = (struct wasm_stat){
+		  .st_dev     = stat.st_dev,
+		  .st_ino     = stat.st_ino,
+		  .st_nlink   = stat.st_nlink,
+		  .st_mode    = stat.st_mode,
+		  .st_uid     = stat.st_uid,
+		  .st_gid     = stat.st_gid,
+		  .st_rdev    = stat.st_rdev,
+		  .st_size    = stat.st_size,
+		  .st_blksize = stat.st_blksize,
+		  .st_blocks  = stat.st_blocks,
+		};
 #ifdef __APPLE__
-        stat_ptr->st_atim.tv_sec  = stat.st_atimespec.tv_sec;
-        stat_ptr->st_atim.tv_nsec = stat.st_atimespec.tv_nsec;
+		stat_ptr->st_atim.tv_sec  = stat.st_atimespec.tv_sec;
+		stat_ptr->st_atim.tv_nsec = stat.st_atimespec.tv_nsec;
 
-        stat_ptr->st_mtim.tv_sec  = stat.st_mtimespec.tv_sec;
-        stat_ptr->st_mtim.tv_nsec = stat.st_mtimespec.tv_nsec;
+		stat_ptr->st_mtim.tv_sec  = stat.st_mtimespec.tv_sec;
+		stat_ptr->st_mtim.tv_nsec = stat.st_mtimespec.tv_nsec;
 
-        stat_ptr->st_ctim.tv_sec  = stat.st_ctimespec.tv_sec;
-        stat_ptr->st_ctim.tv_nsec = stat.st_ctimespec.tv_nsec;
+		stat_ptr->st_ctim.tv_sec  = stat.st_ctimespec.tv_sec;
+		stat_ptr->st_ctim.tv_nsec = stat.st_ctimespec.tv_nsec;
 #else
-        stat_ptr->st_atim.tv_sec  = stat.st_atim.tv_sec;
-        stat_ptr->st_atim.tv_nsec = stat.st_atim.tv_nsec;
+		stat_ptr->st_atim.tv_sec  = stat.st_atim.tv_sec;
+		stat_ptr->st_atim.tv_nsec = stat.st_atim.tv_nsec;
 
-        stat_ptr->st_mtim.tv_sec  = stat.st_mtim.tv_sec;
-        stat_ptr->st_mtim.tv_nsec = stat.st_mtim.tv_nsec;
+		stat_ptr->st_mtim.tv_sec  = stat.st_mtim.tv_sec;
+		stat_ptr->st_mtim.tv_nsec = stat.st_mtim.tv_nsec;
 
-        stat_ptr->st_ctim.tv_sec  = stat.st_ctim.tv_sec;
-        stat_ptr->st_ctim.tv_nsec = stat.st_ctim.tv_nsec;
+		stat_ptr->st_ctim.tv_sec  = stat.st_ctim.tv_sec;
+		stat_ptr->st_ctim.tv_nsec = stat.st_ctim.tv_nsec;
 #endif
-    } else if (res == -1) {
-        return -errno;
-    }
-    return res;
+	} else if (res == -1) {
+		return -errno;
+	}
+	return res;
 }
 
 #define SYS_FSTAT 5
-i32 wasm_fstat(i32 filedes, i32 stat_offset) {
-    struct wasm_stat* stat_ptr = get_memory_ptr_void(stat_offset, sizeof(struct wasm_stat));
+i32
+wasm_fstat(i32 filedes, i32 stat_offset)
+{
+	struct wasm_stat *stat_ptr = get_memory_ptr_void(stat_offset, sizeof(struct wasm_stat));
 
-    struct stat stat;
-    i32         res = fstat(filedes, &stat);
+	struct stat stat;
+	i32         res = fstat(filedes, &stat);
 
-    if (res == 0) {
-        *stat_ptr = (struct wasm_stat){
-            .st_dev     = stat.st_dev,
-            .st_ino     = stat.st_ino,
-            .st_nlink   = stat.st_nlink,
-            .st_mode    = stat.st_mode,
-            .st_uid     = stat.st_uid,
-            .st_gid     = stat.st_gid,
-            .st_rdev    = stat.st_rdev,
-            .st_size    = stat.st_size,
-            .st_blksize = stat.st_blksize,
-            .st_blocks  = stat.st_blocks,
-        };
+	if (res == 0) {
+		*stat_ptr = (struct wasm_stat){
+		  .st_dev     = stat.st_dev,
+		  .st_ino     = stat.st_ino,
+		  .st_nlink   = stat.st_nlink,
+		  .st_mode    = stat.st_mode,
+		  .st_uid     = stat.st_uid,
+		  .st_gid     = stat.st_gid,
+		  .st_rdev    = stat.st_rdev,
+		  .st_size    = stat.st_size,
+		  .st_blksize = stat.st_blksize,
+		  .st_blocks  = stat.st_blocks,
+		};
 #ifdef __APPLE__
-        stat_ptr->st_atim.tv_sec  = stat.st_atimespec.tv_sec;
-        stat_ptr->st_atim.tv_nsec = stat.st_atimespec.tv_nsec;
+		stat_ptr->st_atim.tv_sec  = stat.st_atimespec.tv_sec;
+		stat_ptr->st_atim.tv_nsec = stat.st_atimespec.tv_nsec;
 
-        stat_ptr->st_mtim.tv_sec  = stat.st_mtimespec.tv_sec;
-        stat_ptr->st_mtim.tv_nsec = stat.st_mtimespec.tv_nsec;
+		stat_ptr->st_mtim.tv_sec  = stat.st_mtimespec.tv_sec;
+		stat_ptr->st_mtim.tv_nsec = stat.st_mtimespec.tv_nsec;
 
-        stat_ptr->st_ctim.tv_sec  = stat.st_ctimespec.tv_sec;
-        stat_ptr->st_ctim.tv_nsec = stat.st_ctimespec.tv_nsec;
+		stat_ptr->st_ctim.tv_sec  = stat.st_ctimespec.tv_sec;
+		stat_ptr->st_ctim.tv_nsec = stat.st_ctimespec.tv_nsec;
 #else
-        stat_ptr->st_atim.tv_sec  = stat.st_atim.tv_sec;
-        stat_ptr->st_atim.tv_nsec = stat.st_atim.tv_nsec;
+		stat_ptr->st_atim.tv_sec  = stat.st_atim.tv_sec;
+		stat_ptr->st_atim.tv_nsec = stat.st_atim.tv_nsec;
 
-        stat_ptr->st_mtim.tv_sec  = stat.st_mtim.tv_sec;
-        stat_ptr->st_mtim.tv_nsec = stat.st_mtim.tv_nsec;
+		stat_ptr->st_mtim.tv_sec  = stat.st_mtim.tv_sec;
+		stat_ptr->st_mtim.tv_nsec = stat.st_mtim.tv_nsec;
 
-        stat_ptr->st_ctim.tv_sec  = stat.st_ctim.tv_sec;
-        stat_ptr->st_ctim.tv_nsec = stat.st_ctim.tv_nsec;
+		stat_ptr->st_ctim.tv_sec  = stat.st_ctim.tv_sec;
+		stat_ptr->st_ctim.tv_nsec = stat.st_ctim.tv_nsec;
 #endif
-    } else if (res == -1) {
-        return -errno;
-    }
-    return res;
+	} else if (res == -1) {
+		return -errno;
+	}
+	return res;
 }
 
 #define SYS_LSTAT 6
-i32 wasm_lstat(i32 path_str_offset, i32 stat_offset) {
-    char*             path     = get_memory_string(path_str_offset);
-    struct wasm_stat* stat_ptr = get_memory_ptr_void(stat_offset, sizeof(struct wasm_stat));
+i32
+wasm_lstat(i32 path_str_offset, i32 stat_offset)
+{
+	char	     *path     = get_memory_string(path_str_offset);
+	struct wasm_stat *stat_ptr = get_memory_ptr_void(stat_offset, sizeof(struct wasm_stat));
 
-    struct stat stat;
-    i32         res = lstat(path, &stat);
+	struct stat stat;
+	i32         res = lstat(path, &stat);
 
-    if (res == 0) {
-        *stat_ptr = (struct wasm_stat){
-            .st_dev     = stat.st_dev,
-            .st_ino     = stat.st_ino,
-            .st_nlink   = stat.st_nlink,
-            .st_mode    = stat.st_mode,
-            .st_uid     = stat.st_uid,
-            .st_gid     = stat.st_gid,
-            .st_rdev    = stat.st_rdev,
-            .st_size    = stat.st_size,
-            .st_blksize = stat.st_blksize,
-            .st_blocks  = stat.st_blocks,
-        };
+	if (res == 0) {
+		*stat_ptr = (struct wasm_stat){
+		  .st_dev     = stat.st_dev,
+		  .st_ino     = stat.st_ino,
+		  .st_nlink   = stat.st_nlink,
+		  .st_mode    = stat.st_mode,
+		  .st_uid     = stat.st_uid,
+		  .st_gid     = stat.st_gid,
+		  .st_rdev    = stat.st_rdev,
+		  .st_size    = stat.st_size,
+		  .st_blksize = stat.st_blksize,
+		  .st_blocks  = stat.st_blocks,
+		};
 #ifdef __APPLE__
-        stat_ptr->st_atim.tv_sec  = stat.st_atimespec.tv_sec;
-        stat_ptr->st_atim.tv_nsec = stat.st_atimespec.tv_nsec;
+		stat_ptr->st_atim.tv_sec  = stat.st_atimespec.tv_sec;
+		stat_ptr->st_atim.tv_nsec = stat.st_atimespec.tv_nsec;
 
-        stat_ptr->st_mtim.tv_sec  = stat.st_mtimespec.tv_sec;
-        stat_ptr->st_mtim.tv_nsec = stat.st_mtimespec.tv_nsec;
+		stat_ptr->st_mtim.tv_sec  = stat.st_mtimespec.tv_sec;
+		stat_ptr->st_mtim.tv_nsec = stat.st_mtimespec.tv_nsec;
 
-        stat_ptr->st_ctim.tv_sec  = stat.st_ctimespec.tv_sec;
-        stat_ptr->st_ctim.tv_nsec = stat.st_ctimespec.tv_nsec;
+		stat_ptr->st_ctim.tv_sec  = stat.st_ctimespec.tv_sec;
+		stat_ptr->st_ctim.tv_nsec = stat.st_ctimespec.tv_nsec;
 #else
-        stat_ptr->st_atim.tv_sec  = stat.st_atim.tv_sec;
-        stat_ptr->st_atim.tv_nsec = stat.st_atim.tv_nsec;
+		stat_ptr->st_atim.tv_sec  = stat.st_atim.tv_sec;
+		stat_ptr->st_atim.tv_nsec = stat.st_atim.tv_nsec;
 
-        stat_ptr->st_mtim.tv_sec  = stat.st_mtim.tv_sec;
-        stat_ptr->st_mtim.tv_nsec = stat.st_mtim.tv_nsec;
+		stat_ptr->st_mtim.tv_sec  = stat.st_mtim.tv_sec;
+		stat_ptr->st_mtim.tv_nsec = stat.st_mtim.tv_nsec;
 
-        stat_ptr->st_ctim.tv_sec  = stat.st_ctim.tv_sec;
-        stat_ptr->st_ctim.tv_nsec = stat.st_ctim.tv_nsec;
+		stat_ptr->st_ctim.tv_sec  = stat.st_ctim.tv_sec;
+		stat_ptr->st_ctim.tv_nsec = stat.st_ctim.tv_nsec;
 #endif
-    } else if (res == -1) {
-        return -errno;
-    }
-    return res;
+	} else if (res == -1) {
+		return -errno;
+	}
+	return res;
 }
 
 
 #define SYS_LSEEK 8
-i32 wasm_lseek(i32 filedes, i32 file_offset, i32 whence) {
-    i32 res = (i32)lseek(filedes, file_offset, whence);
+i32
+wasm_lseek(i32 filedes, i32 file_offset, i32 whence)
+{
+	i32 res = (i32)lseek(filedes, file_offset, whence);
 
-    if (res == -1) {
-        return -errno;
-    }
-    return res;
+	if (res == -1) { return -errno; }
+	return res;
 }
 
 #define SYS_MMAP 9
 
 #define MMAP_GRANULARITY 128
 
-u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
-    if (addr != 0) {
-        printf("parameter void *addr is not supported!\n");
-        awsm_assert(0);
-    }
+u32
+wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset)
+{
+	if (addr != 0) {
+		printf("parameter void *addr is not supported!\n");
+		awsm_assert(0);
+	}
 
-    if (fd != -1) {
-        printf("file mapping is not supported!\n");
-        awsm_assert(0);
-    }
+	if (fd != -1) {
+		printf("file mapping is not supported!\n");
+		awsm_assert(0);
+	}
 
-    awsm_assert(len % MMAP_GRANULARITY == 0);
-    awsm_assert(WASM_PAGE_SIZE % MMAP_GRANULARITY == 0);
+	awsm_assert(len % MMAP_GRANULARITY == 0);
+	awsm_assert(WASM_PAGE_SIZE % MMAP_GRANULARITY == 0);
 
-    printf("allocating %d\n", len);
+	printf("allocating %d\n", len);
 
-    u32 res = allocate_n_bytes(len);
-    return res;
+	u32 res = allocate_n_bytes(len);
+	return res;
 }
 
 #define SYS_MUNMAP 11
@@ -452,65 +470,69 @@ u32 wasm_mmap(i32 addr, i32 len, i32 prot, i32 flags, i32 fd, i32 offset) {
 #define SYS_RT_SIGPROGMASK 14
 
 #define SYS_IOCTL 16
-i32 wasm_ioctl(i32 fd, i32 request, i32 data_offet) {
-    // musl libc does some ioctls to stdout, so just allow these to silently go through
-    // FIXME: The above is idiotic
-    return 0;
+i32
+wasm_ioctl(i32 fd, i32 request, i32 data_offet)
+{
+	// musl libc does some ioctls to stdout, so just allow these to silently go through
+	// FIXME: The above is idiotic
+	return 0;
 }
 
 #define SYS_READV 19
 struct wasm_iovec {
-    i32 base_offset;
-    i32 len;
+	i32 base_offset;
+	i32 len;
 };
 
-i32 wasm_readv(i32 fd, i32 iov_offset, i32 iovcnt) {
-    i32                read = 0;
-    struct wasm_iovec* iov  = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
-    for (int i = 0; i < iovcnt; i++) {
-        read += wasm_read(fd, iov[i].base_offset, iov[i].len);
-    }
-    return read;
+i32
+wasm_readv(i32 fd, i32 iov_offset, i32 iovcnt)
+{
+	i32                read = 0;
+	struct wasm_iovec *iov  = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
+	for (int i = 0; i < iovcnt; i++) { read += wasm_read(fd, iov[i].base_offset, iov[i].len); }
+	return read;
 }
 
 #define SYS_WRITEV 20
-i32 wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt) {
-    struct wasm_iovec* iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
+i32
+wasm_writev(i32 fd, i32 iov_offset, i32 iovcnt)
+{
+	struct wasm_iovec *iov = get_memory_ptr_void(iov_offset, iovcnt * sizeof(struct wasm_iovec));
 
 // If we aren't on MUSL, pass writev to printf if possible
 #if defined(__APPLE__) || defined(__GLIBC__)
-    if (fd == 1) {
-        int sum = 0;
-        for (int i = 0; i < iovcnt; i++) {
-            i32   len = iov[i].len;
-            void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
+	if (fd == 1) {
+		int sum = 0;
+		for (int i = 0; i < iovcnt; i++) {
+			i32   len = iov[i].len;
+			void *ptr = get_memory_ptr_void(iov[i].base_offset, len);
 
-            printf("%.*s", len, (char*)ptr);
-            sum += len;
-        }
-        return sum;
-    }
+			printf("%.*s", len, (char *)ptr);
+			sum += len;
+		}
+		return sum;
+	}
 #endif
 
-    struct iovec vecs[iovcnt];
-    for (int i = 0; i < iovcnt; i++) {
-        i32   len = iov[i].len;
-        void* ptr = get_memory_ptr_void(iov[i].base_offset, len);
-        vecs[i]   = (struct iovec){ ptr, len };
-    }
+	struct iovec vecs[iovcnt];
+	for (int i = 0; i < iovcnt; i++) {
+		i32   len = iov[i].len;
+		void *ptr = get_memory_ptr_void(iov[i].base_offset, len);
+		vecs[i]   = (struct iovec){ptr, len};
+	}
 
-    i32 res = (i32)writev(fd, vecs, iovcnt);
-    if (res == -1) {
-        return -errno;
-    }
-    return res;
+	i32 res = (i32)writev(fd, vecs, iovcnt);
+	if (res == -1) { return -errno; }
+	return res;
 }
 
 #define SYS_MADVISE 28
 
 #define SYS_GETPID 39
-u32 wasm_getpid() {
-    return (u32)getpid();
+u32
+wasm_getpid()
+{
+	return (u32)getpid();
 }
 
 
@@ -530,48 +552,55 @@ u32 wasm_getpid() {
 #define WF_SETLKW 7
 
 #define SYS_FCNTL 72
-u32 wasm_fcntl(u32 fd, u32 cmd, u32 arg_or_lock_ptr) {
-    switch (cmd) {
-        case WF_SETFD:
-            //            return fcntl(fd, F_SETFD, arg_or_lock_ptr);
-            return 0;
-        case WF_SETLK: return 0;
-        default: awsm_assert(0);
-    }
+u32
+wasm_fcntl(u32 fd, u32 cmd, u32 arg_or_lock_ptr)
+{
+	switch (cmd) {
+	case WF_SETFD:
+		//            return fcntl(fd, F_SETFD, arg_or_lock_ptr);
+		return 0;
+	case WF_SETLK:
+		return 0;
+	default:
+		awsm_assert(0);
+	}
 }
 
 #define SYS_FSYNC 74
-u32 wasm_fsync(u32 filedes) {
-    u32 res = fsync(filedes);
-    if (res == -1) {
-        return -errno;
-    }
-    return 0;
+u32
+wasm_fsync(u32 filedes)
+{
+	u32 res = fsync(filedes);
+	if (res == -1) { return -errno; }
+	return 0;
 }
 
 #define SYS_GETCWD 79
-u32 wasm_getcwd(u32 buf_offset, u32 buf_size) {
-    char* buf = get_memory_ptr_void(buf_offset, buf_size);
-    char* res = getcwd(buf, buf_size);
+u32
+wasm_getcwd(u32 buf_offset, u32 buf_size)
+{
+	char *buf = get_memory_ptr_void(buf_offset, buf_size);
+	char *res = getcwd(buf, buf_size);
 
-    if (!res)
-        return 0;
-    return buf_offset;
+	if (!res) return 0;
+	return buf_offset;
 }
 
 #define SYS_UNLINK 87
-u32 wasm_unlink(u32 path_str_offset) {
-    char* str = get_memory_string(path_str_offset);
-    u32   res = unlink(str);
-    if (res == -1) {
-        return -errno;
-    }
-    return 0;
+u32
+wasm_unlink(u32 path_str_offset)
+{
+	char *str = get_memory_string(path_str_offset);
+	u32   res = unlink(str);
+	if (res == -1) { return -errno; }
+	return 0;
 }
 
 #define SYS_GETEUID 107
-u32 wasm_geteuid() {
-    return (u32)geteuid();
+u32
+wasm_geteuid()
+{
+	return (u32)geteuid();
 }
 
 #define SYS_SET_THREAD_AREA 205
@@ -580,96 +609,144 @@ u32 wasm_geteuid() {
 
 #define SYS_GET_TIME 228
 struct wasm_time_spec {
-    u64 sec;
-    u32 nanosec;
+	u64 sec;
+	u32 nanosec;
 };
 
-i32 wasm_get_time(i32 clock_id, i32 timespec_off) {
-    clockid_t real_clock;
-    switch (clock_id) {
-        case 0: real_clock = CLOCK_REALTIME; break;
-        case 1: real_clock = CLOCK_MONOTONIC; break;
-        case 2: real_clock = CLOCK_PROCESS_CPUTIME_ID; break;
-        default: awsm_assert(0);
-    }
+i32
+wasm_get_time(i32 clock_id, i32 timespec_off)
+{
+	clockid_t real_clock;
+	switch (clock_id) {
+	case 0:
+		real_clock = CLOCK_REALTIME;
+		break;
+	case 1:
+		real_clock = CLOCK_MONOTONIC;
+		break;
+	case 2:
+		real_clock = CLOCK_PROCESS_CPUTIME_ID;
+		break;
+	default:
+		awsm_assert(0);
+	}
 
-    struct wasm_time_spec* timespec = get_memory_ptr_void(timespec_off, sizeof(struct wasm_time_spec));
+	struct wasm_time_spec *timespec = get_memory_ptr_void(timespec_off, sizeof(struct wasm_time_spec));
 
-    struct timespec native_timespec = { 0, 0 };
-    int             res             = clock_gettime(real_clock, &native_timespec);
-    if (res == -1) {
-        return -errno;
-    }
+	struct timespec native_timespec = {0, 0};
+	int             res             = clock_gettime(real_clock, &native_timespec);
+	if (res == -1) { return -errno; }
 
-    timespec->sec     = native_timespec.tv_sec;
-    timespec->nanosec = native_timespec.tv_nsec;
-    return res;
+	timespec->sec     = native_timespec.tv_sec;
+	timespec->nanosec = native_timespec.tv_nsec;
+	return res;
 }
 
 #define SYS_EXIT_GROUP 231
-i32 wasm_exit_group(i32 status) {
-    exit(status);
-    return 0;
+i32
+wasm_exit_group(i32 status)
+{
+	exit(status);
+	return 0;
 }
 
-i32 inner_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
-    //    printf("n %d\n", n);
-    i32 res;
-    switch (n) {
-        case SYS_READ: return wasm_read(a, b, c);
-        case SYS_WRITE: return wasm_write(a, b, c);
-        case SYS_OPEN: return wasm_open(a, b, c);
-        case SYS_CLOSE: return wasm_close(a);
-        case SYS_STAT: return wasm_stat(a, b);
-        case SYS_FSTAT: return wasm_fstat(a, b);
-        case SYS_LSTAT: return wasm_lstat(a, b);
-        case SYS_LSEEK: return wasm_lseek(a, b, c);
-        case SYS_MMAP: return wasm_mmap(a, b, c, d, e, f);
-        case SYS_MUNMAP: return 0;
-        case SYS_BRK: return 0;
-        case SYS_RT_SIGACTION: return 0;
-        case SYS_RT_SIGPROGMASK: return 0;
-        case SYS_IOCTL: return wasm_ioctl(a, b, c);
-        case SYS_READV: return wasm_readv(a, b, c);
-        case SYS_WRITEV: return wasm_writev(a, b, c);
-        case SYS_MADVISE: return 0;
-        case SYS_GETPID: return wasm_getpid();
-        case SYS_FCNTL: return wasm_fcntl(a, b, c);
-        case SYS_FSYNC: return wasm_fsync(a);
-        case SYS_UNLINK: return wasm_unlink(a);
-        case SYS_GETCWD: return wasm_getcwd(a, b);
-        case SYS_GETEUID: return wasm_geteuid();
-        case SYS_SET_THREAD_AREA: return 0;
-        case SYS_SET_TID_ADDRESS: return 0;
-        case SYS_GET_TIME: return wasm_get_time(a, b);
-        case SYS_EXIT_GROUP: return wasm_exit_group(a);
-    }
-    printf("syscall %d (%d, %d, %d, %d, %d, %d)\n", n, a, b, c, d, e, f);
-    awsm_assert(0);
-    return 0;
+i32
+inner_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f)
+{
+	//    printf("n %d\n", n);
+	i32 res;
+	switch (n) {
+	case SYS_READ:
+		return wasm_read(a, b, c);
+	case SYS_WRITE:
+		return wasm_write(a, b, c);
+	case SYS_OPEN:
+		return wasm_open(a, b, c);
+	case SYS_CLOSE:
+		return wasm_close(a);
+	case SYS_STAT:
+		return wasm_stat(a, b);
+	case SYS_FSTAT:
+		return wasm_fstat(a, b);
+	case SYS_LSTAT:
+		return wasm_lstat(a, b);
+	case SYS_LSEEK:
+		return wasm_lseek(a, b, c);
+	case SYS_MMAP:
+		return wasm_mmap(a, b, c, d, e, f);
+	case SYS_MUNMAP:
+		return 0;
+	case SYS_BRK:
+		return 0;
+	case SYS_RT_SIGACTION:
+		return 0;
+	case SYS_RT_SIGPROGMASK:
+		return 0;
+	case SYS_IOCTL:
+		return wasm_ioctl(a, b, c);
+	case SYS_READV:
+		return wasm_readv(a, b, c);
+	case SYS_WRITEV:
+		return wasm_writev(a, b, c);
+	case SYS_MADVISE:
+		return 0;
+	case SYS_GETPID:
+		return wasm_getpid();
+	case SYS_FCNTL:
+		return wasm_fcntl(a, b, c);
+	case SYS_FSYNC:
+		return wasm_fsync(a);
+	case SYS_UNLINK:
+		return wasm_unlink(a);
+	case SYS_GETCWD:
+		return wasm_getcwd(a, b);
+	case SYS_GETEUID:
+		return wasm_geteuid();
+	case SYS_SET_THREAD_AREA:
+		return 0;
+	case SYS_SET_TID_ADDRESS:
+		return 0;
+	case SYS_GET_TIME:
+		return wasm_get_time(a, b);
+	case SYS_EXIT_GROUP:
+		return wasm_exit_group(a);
+	}
+	printf("syscall %d (%d, %d, %d, %d, %d, %d)\n", n, a, b, c, d, e, f);
+	awsm_assert(0);
+	return 0;
 }
 
-i32 env_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
-    switch_into_runtime();
-    i32 i = inner_syscall_handler(n, a, b, c, d, e, f);
-    switch_out_of_runtime();
-    return i;
+i32
+env_syscall_handler(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f)
+{
+	switch_into_runtime();
+	i32 i = inner_syscall_handler(n, a, b, c, d, e, f);
+	switch_out_of_runtime();
+	return i;
 }
 
-i32 env___syscall(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f) {
-    return env_syscall_handler(n, a, b, c, d, e, f);
+i32
+env___syscall(i32 n, i32 a, i32 b, i32 c, i32 d, i32 e, i32 f)
+{
+	return env_syscall_handler(n, a, b, c, d, e, f);
 }
 
-void env___unmapself(u32 base, u32 size) {
-    // Just do some no op
+void
+env___unmapself(u32 base, u32 size)
+{
+	// Just do some no op
 }
 
 // Floating point routines
 // TODO: Do a fair comparison between musl and wasm-musl
-INLINE double env_sin(double d) {
-    return sin(d);
+INLINE double
+env_sin(double d)
+{
+	return sin(d);
 }
 
-INLINE double env_cos(double d) {
-    return cos(d);
+INLINE double
+env_cos(double d)
+{
+	return cos(d);
 }

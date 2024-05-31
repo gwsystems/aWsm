@@ -1,6 +1,8 @@
 #include <stdio.h>
 
-int main() {
-    printf("We are alive!");
-    return 0;
+int
+main()
+{
+	printf("We are alive!");
+	return 0;
 }

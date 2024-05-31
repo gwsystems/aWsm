@@ -9,7 +9,7 @@
  * writing custom startup logic for other host environments and execution models.
  */
 
-void*                current_wasi_context;
+void                *current_wasi_context;
 struct dylib_handler so_handler;
 
 /* Code that actually runs the wasm code */
@@ -18,37 +18,39 @@ IMPORT void wasmf__start(void);
 /**
  * @brief Lifecycle function that runs at end at termination of WebAssembly module. Suitable for logging and cleanup
  */
-void runtime_on_module_exit() {
-    wasi_context_destroy(current_wasi_context);
-    return;
+void
+runtime_on_module_exit()
+{
+	wasi_context_destroy(current_wasi_context);
+	return;
 }
 
-int main(int argc, char* argv[]) {
-    so_handler.app_path = argv[0];
+int
+main(int argc, char *argv[])
+{
+	so_handler.app_path = argv[0];
 
-    runtime_init();
+	runtime_init();
 
-    /* Copy environ from process */
-    extern char** environ;
-    __wasi_size_t envc = 0;
-    for (char** cursor = environ; *cursor != NULL; cursor++) {
-        envc++;
-    }
+	/* Copy environ from process */
+	extern char **environ;
+	__wasi_size_t envc = 0;
+	for (char **cursor = environ; *cursor != NULL; cursor++) { envc++; }
 
-    wasi_options_t options;
-    wasi_options_init(&options);
-    options.argc         = argc;
-    options.argv         = (const char**)argv;
-    options.envp         = (const char**)environ;
-    current_wasi_context = wasi_context_init(&options);
+	wasi_options_t options;
+	wasi_options_init(&options);
+	options.argc         = argc;
+	options.argv         = (const char **)argv;
+	options.envp         = (const char **)environ;
+	current_wasi_context = wasi_context_init(&options);
 
-    atexit(runtime_on_module_exit);
+	atexit(runtime_on_module_exit);
 
-    if (so_handler.handle) {
-        so_handler.entrypoint();
-    } else {
-        wasmf__start();
-    }
+	if (so_handler.handle) {
+		so_handler.entrypoint();
+	} else {
+		wasmf__start();
+	}
 
-    exit(EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }
