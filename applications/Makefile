@@ -212,7 +212,7 @@ bench/fibonacci.awsm.csv: dist/fibonacci.awsm bench
 
 bench/gocr.awsm.csv: dist/gocr.awsm bench
 	hyperfine -w 10 --export-csv $@ \
-		-n $(subst dist/,,$<) './$< < wasm_apps/gocr/examples/5x8.pnm'
+		-n $(subst dist/,,$<) './$< < wasm_apps/gocr/examples/5x8.png'
 
 bench/mi_adpcm.awsm.csv: dist/mi_adpcm.awsm bench
 	hyperfine -w 10 --export-csv $@ \
