@@ -191,7 +191,10 @@ pub fn compile_function(ctx: &ModuleCtx, f: &ImplementedFunction) {
     let termination_block = llvm_f.append("exit");
     let root_breakout_target = BreakoutTarget::new_wrapped(
         termination_block,
-        f.get_return_type().map(TypeOrFuncType::Type),
+        f.get_return_type()
+            .iter()
+            .map(|e| TypeOrFuncType::Type(*e))
+            .collect(),
     );
 
     // In WASM, a break out of the root block is the same as returning from the function
