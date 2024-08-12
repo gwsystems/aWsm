@@ -73,7 +73,7 @@ cd .. || exit
 if [[ -n "${WASI_SDK_PATH}" ]] && [[ -x "${WASI_SDK_PATH}/bin/clang" ]]; then
 	echo "wasi-sdk detected"
 else
-	wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$WASI_SDK_VERSION/wasi-$WASI_SDK_VERSION.0_amd64.deb
+	wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$WASI_SDK_VERSION/wasi-sdk_$WASI_SDK_VERSION.0_amd64.deb
 	# The Debian package installs WASI-SDK to /opt/wasi-sdk
 	$sudo dpkg -i wasi-sdk_$WASI_SDK_VERSION.0_amd64.deb
 	rm -f wasi-sdk_$WASI_SDK_VERSION.0_amd64.deb
