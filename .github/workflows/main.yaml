@@ -20,6 +20,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
+      - name: Install Rust 1.56.0
+        run: |
+          rustup default 1.56.0
+          rustup component add rustfmt
+          rustup update
+          cargo --version
       - name: Install Clang Format
         run: |
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
@@ -31,7 +37,7 @@ jobs:
       - name: Run Clang Format check
         run: ./format.sh -d
       - name: Run Cargo Format check
-        run: cargo fmt --check
+        run: cargo fmt -- --check
 
   test:
     runs-on: ubuntu-20.04
@@ -43,6 +49,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Install Rust 1.56.0
+        run: |
+          rustup default 1.56.0
+          rustup update
+          cargo --version
+
       - name: Install LLVM
         run: |
           sudo apt install binaryen --yes
@@ -76,8 +88,9 @@ jobs:
         run: |
           make -C ./runtime/thirdparty install
 
-      - name: Compile
+      - name: Compile awsm
         run: |
+          cargo --version
           cargo build --release
 
       - name: Preliminary tests

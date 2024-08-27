@@ -50,9 +50,11 @@ $sudo apt install binaryen --yes
 
 # Install Rust
 if [[ -x "$(command -v rustup)" ]]; then
+    rustup install 1.56.0
+    rustup default 1.56.0
 	rustup update
 else
-	curl https://sh.rustup.rs -sSf | bash -s -- -y
+    curl https://sh.rustup.rs -sSf | bash -s -- -y --default-toolchain 1.56.0
 fi
 source "$HOME/.cargo/env"
 export PATH="$HOME/.cargo/bin:$PATH"
