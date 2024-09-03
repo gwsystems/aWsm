@@ -235,15 +235,19 @@ impl ImplementedFunction {
         }
     }
 
-    pub fn get_return_type(&self) -> Option<Type> {
+    pub fn get_return_type(&self) -> Vec<Type> {
         match self.ty {
             Some(ref ty) => {
                 if ty.returns.len() == 1 {
-                    Some(ty.returns[0])
+                    let mut res = Vec::new();
+                    res.push(ty.returns[0]);
+                    res
                 } else if ty.returns.is_empty() {
-                    None
+                    Vec::new()
                 } else {
-                    panic!("Malformed wasm, a function has too many return types")
+                    let mut res: Vec<Type> = ty.returns.iter().map(|e| *e).collect();
+                    res
+                    // panic!("Malformed wasm, a function has too many return types")
                 }
             }
             None => panic!("Malformed wasm, a function has no type"),
@@ -266,9 +270,9 @@ pub struct TableInitializer {
 #[derive(Clone, Debug, PartialEq)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum Instruction {
-    BlockStart { produced_type: Option<TypeOrFuncType> },
-    LoopStart { produced_type: Option<TypeOrFuncType> },
-    If { produced_type: Option<TypeOrFuncType> },
+    BlockStart { produced_type: Vec<TypeOrFuncType> },
+    LoopStart { produced_type: Vec<TypeOrFuncType> },
+    If { produced_type: Vec<TypeOrFuncType> },
     Else,
     End,
 
@@ -491,7 +495,7 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
             }
             Operator::Loop { ty } => {
                 let produced_type = if ty == TypeOrFuncType::Type(Type::EmptyBlockType) {
-                    None
+                    new Vec()
                 } else {
                     Some(ty)
                 };
@@ -499,9 +503,9 @@ impl<'a> From<&'a Operator<'a>> for Instruction {
             }
             Operator::If { ty } => {
                 let produced_type = if ty == TypeOrFuncType::Type(Type::EmptyBlockType) {
-                    None
+                    Vec::new()
                 } else {
-                    Some(ty)
+                    ty
                 };
                 Instruction::If { produced_type }
             }
