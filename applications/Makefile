@@ -176,6 +176,17 @@ all.awsm: \
 	# dist/mi_patricia_cm.awsm \
 	# dist/mi_pgp.awsm \
 
+.PHONY: all.so
+all.so: \
+	dist/cifar10.so \
+	dist/empty.so \
+	dist/fibonacci.so \
+	dist/gocr.so \
+	dist/resize_image.so \
+	dist/license_plate_detection.so \
+	dist/cnn_face_detection.so \
+	dist/gps_ekf.so \
+
 clean.bench:
 	rm -rf bench
 

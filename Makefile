@@ -28,6 +28,11 @@ awsm.clean:
 applications:
 	make -C applications all.awsm
 
+# aWsm Applications dynamic libs
+.PHONY: applications.so
+applications.so:
+	make -C applications all.so
+
 .PHONY: applications.clean
 applications.clean:
 	make -C applications clean
