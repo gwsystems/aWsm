@@ -13,7 +13,7 @@ use crate::codegen::type_conversions::wasm_type_to_zeroed_value;
 
 pub struct BreakoutTarget<'a> {
     pub bb: &'a BasicBlock,
-    result_type: Option<TypeOrFuncType>,
+    result_type: Vec<TypeOrFuncType>,
     jumps: Vec<JumpFrom<'a>>,
 }
 
@@ -26,7 +26,7 @@ pub struct JumpFrom<'a> {
 pub type WBreakoutTarget<'a> = Rc<RefCell<BreakoutTarget<'a>>>;
 
 impl<'a> BreakoutTarget<'a> {
-    pub fn new(bb: &'a BasicBlock, result_type: Option<TypeOrFuncType>) -> BreakoutTarget<'a> {
+    pub fn new(bb: &'a BasicBlock, result_type: Vec<TypeOrFuncType>) -> BreakoutTarget<'a> {
         BreakoutTarget {
             bb,
             result_type,
@@ -36,7 +36,7 @@ impl<'a> BreakoutTarget<'a> {
 
     pub fn new_wrapped(
         bb: &'a BasicBlock,
-        result_type: Option<TypeOrFuncType>,
+        result_type: Vec<TypeOrFuncType>,
     ) -> WBreakoutTarget<'a> {
         let bt = Self::new(bb, result_type);
         Rc::new(RefCell::new(bt))
@@ -135,7 +135,7 @@ impl<'a> BreakoutTarget<'a> {
         locals: &[&'b Value],
         stack: &[&'b Value],
     ) {
-        let res = if self.result_type.is_some() {
+        let res = if self.result_type.len() > 0 {
             Some(
                 *stack
                     .last()
